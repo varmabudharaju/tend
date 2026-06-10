@@ -1,3 +1,5 @@
+import os
+
 from conftest import make_event
 
 from tend import readguard
@@ -33,3 +35,19 @@ def test_other_tools_and_missing_files_ignored(tmp_path):
     assert readguard.handle(
         make_event(tool_name="Read", tool_input={"file_path": str(tmp_path / "nope")})
     ) is None
+
+
+def test_file_deleted_between_isfile_and_getsize_returns_none(tmp_path, monkeypatch):
+    """TOCTOU: file disappears between isfile check and getsize — must return None."""
+    f = tmp_path / "big.txt"
+    f.write_text("x" * 100_000)
+
+    def getsize_that_raises(path):
+        raise OSError("file vanished")
+
+    monkeypatch.setattr(os.path, "getsize", getsize_that_raises)
+    ev = make_event(hook_event_name="PreToolUse", tool_name="Read",
+                    tool_input={"file_path": str(f)})
+    # With the TOCTOU fix, OSError from getsize must be caught and return None
+    result = readguard.handle(ev)
+    assert result is None, "OSError from getsize must be caught and return None"

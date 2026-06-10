@@ -14,7 +14,10 @@ def handle(event):
     if not fp or not os.path.isfile(fp):
         return None
     cfg = config.load(event.get("cwd"))
-    size = os.path.getsize(fp)
+    try:
+        size = os.path.getsize(fp)
+    except OSError:
+        return None
     if size <= cfg.read_guard_bytes:
         return None
     return {

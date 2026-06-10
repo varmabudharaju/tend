@@ -41,3 +41,21 @@ def test_is_fresh(tmp_path):
     os.utime(p, (old, old))
     assert not state.is_fresh(p, hours=1)
     assert not state.is_fresh(tmp_path / "nope.md", hours=1)
+
+
+def test_duplicate_goal_sections_preserve_first_content(tmp_path):
+    """When STATE.md has two ## Goal sections, first non-placeholder line is from first section."""
+    p = state.path_for(str(tmp_path))
+    p.parent.mkdir(parents=True)
+    p.write_text(
+        "# Session state\n\n"
+        "## Goal\n"
+        "Ship the harness\n\n"
+        "## Now\n"
+        "Writing tests\n\n"
+        "## Goal\n"
+        "Second duplicate goal section\n"
+    )
+    goal, now = state.goal_now(p)
+    assert goal == "Ship the harness", "first Goal section content must be preserved"
+    assert now == "Writing tests"

@@ -40,7 +40,7 @@ def read_sections(path) -> dict:
     for line in path.read_text().splitlines():
         if line.startswith("## "):
             current = line[3:].strip()
-            sections[current] = []
+            sections.setdefault(current, [])
         elif current is not None:
             sections[current].append(line)
     return {k: "\n".join(v).strip() for k, v in sections.items()}
