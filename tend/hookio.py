@@ -13,7 +13,7 @@ def read_event() -> dict:
 
 
 def emit(obj: dict) -> None:
-    sys.stdout.write(json.dumps(obj))
+    sys.stdout.write(json.dumps(obj) + "\n")
 
 
 def log_error() -> None:
@@ -31,8 +31,8 @@ def run_fail_open(handler) -> int:
             return 0
         event = read_event()
         out = handler(event)
-        if out:
+        if out is not None:
             emit(out)
-    except Exception:
+    except BaseException:
         log_error()
     return 0

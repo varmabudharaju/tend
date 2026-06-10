@@ -41,3 +41,17 @@ def test_disabled_short_circuits(monkeypatch, capsys, tend_home):
     called = []
     code, out = run(lambda e: called.append(1), "{}", monkeypatch, capsys)
     assert code == 0 and out == "" and not called
+
+
+def test_systemexit_in_handler_is_swallowed(monkeypatch, capsys, tend_home):
+    def bail(e):
+        raise SystemExit(1)
+
+    code, out = run(bail, "{}", monkeypatch, capsys)
+    assert code == 0 and out == ""
+
+
+def test_empty_dict_handler_emits_empty_object(monkeypatch, capsys):
+    code, out = run(lambda e: {}, "{}", monkeypatch, capsys)
+    assert code == 0
+    assert json.loads(out) == {}

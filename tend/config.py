@@ -43,5 +43,7 @@ def load(cwd=None) -> Config:
 
             loaded = yaml.safe_load(p.read_text()) or {}
             data.update({k: v for k, v in loaded.items() if k in DEFAULTS})
+    if isinstance(data["offload_tools"], str):
+        data["offload_tools"] = [data["offload_tools"]]
     data["offload_tools"] = tuple(data["offload_tools"])
     return Config(**data)

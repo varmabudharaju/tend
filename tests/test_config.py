@@ -29,3 +29,10 @@ def test_unknown_keys_ignored(tend_home):
     (tend_home / "config.yaml").write_text("bogus_key: 1\n")
     cfg = config.load()
     assert not hasattr(cfg, "bogus_key")
+
+
+def test_scalar_string_offload_tools(tend_home):
+    tend_home.mkdir(parents=True, exist_ok=True)
+    (tend_home / "config.yaml").write_text("offload_tools: Bash\n")
+    cfg = config.load()
+    assert cfg.offload_tools == ("Bash",)

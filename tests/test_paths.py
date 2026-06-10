@@ -23,4 +23,4 @@ def test_json_roundtrip_atomic(tend_home):
     paths.write_json_atomic(p, {"a": 1})
     assert paths.read_json(p) == {"a": 1}
     assert paths.read_json(tend_home / "missing.json", {"d": 1}) == {"d": 1}
-    assert not p.with_name(p.name + ".tmp").exists()
+    assert not list(p.parent.glob("*.tmp"))

@@ -24,7 +24,7 @@ def log_path() -> Path:
 
 def read_json(path, default=None):
     try:
-        return json.loads(Path(path).read_text())
+        return json.loads(Path(path).read_text(encoding="utf-8"))
     except Exception:
         return default
 
@@ -32,6 +32,6 @@ def read_json(path, default=None):
 def write_json_atomic(path, obj, indent=None) -> None:
     p = Path(path)
     p.parent.mkdir(parents=True, exist_ok=True)
-    tmp = p.with_name(p.name + ".tmp")
-    tmp.write_text(json.dumps(obj, indent=indent))
+    tmp = p.with_name(f"{p.name}.{os.getpid()}.tmp")
+    tmp.write_text(json.dumps(obj, indent=indent), encoding="utf-8")
     tmp.replace(p)
