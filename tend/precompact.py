@@ -18,8 +18,7 @@ def handle(event):
     if event.get("trigger") == "auto":
         fl = flags.load(sid)
         if not fl.get("blocked_once") and _is_stale(event, cfg):
-            fl["blocked_once"] = True
-            flags.save(sid, fl)
+            flags.update(sid, blocked_once=True)
             return {"decision": "block", "reason": BLOCK_REASON}
     return None
 
@@ -32,6 +31,7 @@ def _is_stale(event, cfg) -> bool:
     mark = summary.get("state_mark")
     if mark and mark.get("mtime") != sp.stat().st_mtime:
         return False  # updated since our last mark: fresh
+    # No mark ever set (no Stop yet): tokens_since returns None -> treat as not stale.
     since = ledger.tokens_since_state_mark(summary)
     return since is not None and since > cfg.state_stale_tokens
 
@@ -42,4 +42,4 @@ def _snapshot(sid) -> None:
         "ctx": ctxmetrics.read_ctx(sid),
         "ts": time.time(),
     }
-    paths.write_json_atomic(paths.session_dir(sid) / f"precompact-{int(time.time())}.json", snap)
+    paths.write_json_atomic(paths.session_dir(sid) / f"precompact-{time.time_ns()}.json", snap)

@@ -54,5 +54,7 @@ def test_anchor_truncated_to_budget(tmp_path):
 
 
 def test_anchor_works_without_state_or_metrics(tmp_path):
+    flags.save("s1", {"state_reminder": True})
     ctx = anchor.handle(ev(tmp_path))["hookSpecificOutput"]["additionalContext"]
     assert "context usage unknown" in ctx
+    assert "STATE.md is stale" in ctx

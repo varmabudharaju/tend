@@ -14,6 +14,9 @@ def handle(event):
     goal, now = state.goal_now(sp)
     pct = ctxmetrics.used_pct(sid)
 
+    if not goal and not now and pct is None and not ledger.stale_tokens(summary) and not fl.get("state_reminder"):
+        return None
+
     lines = []
     if goal:
         lines.append(f"Goal: {goal}")

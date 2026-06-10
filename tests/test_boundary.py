@@ -46,3 +46,10 @@ def test_missing_state_quiet_early(tmp_path):
     setup_summary(5_000)
     boundary.handle(make_event(hook_event_name="Stop", cwd=str(tmp_path)))
     assert flags.load("s1")["state_reminder"] is False
+
+
+def test_blocked_once_survives_stop(tmp_path):
+    flags.save("s1", {"blocked_once": True})
+    setup_summary(5_000)
+    boundary.handle(make_event(hook_event_name="Stop", cwd=str(tmp_path)))
+    assert flags.load("s1").get("blocked_once") is True

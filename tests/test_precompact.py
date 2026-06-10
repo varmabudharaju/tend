@@ -25,6 +25,13 @@ def test_snapshot_written(tmp_path):
     assert len(snaps) == 1
 
 
+def test_two_snapshots_are_unique(tmp_path):
+    precompact.handle(ev("manual", tmp_path))
+    precompact.handle(ev("manual", tmp_path))
+    snaps = list(paths.session_dir("s1").glob("precompact-*.json"))
+    assert len(snaps) == 2
+
+
 def test_fresh_state_not_blocked(tmp_path):
     from tend import ledger, state
 
