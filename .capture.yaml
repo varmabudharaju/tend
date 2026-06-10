@@ -1,0 +1,10 @@
+shots:
+  - kind: cli
+    command: tend status --session smoke-live --cwd /Users/varma/tend
+    name: tend-status
+  - kind: cli
+    command: tend report --session smoke-live
+    name: tend-report
+  - kind: cli
+    command: tend handoff --cwd /Users/varma/tend
+    name: tend-handoff
