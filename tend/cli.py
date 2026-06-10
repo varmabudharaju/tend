@@ -6,6 +6,11 @@ from pathlib import Path
 from . import ctxmetrics, install, ledger, paths, state
 
 
+def _session_mtime(d):
+    times = [f.stat().st_mtime for f in d.iterdir() if f.is_file()]
+    return max(times, default=d.stat().st_mtime)
+
+
 def latest_session():
     root = paths.home() / "sessions"
     if not root.exists():
@@ -13,7 +18,7 @@ def latest_session():
     dirs = [d for d in root.iterdir() if d.is_dir()]
     if not dirs:
         return None
-    return max(dirs, key=lambda d: d.stat().st_mtime).name
+    return max(dirs, key=_session_mtime).name
 
 
 def cmd_status(args) -> int:
@@ -100,14 +105,22 @@ def cmd_off(args) -> int:
 
 
 def cmd_install(args) -> int:
-    install.install(args.settings)
+    try:
+        install.install(args.settings)
+    except install.SettingsError as e:
+        print(str(e))
+        return 1
     print(f"tend hooks + statusline installed into {args.settings}")
     print("Restart your Claude Code session to activate.")
     return 0
 
 
 def cmd_uninstall(args) -> int:
-    install.uninstall(args.settings)
+    try:
+        install.uninstall(args.settings)
+    except install.SettingsError as e:
+        print(str(e))
+        return 1
     print(f"tend removed from {args.settings}")
     return 0
 

@@ -2,6 +2,7 @@
 import fcntl
 import json
 import os
+from contextlib import contextmanager
 from pathlib import Path
 
 from . import paths, tokens
@@ -35,14 +36,20 @@ def load_summary(sid) -> dict:
     return paths.read_json(_summary_path(sid), _empty())
 
 
+@contextmanager
+def _locked(sid):
+    lock_path = paths.session_dir(sid) / "ledger.lock"
+    with open(lock_path, "w") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        yield
+
+
 def ingest(event) -> None:
     sid = event.get("session_id")
     tp = event.get("transcript_path")
     if not sid or not tp or not Path(tp).exists():
         return
-    lock_path = paths.session_dir(sid) / "ledger.lock"
-    with open(lock_path, "w") as lock:
-        fcntl.flock(lock, fcntl.LOCK_EX)
+    with _locked(sid):
         _ingest_locked(sid, tp)
 
 
@@ -114,9 +121,10 @@ def _ingest_line(summary, line) -> None:
 
 
 def set_state_mark(sid, mtime) -> None:
-    s = load_summary(sid)
-    s["state_mark"] = {"mtime": mtime, "context_total": s.get("context_total", 0)}
-    paths.write_json_atomic(_summary_path(sid), s)
+    with _locked(sid):
+        s = load_summary(sid)
+        s["state_mark"] = {"mtime": mtime, "context_total": s.get("context_total", 0)}
+        paths.write_json_atomic(_summary_path(sid), s)
 
 
 def tokens_since_state_mark(summary):
@@ -140,10 +148,11 @@ def record_agent(event) -> None:
     aid = event.get("agent_id")
     if not sid or not aid:
         return
-    s = load_summary(sid)
-    rec = s["agents"].setdefault(aid, {"type": None, "stopped": False})
-    if event.get("hook_event_name") == "SubagentStart":
-        rec["type"] = event.get("agent_type")
-    else:
-        rec["stopped"] = True
-    paths.write_json_atomic(_summary_path(sid), s)
+    with _locked(sid):
+        s = load_summary(sid)
+        rec = s["agents"].setdefault(aid, {"type": None, "stopped": False})
+        if event.get("hook_event_name") == "SubagentStart":
+            rec["type"] = event.get("agent_type")
+        else:
+            rec["stopped"] = True
+        paths.write_json_atomic(_summary_path(sid), s)
