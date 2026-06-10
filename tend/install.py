@@ -58,6 +58,7 @@ def install(settings_path) -> None:
         paths.write_json_atomic(paths.home() / "statusline-original.json", sl)
         settings["statusLine"] = {"type": "command", "command": statusline_command()}
     elif not sl:
+        (paths.home() / "statusline-original.json").unlink(missing_ok=True)
         settings["statusLine"] = {"type": "command", "command": statusline_command()}
     _write_settings(sp, settings)
 
@@ -82,6 +83,7 @@ def uninstall(settings_path) -> None:
             settings["statusLine"] = orig
         else:
             settings.pop("statusLine", None)
+        (paths.home() / "statusline-original.json").unlink(missing_ok=True)
     if not changed:
         return
     _write_settings(sp, settings)

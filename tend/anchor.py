@@ -22,7 +22,7 @@ def handle(event):
         lines.append(f"Goal: {goal}")
     if now:
         lines.append(f"Now: {now}")
-    lines.append(_health_line(pct, summary))
+    lines.append(_health_line(pct, summary, cfg))
     if fl.get("state_reminder"):
         lines.append(
             "STATE.md is stale - update .claude/tend/STATE.md "
@@ -40,9 +40,12 @@ def handle(event):
     }
 
 
-def _health_line(pct, summary):
+def _health_line(pct, summary, cfg):
     parts = [f"context {pct:.0f}% used" if pct is not None else "context usage unknown"]
     st = ledger.stale_tokens(summary)
     if st:
         parts.append(f"~{st:,} tok of stale tool results")
+    bl = ledger.bloat_tokens(summary, cfg.offload_threshold_tokens)
+    if bl:
+        parts.append(f"~{bl:,} tok in oversized results")
     return "Health: " + ", ".join(parts)

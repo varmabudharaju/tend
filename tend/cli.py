@@ -3,7 +3,7 @@ import argparse
 import time
 from pathlib import Path
 
-from . import ctxmetrics, install, ledger, paths, state
+from . import config, ctxmetrics, install, ledger, paths, state
 
 
 def _session_mtime(d):
@@ -26,12 +26,23 @@ def cmd_status(args) -> int:
     if not sid:
         print("no tend sessions recorded yet")
         return 0
+    if args.session and not (paths.home() / "sessions" / sid).is_dir():
+        print(f"no such session: {sid}")
+        return 1
     summary = ledger.load_summary(sid)
     pct = ctxmetrics.used_pct(sid)
     print(f"session  {sid}")
+    newest = max(
+        (f.stat().st_mtime for f in (paths.home() / "sessions" / sid).iterdir() if f.is_file()),
+        default=None,
+    )
+    if newest:
+        print(f"last hook activity {(time.time() - newest) / 60:.1f}m ago")
     pct_s = f"{pct:.0f}%" if pct is not None else "unknown"
     print(f"context  {pct_s} ({summary.get('context_total', 0):,} tok)")
     print(f"stale    {ledger.stale_tokens(summary):,} tok of stale tool results")
+    cfg = config.load(args.cwd)
+    print(f"bloat    {ledger.bloat_tokens(summary, cfg.offload_threshold_tokens):,} tok in oversized results")
     sp = state.path_for(args.cwd)
     if sp.exists():
         age_h = (time.time() - sp.stat().st_mtime) / 3600
@@ -52,6 +63,9 @@ def cmd_report(args) -> int:
     if not sid:
         print("no tend sessions recorded yet")
         return 0
+    if args.session and not (paths.home() / "sessions" / sid).is_dir():
+        print(f"no such session: {sid}")
+        return 1
     summary = ledger.load_summary(sid)
     print(f"# tend report - session {sid}\n")
     print(f"context total : {summary.get('context_total', 0):,} tok")
@@ -73,6 +87,11 @@ def cmd_report(args) -> int:
         for aid, a in agents.items():
             status = "done" if a.get("stopped") else "running"
             print(f"  {aid}  {a.get('type') or '?'}  {status}")
+    snaps = sorted((paths.session_dir(sid)).glob("precompact-*.json"))
+    if snaps:
+        print(f"\n## compaction snapshots ({len(snaps)})")
+        for p in snaps:
+            print(f"  {p.name}")
     return 0
 
 

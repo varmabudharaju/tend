@@ -143,6 +143,13 @@ def stale_tokens(summary) -> int:
     return sum(r["tokens"] for r in summary.get("results", {}).values() if r.get("stale"))
 
 
+def bloat_tokens(summary, threshold) -> int:
+    """Tokens sitting in oversized in-context tool results (>= threshold each)."""
+    return sum(
+        r["tokens"] for r in summary.get("results", {}).values() if r["tokens"] >= threshold
+    )
+
+
 def record_agent(event) -> None:
     sid = event.get("session_id")
     aid = event.get("agent_id")

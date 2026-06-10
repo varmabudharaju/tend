@@ -88,6 +88,17 @@ def test_record_agent():
     assert s["agents"]["a1"]["stopped"] is True
 
 
+def test_bloat_tokens(tmp_path):
+    """One 3000-tok result + one 100-tok result; threshold 2500 → bloat = 3000."""
+    summary = {
+        "results": {
+            "big": {"tool": "Bash", "tokens": 3000, "file": None, "stale": False},
+            "small": {"tool": "Read", "tokens": 100, "file": "/f", "stale": False},
+        }
+    }
+    assert ledger.bloat_tokens(summary, 2500) == 3000
+
+
 def test_cursor_past_eof_reset(tmp_path):
     """Ingest full fixture, set state mark, then truncate to first line only; verify recovery."""
     tp = tmp_path / "t.jsonl"

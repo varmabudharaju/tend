@@ -56,3 +56,41 @@ def test_install_hook_via_cli(tmp_path, tend_home):
     sp.write_text("{}")
     assert cli.main(["install-hook", "--settings", str(sp)]) == 0
     assert "-m tend.hook" in sp.read_text()
+
+
+def test_status_contains_bloat(capsys, tend_home):
+    seed_session()  # seeds a 3000-tok result, threshold default 2500
+    cli.main(["status"])
+    out = capsys.readouterr().out
+    assert "bloat" in out
+
+
+def test_report_lists_compaction_snapshots(capsys, tend_home):
+    seed_session()
+    snap = paths.session_dir("s1") / "precompact-123.json"
+    snap.write_text("{}")
+    cli.main(["report"])
+    out = capsys.readouterr().out
+    assert "compaction snapshots" in out
+    assert "precompact-123.json" in out
+
+
+def test_status_contains_last_hook_activity(capsys, tend_home):
+    seed_session()
+    cli.main(["status"])
+    out = capsys.readouterr().out
+    assert "last hook activity" in out
+
+
+def test_status_ghost_session_returns_1(capsys, tend_home):
+    result = cli.main(["status", "--session", "ghost"])
+    assert result == 1
+    assert "no such session: ghost" in capsys.readouterr().out
+    assert not (paths.home() / "sessions" / "ghost").exists()
+
+
+def test_report_ghost_session_returns_1(capsys, tend_home):
+    result = cli.main(["report", "--session", "ghost"])
+    assert result == 1
+    assert "no such session: ghost" in capsys.readouterr().out
+    assert not (paths.home() / "sessions" / "ghost").exists()

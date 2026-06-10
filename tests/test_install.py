@@ -117,3 +117,31 @@ def test_uninstall_noop_leaves_file_identical(tmp_path):
     assert sp.read_bytes() == original_bytes
     bak = tmp_path / "settings.json.bak-tend"
     assert not bak.exists()
+
+
+# ── Fix 5 (this PR): statusline-original.json lifecycle ──────────────────────
+
+def test_uninstall_removes_statusline_original(tmp_path, tend_home):
+    """Install (with existing statusLine) saves original; uninstall must delete it."""
+    sp = tmp_path / "settings.json"
+    sp.write_text(json.dumps(EXISTING))
+    install.install(sp)
+    orig_file = tend_home / "statusline-original.json"
+    assert orig_file.exists(), "original should be saved on install"
+    install.uninstall(sp)
+    assert not orig_file.exists(), "original should be deleted after uninstall"
+
+
+def test_install_without_statusline_leaves_no_original(tmp_path, tend_home):
+    """Install with no pre-existing statusLine must not leave a stale original file."""
+    settings_no_sl = {k: v for k, v in EXISTING.items() if k != "statusLine"}
+    sp = tmp_path / "settings.json"
+    sp.write_text(json.dumps(settings_no_sl))
+    # Seed a stale original from a previous install
+    stale = tend_home / "statusline-original.json"
+    stale.parent.mkdir(parents=True, exist_ok=True)
+    stale.write_text('{"type":"command","command":"stale"}')
+    install.install(sp)
+    assert not stale.exists(), "stale original must be removed when no statusLine in settings"
+    s = json.loads(sp.read_text())
+    assert "-m tend.statusline" in s["statusLine"]["command"]
