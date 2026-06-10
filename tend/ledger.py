@@ -1,5 +1,7 @@
 """Incremental transcript ledger: exact context totals, tool-result sizes, staleness."""
+import fcntl
 import json
+import os
 from pathlib import Path
 
 from . import paths, tokens
@@ -18,6 +20,7 @@ def _summary_path(sid):
 def _empty():
     return {
         "context_total": 0,
+        # output_total is advisory: additive across parses; exact context size is context_total
         "output_total": 0,
         "results": {},
         "reads": {},
@@ -37,8 +40,22 @@ def ingest(event) -> None:
     tp = event.get("transcript_path")
     if not sid or not tp or not Path(tp).exists():
         return
+    lock_path = paths.session_dir(sid) / "ledger.lock"
+    with open(lock_path, "w") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        _ingest_locked(sid, tp)
+
+
+def _ingest_locked(sid, tp) -> None:
     cur = paths.read_json(_cursor_path(sid), {"offset": 0})
     summary = load_summary(sid)
+    # If the stored cursor exceeds the current file size, the transcript was truncated/rewritten.
+    # Reset to re-parse from the beginning, preserving agents and state_mark.
+    if cur["offset"] > os.path.getsize(tp):
+        preserved = {"agents": summary.get("agents", {}), "state_mark": summary.get("state_mark")}
+        summary = _empty() | preserved
+        summary["degraded"] = True  # signals a reset happened; counts rebuilt from new file
+        cur = {"offset": 0}
     with open(tp, "r", encoding="utf-8") as f:
         f.seek(cur["offset"])
         for line in f:

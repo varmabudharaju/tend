@@ -86,3 +86,30 @@ def test_record_agent():
     s = ledger.load_summary("s1")
     assert s["agents"]["a1"]["type"] == "Explore"
     assert s["agents"]["a1"]["stopped"] is True
+
+
+def test_cursor_past_eof_reset(tmp_path):
+    """Ingest full fixture, set state mark, then truncate to first line only; verify recovery."""
+    tp = tmp_path / "t.jsonl"
+    write_transcript(tp, fixture_lines())
+    ev = make_event(transcript_path=str(tp))
+    ledger.ingest(ev)
+    # Set a state mark so we can verify it survives truncation
+    ledger.set_state_mark("s1", 999.0)
+    ledger.record_agent(make_event(hook_event_name="SubagentStart", agent_id="a99", agent_type="Search"))
+
+    # Truncate the transcript to only the first line
+    first_line = fixture_lines()[0]
+    import json as _json
+    tp.write_text(_json.dumps(first_line) + "\n")
+
+    ledger.ingest(ev)
+    s = ledger.load_summary("s1")
+
+    # Cursor reset → file re-parsed from beginning; degraded flag set
+    assert s["degraded"] is True
+    # First line: input_tokens=10, cache_read=0, cache_creation=1000 → context_total=1010
+    assert s["context_total"] == 1010
+    # agents and state_mark are preserved across the reset
+    assert s["state_mark"] is not None
+    assert s["agents"]["a99"]["type"] == "Search"

@@ -38,3 +38,15 @@ def test_fallback_line_without_original(monkeypatch, capsys, tend_home):
 def test_garbage_input_never_raises(monkeypatch, capsys, tend_home):
     monkeypatch.setattr("sys.stdin", io.StringIO("not json"))
     statusline.main()  # must not raise
+
+
+def test_failing_original_falls_through_to_fallback(monkeypatch, capsys, tend_home):
+    """If statusline-original.json command exits non-zero, use the built-in fallback."""
+    paths.write_json_atomic(
+        tend_home / "statusline-original.json",
+        {"type": "command", "command": "exit 3"},
+    )
+    monkeypatch.setattr("sys.stdin", io.StringIO(STATUS_JSON))
+    statusline.main()
+    out = capsys.readouterr().out
+    assert "Fable" in out

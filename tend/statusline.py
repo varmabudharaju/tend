@@ -24,8 +24,17 @@ def main() -> int:
             res = subprocess.run(
                 orig["command"], shell=True, input=raw, capture_output=True, text=True, timeout=10
             )
-            sys.stdout.write(res.stdout)
-            return 0
+            if res.returncode == 0 and res.stdout:
+                sys.stdout.write(res.stdout)
+                return 0
+            # Non-zero exit or empty stdout: log stderr and fall through to built-in fallback
+            if res.stderr:
+                try:
+                    paths.home().mkdir(parents=True, exist_ok=True)
+                    with open(paths.log_path(), "a") as f:
+                        f.write(f"statusline-original stderr: {res.stderr}\n")
+                except Exception:
+                    pass
         except Exception:
             pass
     model = (data.get("model") or {}).get("display_name", "")
@@ -33,7 +42,7 @@ def main() -> int:
     line = model or "tend"
     if pct is not None:
         line += f" | ctx {pct:.0f}%"
-    sys.stdout.write(line)
+    sys.stdout.write(line + "\n")
     return 0
 
 
