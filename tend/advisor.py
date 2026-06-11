@@ -1,6 +1,12 @@
 """Pillar 4: when and how to recommend a curated /compact."""
 from . import state
 
+MAX_LINE_CHARS = 200
+
+
+def clip(s):
+    return s if len(s) <= MAX_LINE_CHARS else s[: MAX_LINE_CHARS - 1] + "…"
+
 
 def level(pct, cfg):
     if pct is None:
@@ -19,7 +25,7 @@ def compact_instructions(state_path) -> str:
         "(they are recorded in STATE.md)"
     )
     goal, _ = state.goal_now(state_path)
-    return f"{base}. Goal: {goal}" if goal else base
+    return f"{base}. Goal: {clip(goal)}" if goal else base
 
 
 def advice(pct, cfg, state_path, fl):
