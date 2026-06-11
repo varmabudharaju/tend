@@ -59,6 +59,43 @@ def _coerce(key, value):
     return None
 
 
+def _parse_value(v: str):
+    if v == "":
+        return None
+    if v.startswith("["):
+        if not v.endswith("]"):
+            return v  # malformed: _coerce will reject it
+        return [i.strip().strip("'\"") for i in v[1:-1].split(",") if i.strip()]
+    if v.lower() in ("true", "yes", "on"):
+        return True
+    if v.lower() in ("false", "no", "off"):
+        return False
+    s = v.strip("'\"")
+    try:
+        return int(s)
+    except ValueError:
+        try:
+            return float(s)
+        except ValueError:
+            return s
+
+
+def _parse_config(text: str) -> dict:
+    """Flat `key: value` parser (a YAML subset). tend's whole config is flat
+    scalars and string lists; stdlib-only keeps the plugin dependency-free."""
+    data = {}
+    for line in text.splitlines():
+        line = line.split("#", 1)[0].strip()
+        if not line or ":" not in line:
+            continue
+        k, _, v = line.partition(":")
+        k = k.strip()
+        if not k or " " in k:
+            continue
+        data[k] = _parse_value(v.strip())
+    return data
+
+
 def load(cwd=None) -> Config:
     data = dict(DEFAULTS)
     candidates = [paths.home() / "config.yaml"]
@@ -67,14 +104,10 @@ def load(cwd=None) -> Config:
     for p in candidates:
         if not p.is_file():
             continue
-        import yaml  # lazy: keeps hook startup fast when no config exists
-
         try:
-            loaded = yaml.safe_load(p.read_text(encoding="utf-8"))
+            loaded = _parse_config(p.read_text(encoding="utf-8"))
         except Exception:
-            continue  # unparseable config must never kill the hooks
-        if not isinstance(loaded, dict):
-            continue
+            continue  # unreadable config must never kill the hooks
         for k, v in loaded.items():
             if k in DEFAULTS:
                 v = _coerce(k, v)
