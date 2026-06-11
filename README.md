@@ -117,6 +117,17 @@ sequenceDiagram
 
 ## Install
 
+**As a Claude Code plugin** (recommended):
+
+```
+/plugin marketplace add varmabudharaju/tend
+/plugin install tend@tend
+```
+
+That's the whole thing — hooks register automatically and the `tend` CLI lands on your PATH. Optional: `tend wrap-statusline` adds the statusline tee (exact context % in anchors + the visible heartbeat); plugins can't wrap the statusline themselves.
+
+**Or via pip** (gets hooks + statusline in one step):
+
 ```bash
 python3 -m pip install --user -e .
 tend install-hook        # merges hooks + statusline into ~/.claude/settings.json
