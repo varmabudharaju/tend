@@ -15,6 +15,7 @@ DEFAULTS = {
     "state_fresh_hours": 48,
     "advise_pct": 55,
     "urge_pct": 70,
+    "delegation_guard": True,
 }
 
 
@@ -30,6 +31,7 @@ class Config:
     state_fresh_hours: int
     advise_pct: float
     urge_pct: float
+    delegation_guard: bool
 
 
 def _coerce(key, value):
@@ -40,6 +42,8 @@ def _coerce(key, value):
         if isinstance(value, list) and all(isinstance(t, str) for t in value):
             return value  # [] is legal: disables offloading
         return None
+    if isinstance(DEFAULTS[key], bool):
+        return value if isinstance(value, bool) else None
     if isinstance(value, bool):
         return None
     if isinstance(value, (int, float)):
