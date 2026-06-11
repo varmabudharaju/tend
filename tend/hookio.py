@@ -16,13 +16,26 @@ def emit(obj: dict) -> None:
     sys.stdout.write(json.dumps(obj) + "\n")
 
 
-def log_error() -> None:
+MAX_LOG_BYTES = 1_000_000
+
+
+def append_log(text: str) -> None:
     try:
         paths.home().mkdir(parents=True, exist_ok=True)
-        with open(paths.log_path(), "a") as f:
-            f.write(f"--- {datetime.datetime.now().isoformat()}\n{traceback.format_exc()}\n")
-    except Exception:
+        lp = paths.log_path()
+        try:
+            if lp.stat().st_size > MAX_LOG_BYTES:
+                lp.replace(lp.with_name(lp.name + ".1"))
+        except OSError:
+            pass
+        with open(lp, "a", encoding="utf-8") as f:
+            f.write(text)
+    except BaseException:
         pass
+
+
+def log_error() -> None:
+    append_log(f"--- {datetime.datetime.now().isoformat()}\n{traceback.format_exc()}\n")
 
 
 def run_fail_open(handler) -> int:
@@ -33,6 +46,8 @@ def run_fail_open(handler) -> int:
         out = handler(event)
         if out is not None:
             emit(out)
+    except KeyboardInterrupt:
+        pass  # routine Ctrl-C: not a tend error, nothing to log
     except BaseException:
         log_error()
     return 0

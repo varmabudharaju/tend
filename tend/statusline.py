@@ -29,12 +29,9 @@ def main() -> int:
                 return 0
             # Non-zero exit or empty stdout: log stderr and fall through to built-in fallback
             if res.stderr:
-                try:
-                    paths.home().mkdir(parents=True, exist_ok=True)
-                    with open(paths.log_path(), "a") as f:
-                        f.write(f"statusline-original stderr: {res.stderr}\n")
-                except Exception:
-                    pass
+                from . import hookio
+
+                hookio.append_log(f"statusline-original stderr: {res.stderr}\n")
         except Exception:
             pass
     model = (data.get("model") or {}).get("display_name", "")
