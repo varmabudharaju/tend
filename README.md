@@ -12,6 +12,8 @@ tend is a small, invisible helper that rides along with [Claude Code](https://cl
 pip install -e . && tend install-hook    # 30 seconds, fully reversible, no daemon
 ```
 
+![tend in action: status dashboard, automatic offloading, lossless handoff](docs/screenshots/demo.gif)
+
 ```mermaid
 flowchart LR
     S["Your Claude Code session"] -->|every event| T{"tend<br/>(8 tiny hooks)"}
