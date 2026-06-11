@@ -106,7 +106,7 @@ def cmd_handoff(args) -> int:
     if age_h > 4:
         print("WARNING: state may be stale; ask Claude to update it before switching sessions.")
     print("\nA new session in this project will auto-load:\n")
-    print(sp.read_text())
+    print(sp.read_text(encoding="utf-8"))
     return 0
 
 

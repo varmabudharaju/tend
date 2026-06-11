@@ -1,4 +1,5 @@
 """STATE.md: the session's external source of truth, maintained by Claude."""
+import os
 import time
 from pathlib import Path
 
@@ -28,8 +29,14 @@ def path_for(cwd) -> Path:
 def seed(path) -> None:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    if not path.exists():
-        path.write_text(TEMPLATE)
+    try:
+        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL)
+    except FileExistsError:
+        return  # another session seeded first; theirs wins
+    except OSError:
+        return
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        f.write(TEMPLATE)
 
 
 def read_sections(path) -> dict:
@@ -37,7 +44,7 @@ def read_sections(path) -> dict:
     if not path.exists():
         return {}
     sections, current = {}, None
-    for line in path.read_text().splitlines():
+    for line in path.read_text(encoding="utf-8").splitlines():
         if line.startswith("## "):
             current = line[3:].strip()
             sections.setdefault(current, [])
