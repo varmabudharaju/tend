@@ -11,7 +11,7 @@ final-retry fallback, validator allow-list, --session-model, skill/docs
 guidance, agent frontmatter tiers) merged to swarm master + installed; tend
 side (agentguard delegation nudge, session_model_tier, delegation_guard
 config, PreToolUse routing) merged to tend master, 164 tests green. Spec:
-swarm/docs/superpowers/specs/2026-06-10-model-tiering-design.md.
+(spec now only in git history — planning docs removed from public HEAD).
 PUBLISHED 2026-06-10: github.com/varmabudharaju/{tend,swarm} (public, full
 per-feature history). READMEs now have THREE diagram layers, all mermaid,
 render-verified via capture: concept (analogies), engineering (system design,
@@ -56,5 +56,6 @@ machine). v0.2 goal COMPLETE.
 - tests/* — 43 new regression tests, one per finding repro (plus updates to
   v0.1 tests that encoded overturned behavior).
 - README.md — Limitations section (M8, staleness semantics).
-- docs/superpowers/plans/2026-06-10-tend-v02-bugfixes.md — the executed plan.
+- v0.2 plan executed then removed from HEAD with the other planning docs
+  (recoverable via git history).
 - tend/agentguard.py (new), ctxmetrics.py, config.py, hook.py — delegation guard.
