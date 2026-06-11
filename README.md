@@ -8,6 +8,10 @@
 
 tend is a small, invisible helper that rides along with [Claude Code](https://claude.com/claude-code) and keeps its limited "working memory" clean — so the assistant stays smart ten hours into a big task instead of slowly losing the plot.
 
+```bash
+pip install -e . && tend install-hook    # 30 seconds, fully reversible, no daemon
+```
+
 ```mermaid
 flowchart LR
     S["Your Claude Code session"] -->|every event| T{"tend<br/>(8 tiny hooks)"}
