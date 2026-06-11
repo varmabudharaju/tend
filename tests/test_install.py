@@ -212,3 +212,17 @@ def test_backup_and_settings_keep_restrictive_mode(tmp_path):
     install.install(sp)
     assert stat.S_IMODE(os.stat(tmp_path / "settings.json.bak-tend").st_mode) == 0o600
     assert stat.S_IMODE(os.stat(sp).st_mode) == 0o600
+
+
+def test_wrap_statusline_touches_only_statusline(tmp_path, tend_home):
+    """Plugin installs: hooks come from the plugin; this wraps just the statusline."""
+    sp = tmp_path / "settings.json"
+    sp.write_text(json.dumps(EXISTING))
+    install.wrap_statusline(sp)
+    s = json.loads(sp.read_text())
+    assert "-m tend.statusline" in s["statusLine"]["command"]
+    cmds = [h["command"] for e in s["hooks"]["PostToolUse"] for h in e["hooks"]]
+    assert cmds == ["python3 -m agent_pd.hook"]          # hooks untouched
+    orig = paths.read_json(tend_home / "statusline-original.json")
+    assert "statusline.sh" in orig["command"]            # original saved
+    assert cli.main(["wrap-statusline", "--settings", str(sp)]) == 0

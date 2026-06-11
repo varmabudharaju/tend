@@ -158,6 +158,16 @@ def cmd_uninstall(args) -> int:
     return 0
 
 
+def cmd_wrap_statusline(args) -> int:
+    try:
+        install.wrap_statusline(args.settings)
+    except install.SettingsError as e:
+        print(str(e))
+        return 1
+    print(f"statusline wrapped in {args.settings} (original saved; tend uninstall-hook restores it)")
+    return 0
+
+
 def cmd_statusline_wrap(args) -> int:
     from . import statusline
 
@@ -177,6 +187,7 @@ def main(argv=None) -> int:
         ("off", cmd_off, []),
         ("install-hook", cmd_install, ["settings"]),
         ("uninstall-hook", cmd_uninstall, ["settings"]),
+        ("wrap-statusline", cmd_wrap_statusline, ["settings"]),
         ("statusline-wrap", cmd_statusline_wrap, []),
     ]:
         p = sub.add_parser(name)

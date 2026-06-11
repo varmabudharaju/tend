@@ -66,13 +66,26 @@ def install(settings_path) -> None:
             entries = hooks[ev] = []
         if not _refresh_marked(entries, HOOK_MARKER, hook_command()):
             entries.append({"hooks": [{"type": "command", "command": hook_command()}]})
+    _wrap_statusline(settings)
+    _write_settings(sp, settings)
+
+
+def wrap_statusline(settings_path) -> None:
+    """Statusline wrap only (no hooks) - the optional step for plugin installs,
+    where hooks come from the plugin but the statusline tee needs settings.json."""
+    sp = Path(settings_path).resolve()
+    settings = _load_settings(sp)
+    _wrap_statusline(settings)
+    _write_settings(sp, settings)
+
+
+def _wrap_statusline(settings) -> None:
     sl = settings.get("statusLine")
     if sl and not _is_tend_statusline(sl):
         paths.write_json_atomic(paths.home() / "statusline-original.json", sl)
     # Never delete a saved original here: after an external removal of our
     # wrapper it can be the only copy of the user's statusline.
     settings["statusLine"] = {"type": "command", "command": statusline_command()}
-    _write_settings(sp, settings)
 
 
 def uninstall(settings_path) -> None:
