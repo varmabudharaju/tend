@@ -71,3 +71,54 @@ def test_overlap_guard_skips_offload_when_excerpt_not_smaller(tend_home):
     ev = make_event(tool_name="Bash", tool_response=text)
     result = offload.handle(ev)
     assert result is None, "overlap guard must return None when excerpt wouldn't save tokens"
+
+
+def test_tail_zero_offloads_head_only(tend_home):
+    """M6: tail=0 must mean 'no tail', never 'the whole string'."""
+    (tend_home / "config.yaml").parent.mkdir(parents=True, exist_ok=True)
+    (tend_home / "config.yaml").write_text(
+        "offload_threshold_tokens: 500\noffload_head_tokens: 100\noffload_tail_tokens: 0\n"
+    )
+    text = "H" * 400 + "m" * 4000
+    out = offload.handle(make_event(tool_name="Bash", tool_response=text))
+    repl = out["hookSpecificOutput"]["updatedToolOutput"]
+    assert len(repl) < len(text)
+    assert repl.startswith("H" * 400)
+    assert "m" * 1000 not in repl          # the body is actually gone
+
+
+def test_banner_overhead_never_inflates(tend_home):
+    """L4: head+tail just under len(text), but banner pushes it over - skip, no file."""
+    (tend_home / "config.yaml").parent.mkdir(parents=True, exist_ok=True)
+    (tend_home / "config.yaml").write_text(
+        "offload_threshold_tokens: 500\noffload_head_tokens: 300\noffload_tail_tokens: 300\n"
+    )
+    text = "x" * 2500                       # head+tail = 2400 < 2500, banner makes it bigger
+    assert offload.handle(make_event(tool_name="Bash", tool_response=text)) is None
+    assert list((paths.session_dir("s1") / "outputs").glob("*.txt")) == []
+
+
+def test_mcp_structured_response_not_offloaded(tend_home):
+    """M8: schema'd MCP outputs would be silently rejected by Claude Code - don't pretend."""
+    (tend_home / "config.yaml").parent.mkdir(parents=True, exist_ok=True)
+    (tend_home / "config.yaml").write_text('offload_tools: ["mcp__db__query"]\n')
+    ev = make_event(tool_name="mcp__db__query", tool_response={"rows": ["x" * 20000]})
+    assert offload.handle(ev) is None
+    assert list((paths.session_dir("s1") / "outputs").glob("*.txt")) == []
+
+
+def test_mcp_plain_string_response_still_offloaded(tend_home):
+    (tend_home / "config.yaml").parent.mkdir(parents=True, exist_ok=True)
+    (tend_home / "config.yaml").write_text('offload_tools: ["mcp__db__query"]\n')
+    ev = make_event(tool_name="mcp__db__query", tool_response="x" * 20000)
+    assert offload.handle(ev) is not None
+
+
+def test_bash_dict_offload_file_is_line_addressable(tend_home):
+    """M7 live-artifact repro: the saved file must have real newlines, not escaped JSON."""
+    resp = {"stdout": "line\n" * 4000, "stderr": ""}
+    out = offload.handle(make_event(tool_name="Bash", tool_response=resp))
+    assert out is not None
+    saved = next((paths.session_dir("s1") / "outputs").glob("*.txt")).read_text()
+    assert saved.startswith("line\nline\n")
+    assert '"stdout"' not in saved
