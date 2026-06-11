@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ctx-tend"
-version = "0.2.0"
+version = "0.2.1"
 description = "Context hygiene for Claude Code - keeps long sessions sharp: offloads oversized outputs, externalizes session state, anchors the goal, curates compaction"
 readme = "README.md"
 license = { text = "MIT" }

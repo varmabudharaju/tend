@@ -35,7 +35,7 @@ def _main() -> int:
                 orig["command"], shell=True, input=raw, capture_output=True, text=True, timeout=10
             )
             if res.returncode == 0 and res.stdout:
-                sys.stdout.write(res.stdout)
+                sys.stdout.write(res.stdout.rstrip("\n") + _tend_segment(sid) + "\n")
                 return 0
             # Non-zero exit or empty stdout: log stderr and fall through to built-in fallback
             if res.stderr:
@@ -52,8 +52,29 @@ def _main() -> int:
             line += f" | ctx {float(pct):.0f}%"
         except (TypeError, ValueError):
             pass
-    sys.stdout.write(line + "\n")
+    sys.stdout.write(line + _tend_segment(sid) + "\n")
     return 0
+
+
+def _tend_segment(sid) -> str:
+    """The visible heartbeat: a quiet suffix proving tend is on and working."""
+    if not sid or paths.disabled():
+        return ""
+    try:
+        from . import ledger
+
+        summary = ledger.load_summary(sid)
+        parts = []
+        outputs = paths.home() / "sessions" / str(sid) / "outputs"
+        filed = len(list(outputs.glob("*.txt"))) if outputs.is_dir() else 0
+        if filed:
+            parts.append(f"{filed} filed")
+        stale = ledger.stale_tokens(summary)
+        if stale >= 1000:
+            parts.append(f"{stale // 1000}k stale")
+        return " | tend: " + (", ".join(parts) if parts else "on")
+    except Exception:
+        return ""
 
 
 if __name__ == "__main__":
