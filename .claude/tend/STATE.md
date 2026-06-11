@@ -11,8 +11,10 @@ final-retry fallback, validator allow-list, --session-model, skill/docs
 guidance, agent frontmatter tiers) merged to swarm master + installed; tend
 side (agentguard delegation nudge, session_model_tier, delegation_guard
 config, PreToolUse routing) merged to tend master, 164 tests green. Spec:
-swarm/docs/superpowers/specs/2026-06-10-model-tiering-design.md. Still
-pending from v0.2 goal: professional README + push to GitHub for tend.
+swarm/docs/superpowers/specs/2026-06-10-model-tiering-design.md.
+PUBLISHED 2026-06-10: github.com/varmabudharaju/{tend,swarm} (public, full
+per-feature history, plain-language READMEs with mermaid diagrams; render
+verified by capture screenshots). v0.2 goal COMPLETE.
 
 ## Decisions
 - state_stale_tokens now counts OUTPUT tokens (monotonic metric); default
