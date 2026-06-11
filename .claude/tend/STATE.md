@@ -6,6 +6,11 @@ tend v0.2: fix the 31 confirmed findings from the swarm review
 (varmabudharaju/tend, public — match agent-pd/capture repo style).
 
 ## Now
+DEMO GIF SHIPPED (65ea3ef): 5-frame real-output terminal demo in README hero
+(status dashboard, live offload via real hook call, handoff, install card);
+103KB, built with capture session mode + PIL. Open question from user: add
+real-Claude-session frames (statusline visible; anchor is invisible by
+design - inject-into-context, no pixels).
 ADOPTION POLISH COMPLETE (2026-06-10): name decision = keep "tend"; both repos
 have MIT LICENSE, CI green on first run (badges live), v0.2.0 metadata,
 GitHub topics, install teasers; planning docs removed from public HEAD.
