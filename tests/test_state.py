@@ -59,3 +59,32 @@ def test_duplicate_goal_sections_preserve_first_content(tmp_path):
     goal, now = state.goal_now(p)
     assert goal == "Ship the harness", "first Goal section content must be preserved"
     assert now == "Writing tests"
+
+
+def test_seed_is_atomic_o_excl(tmp_path, monkeypatch):
+    """L11: two concurrent seeds must not clobber - second open(O_EXCL) loses quietly."""
+    import os as os_mod
+
+    p = state.path_for(str(tmp_path))
+    real_open = os_mod.open
+    calls = {}
+
+    def racing_open(path, flags, *a, **kw):
+        if str(path) == str(p) and not calls:
+            calls["raced"] = True
+            p.parent.mkdir(parents=True, exist_ok=True)
+            p.write_text("winner", encoding="utf-8")  # the rival session wins the race
+        return real_open(path, flags, *a, **kw)
+
+    monkeypatch.setattr(state.os, "open", racing_open)
+    state.seed(p)  # must not raise, must not overwrite
+    assert p.read_text(encoding="utf-8") == "winner"
+
+
+def test_unicode_state_roundtrip(tmp_path):
+    """L12: explicit utf-8 - non-ASCII goals survive regardless of locale."""
+    p = state.path_for(str(tmp_path))
+    p.parent.mkdir(parents=True)
+    p.write_bytes("## Goal\nnaïve café ✓\n".encode("utf-8"))
+    goal, _ = state.goal_now(p)
+    assert goal == "naïve café ✓"

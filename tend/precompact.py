@@ -1,5 +1,6 @@
 """Pillar 4 safety net: snapshot before compaction; block a stale auto-compact once."""
 import time
+from pathlib import Path
 
 from . import config, ctxmetrics, flags, ledger, paths, state
 
@@ -24,7 +25,10 @@ def handle(event):
 
 
 def _is_stale(event, cfg) -> bool:
-    sp = state.path_for(event.get("cwd") or ".")
+    cwd = event.get("cwd") or "."
+    if Path(cwd).resolve() == Path.home().resolve():
+        return False  # $HOME is never seeded (see sessionstart); never block there
+    sp = state.path_for(cwd)
     if not sp.exists():
         return True
     summary = ledger.load_summary(event.get("session_id"))

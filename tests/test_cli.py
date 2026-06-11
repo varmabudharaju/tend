@@ -94,3 +94,27 @@ def test_report_ghost_session_returns_1(capsys, tend_home):
     assert result == 1
     assert "no such session: ghost" in capsys.readouterr().out
     assert not (paths.home() / "sessions" / "ghost").exists()
+
+
+def test_session_mtime_tolerates_vanishing_files(tmp_path, monkeypatch):
+    """L16: a .tmp file deleted between listing and stat must not crash status."""
+    import contextlib
+
+    d = tmp_path / "sess"
+    d.mkdir()
+
+    class Vanished:
+        name = "summary.json.123.tmp"
+
+        def is_file(self):
+            return True
+
+        def stat(self):
+            raise FileNotFoundError("vanished between listing and stat")
+
+    @contextlib.contextmanager
+    def fake_scandir(path):
+        yield iter([Vanished()])
+
+    monkeypatch.setattr(cli.os, "scandir", fake_scandir)
+    assert cli._session_mtime(d) == d.stat().st_mtime

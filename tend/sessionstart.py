@@ -31,7 +31,12 @@ def handle(event):
         state.seed(sp)
         return _ctx(CONVENTION)
     if state.is_fresh(sp, cfg.state_fresh_hours):
-        return _ctx(PREAMBLE + sp.read_text()[:MAX_INJECT_CHARS])
+        text = sp.read_text(encoding="utf-8")
+        if len(text) > MAX_INJECT_CHARS:
+            cut = text.rfind("\n", 0, MAX_INJECT_CHARS)
+            text = text[: cut if cut > 0 else MAX_INJECT_CHARS]
+            text += f"\n[tend] STATE.md truncated for injection - read the rest at {sp}"
+        return _ctx(PREAMBLE + text)
     return None
 
 

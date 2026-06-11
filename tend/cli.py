@@ -1,5 +1,6 @@
 """tend CLI: status, report, handoff, on/off, install-hook, uninstall-hook, statusline-wrap."""
 import argparse
+import os
 import time
 from pathlib import Path
 
@@ -7,8 +8,24 @@ from . import config, ctxmetrics, install, ledger, paths, state
 
 
 def _session_mtime(d):
-    times = [f.stat().st_mtime for f in d.iterdir() if f.is_file()]
-    return max(times, default=d.stat().st_mtime)
+    """Newest mtime in d, tolerating files that vanish mid-scan (atomic-write tmps)."""
+    times = []
+    try:
+        with os.scandir(d) as it:
+            for entry in it:
+                try:
+                    if entry.is_file():
+                        times.append(entry.stat().st_mtime)
+                except OSError:
+                    continue
+    except OSError:
+        return 0.0
+    if times:
+        return max(times)
+    try:
+        return d.stat().st_mtime
+    except OSError:
+        return 0.0
 
 
 def latest_session():
@@ -32,10 +49,7 @@ def cmd_status(args) -> int:
     summary = ledger.load_summary(sid)
     pct = ctxmetrics.used_pct(sid)
     print(f"session  {sid}")
-    newest = max(
-        (f.stat().st_mtime for f in (paths.home() / "sessions" / sid).iterdir() if f.is_file()),
-        default=None,
-    )
+    newest = _session_mtime(paths.home() / "sessions" / sid)
     if newest:
         print(f"last hook activity {(time.time() - newest) / 60:.1f}m ago")
     pct_s = f"{pct:.0f}%" if pct is not None else "unknown"
@@ -106,7 +120,7 @@ def cmd_handoff(args) -> int:
     if age_h > 4:
         print("WARNING: state may be stale; ask Claude to update it before switching sessions.")
     print("\nA new session in this project will auto-load:\n")
-    print(sp.read_text())
+    print(sp.read_text(encoding="utf-8"))
     return 0
 
 

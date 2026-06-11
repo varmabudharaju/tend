@@ -51,3 +51,13 @@ def test_file_deleted_between_isfile_and_getsize_returns_none(tmp_path, monkeypa
     # With the TOCTOU fix, OSError from getsize must be caught and return None
     result = readguard.handle(ev)
     assert result is None, "OSError from getsize must be caught and return None"
+
+
+def test_binary_file_not_nudged(tmp_path):
+    """L5: bytes//4 'tokens' and offset/limit advice are meaningless for a PNG."""
+    big = tmp_path / "img.png"
+    big.write_bytes(b"\x89PNG\r\n\x1a\n" + b"\x00" * 70000)
+    out = readguard.handle(make_event(
+        hook_event_name="PreToolUse", tool_name="Read",
+        tool_input={"file_path": str(big)}))
+    assert out is None

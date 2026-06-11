@@ -55,3 +55,23 @@ def test_empty_dict_handler_emits_empty_object(monkeypatch, capsys):
     code, out = run(lambda e: {}, "{}", monkeypatch, capsys)
     assert code == 0
     assert json.loads(out) == {}
+
+
+def test_keyboard_interrupt_neither_raises_nor_logs(tend_home, monkeypatch):
+    """L8: routine Ctrl-C is not a tend error - swallow it, log nothing."""
+    monkeypatch.setattr("sys.stdin", io.StringIO("{}"))
+
+    def handler(event):
+        raise KeyboardInterrupt
+
+    assert hookio.run_fail_open(handler) == 0
+    assert not paths.log_path().exists()
+
+
+def test_log_rotates_at_cap(tend_home):
+    """L9: a persistent fault must not grow tend.log without bound."""
+    paths.home().mkdir(parents=True, exist_ok=True)
+    paths.log_path().write_text("x" * (hookio.MAX_LOG_BYTES + 1))
+    hookio.append_log("new entry\n")
+    assert (tend_home / "tend.log.1").exists()
+    assert paths.log_path().read_text() == "new entry\n"

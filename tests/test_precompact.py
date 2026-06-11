@@ -39,3 +39,28 @@ def test_fresh_state_not_blocked(tmp_path):
     state.seed(sp)
     ledger.set_state_mark("s1", sp.stat().st_mtime)  # mark matches: fresh, 0 tokens since
     assert precompact.handle(ev("auto", tmp_path)) is None
+
+
+def test_stale_auto_compact_blocked_even_after_context_shrink(tmp_path):
+    """H2 repro: mark at high output, context shrank - the block must still fire."""
+    from tend import paths, state
+
+    sp = state.path_for(str(tmp_path))
+    state.seed(sp)
+    paths.write_json_atomic(paths.session_dir("s1") / "summary.json", {
+        "context_total": 30_000, "output_total": 9_000, "results": {}, "reads": {},
+        "pending": {}, "agents": {},
+        "state_mark": {"mtime": sp.stat().st_mtime, "output_total": 1_000},
+        "degraded": False,
+    })
+    out = precompact.handle(ev("auto", tmp_path))
+    assert out == {"decision": "block", "reason": precompact.BLOCK_REASON}
+
+
+def test_auto_compact_never_blocked_in_home(tend_home):
+    """M5: sessionstart never seeds $HOME, so STATE.md can't exist there - don't block."""
+    from pathlib import Path
+
+    out = precompact.handle(make_event(
+        hook_event_name="PreCompact", trigger="auto", cwd=str(Path.home())))
+    assert out is None

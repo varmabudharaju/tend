@@ -1,6 +1,8 @@
+import json
+
 from conftest import make_event, write_transcript
 
-from tend import ledger
+from tend import ledger, paths
 
 
 def fixture_lines():
@@ -76,8 +78,22 @@ def test_state_mark_roundtrip(tmp_path):
     ledger.ingest(make_event(transcript_path=str(tp)))
     ledger.set_state_mark("s1", 123.0)
     s = ledger.load_summary("s1")
-    assert s["state_mark"] == {"mtime": 123.0, "context_total": 2502}
+    assert s["state_mark"] == {"mtime": 123.0, "output_total": 170}  # 50+80+40
     assert ledger.tokens_since_state_mark(s) == 0
+
+
+def test_since_never_negative_after_context_shrink():
+    """H2: compaction shrinks context_total; output-based since stays correct."""
+    summary = {"context_total": 30_000, "output_total": 5_000,
+               "state_mark": {"mtime": 1.0, "output_total": 2_000}}
+    assert ledger.tokens_since_state_mark(summary) == 3_000
+
+
+def test_legacy_context_total_mark_returns_none():
+    """Pre-v0.2 marks lack output_total: report unknown, never a bogus number."""
+    summary = {"context_total": 10_000, "output_total": 100,
+               "state_mark": {"mtime": 1.0, "context_total": 140_000}}
+    assert ledger.tokens_since_state_mark(summary) is None
 
 
 def test_record_agent():
@@ -121,6 +137,119 @@ def test_cursor_past_eof_reset(tmp_path):
     assert s["degraded"] is True
     # First line: input_tokens=10, cache_read=0, cache_creation=1000 → context_total=1010
     assert s["context_total"] == 1010
-    # agents and state_mark are preserved across the reset
-    assert s["state_mark"] is not None
+    # agents survive the reset; the state_mark baseline is dropped with the
+    # counters it was measured against (re-marked on the next Stop)
+    assert s["state_mark"] is None
     assert s["agents"]["a99"]["type"] == "Search"
+
+
+# ── v0.2: H1 partial-line race ────────────────────────────────────────────────
+
+def test_partial_trailing_line_deferred_not_lost(tmp_path):
+    """A writer mid-append leaves a partial line; it must be re-read later, not skipped."""
+    tp = tmp_path / "t.jsonl"
+    lines = fixture_lines()
+    line1 = json.dumps(lines[0]) + "\n"
+    full = line1 + json.dumps(lines[1]) + "\n"
+    tp.write_text(line1 + full[len(line1):len(line1) + 40])  # line 2 cut at 40 chars
+    ev = make_event(transcript_path=str(tp))
+    ledger.ingest(ev)
+    s = ledger.load_summary("s1")
+    assert s["degraded"] is False          # fragment is deferred, not judged corrupt
+    assert "t1" in s["pending"]            # line 1 fully ingested
+    assert s["results"] == {}              # line 2 not consumed yet
+    tp.write_text(full)                    # writer finishes the append
+    ledger.ingest(ev)
+    s = ledger.load_summary("s1")
+    assert s["results"]["t1"]["tokens"] == 500   # nothing lost
+    assert s["degraded"] is False
+
+
+def test_invalid_utf8_line_skipped_cursor_advances(tmp_path):
+    """M1: bad bytes degrade that line only; later lines parse and re-ingest is stable."""
+    tp = tmp_path / "t.jsonl"
+    good = json.dumps(fixture_lines()[0]).encode("utf-8")
+    tp.write_bytes(b"\xff\xfe garbage\n" + good + b"\n")
+    ev = make_event(transcript_path=str(tp))
+    ledger.ingest(ev)
+    s = ledger.load_summary("s1")
+    assert s["degraded"] is True
+    assert s["context_total"] == 1010      # the good line after the bad bytes parsed
+    before = s["output_total"]
+    ledger.ingest(ev)                       # cursor advanced past the bad line
+    assert ledger.load_summary("s1")["output_total"] == before
+
+
+def test_non_dict_json_lines_skipped(tmp_path):
+    """M2: null / list / str / number lines must not stall the cursor or crash."""
+    tp = tmp_path / "t.jsonl"
+    good = json.dumps(fixture_lines()[0])
+    tp.write_text('null\n[1, 2]\n"str"\n123\n' + good + "\n")
+    ev = make_event(transcript_path=str(tp))
+    ledger.ingest(ev)
+    s = ledger.load_summary("s1")
+    assert s["context_total"] == 1010
+    before = s["output_total"]
+    ledger.ingest(ev)
+    assert ledger.load_summary("s1")["output_total"] == before
+
+
+def test_notebookedit_staleness_uses_notebook_path(tmp_path):
+    """L1: live NotebookEdit schema sends notebook_path, not file_path."""
+    tp = tmp_path / "t.jsonl"
+    nb = "/tmp/proj/nb.ipynb"
+    write_transcript(tp, [
+        {"type": "assistant", "message": {"content": [
+            {"type": "tool_use", "id": "r1", "name": "Read", "input": {"file_path": nb}}]}},
+        {"type": "user", "message": {"content": [
+            {"type": "tool_result", "tool_use_id": "r1", "content": "cells"}]}},
+        {"type": "assistant", "message": {"content": [
+            {"type": "tool_use", "id": "e1", "name": "NotebookEdit",
+             "input": {"notebook_path": nb}}]}},
+    ])
+    ledger.ingest(make_event(transcript_path=str(tp)))
+    assert ledger.load_summary("s1")["results"]["r1"]["stale"] is True
+
+
+def test_poisoned_cursor_repaired(tmp_path):
+    """L2: cursor.json of null / {} / {"offset":"0"} must reset to 0, not crash forever."""
+    tp = tmp_path / "t.jsonl"
+    write_transcript(tp, [fixture_lines()[0]])
+    ev = make_event(transcript_path=str(tp))
+    for poison in ("null", "{}", '{"offset": "0"}', '{"offset": -5}'):
+        sdir = paths.session_dir("s1")
+        for f in sdir.glob("*.json"):
+            f.unlink()
+        (sdir / "cursor.json").write_text(poison)
+        ledger.ingest(ev)
+        assert ledger.load_summary("s1")["context_total"] == 1010, poison
+
+
+def test_cursor_lives_in_summary_single_atomic_write(tmp_path):
+    """L3: cursor is stored inside summary.json; legacy cursor.json is consumed and removed."""
+    tp = tmp_path / "t.jsonl"
+    write_transcript(tp, fixture_lines())
+    ev = make_event(transcript_path=str(tp))
+    ledger.ingest(ev)
+    s = ledger.load_summary("s1")
+    assert s["cursor"]["offset"] == tp.stat().st_size
+    assert not (paths.session_dir("s1") / "cursor.json").exists()
+
+
+def test_legacy_cursor_json_migrated(tmp_path):
+    """Upgrade path: an old separate cursor.json must seed the offset (no double-count)."""
+    tp = tmp_path / "t.jsonl"
+    lines = fixture_lines()
+    write_transcript(tp, lines[:2])
+    first_two = tp.stat().st_size
+    write_transcript(tp, lines)
+    # Simulate a v0.1 session: summary without "cursor", offset in separate file
+    paths.write_json_atomic(paths.session_dir("s1") / "cursor.json", {"offset": first_two})
+    paths.write_json_atomic(paths.session_dir("s1") / "summary.json", {
+        "context_total": 2502, "output_total": 130, "results": {}, "reads": {},
+        "pending": {}, "agents": {}, "state_mark": None, "degraded": False,
+    })
+    ledger.ingest(make_event(transcript_path=str(tp)))
+    s = ledger.load_summary("s1")
+    assert s["output_total"] == 130 + 80 + 40   # only lines 3-5 ingested, not re-counted
+    assert not (paths.session_dir("s1") / "cursor.json").exists()

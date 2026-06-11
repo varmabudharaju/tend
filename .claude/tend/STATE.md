@@ -6,11 +6,22 @@ tend v0.2: fix the 31 confirmed findings from the swarm review
 (varmabudharaju/tend, public — match agent-pd/capture repo style).
 
 ## Now
-Bug-fix round NOT started (a fixer agent was stopped before editing; master is
-green at 110 tests). Next: fix all confirmed HIGH+MEDIUM findings, TDD with
-regression tests from each finding's repro.
+Bug-fix round COMPLETE on branch fix/v0.2-swarm-findings: all 31 confirmed
+findings fixed TDD-style, 153 tests green (was 110). Plan executed:
+docs/superpowers/plans/2026-06-10-tend-v02-bugfixes.md. Next: merge to master,
+then professional README + push to GitHub (varmabudharaju/tend).
 
 ## Decisions
+- state_stale_tokens now counts OUTPUT tokens (monotonic metric); default
+  lowered 25000 -> 3000 to match the ~10x slower growth.
+- M8 fix = skip offload for mcp__* tools with non-string responses + README
+  Limitations note (hooks can't see outputSchema, so don't pretend).
+- Ledger cursor now lives INSIDE summary.json (one atomic write kills the
+  L3 torn-write window); legacy cursor.json migrated once then unlinked.
+- Truncation reset drops state_mark (re-baselined next Stop) — preserving it
+  with rebuilt counters recreates the negative-since bug.
+- advisor.clip(goal) at 200 chars: the /compact instruction line was smuggling
+  the full Goal past the anchor budget (found while fixing M9).
 - Staleness metric fix: switch state_mark to monotonic output_total (not
   context_total) — kills the negative-since bug cluster (2 HIGH-adjacent).
 - Ledger partial-line fix: only advance cursor past data ending in \n.
@@ -26,3 +37,10 @@ regression tests from each finding's repro.
 
 ## Files touched
 - docs/swarm-review-2026-06-10.md — committed; the authoritative bug list.
+- tend/{ledger,boundary,config,hook,tokens,offload,anchor,advisor,precompact,
+  install,paths,hookio,statusline,state,sessionstart,readguard,cli}.py — all
+  31 fixes, one commit per plan task (12 commits on fix/v0.2-swarm-findings).
+- tests/* — 43 new regression tests, one per finding repro (plus updates to
+  v0.1 tests that encoded overturned behavior).
+- README.md — Limitations section (M8, staleness semantics).
+- docs/superpowers/plans/2026-06-10-tend-v02-bugfixes.md — the executed plan.

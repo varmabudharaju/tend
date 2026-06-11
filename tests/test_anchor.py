@@ -58,3 +58,25 @@ def test_anchor_works_without_state_or_metrics(tmp_path):
     ctx = anchor.handle(ev(tmp_path))["hookSpecificOutput"]["additionalContext"]
     assert "context usage unknown" in ctx
     assert "STATE.md is stale" in ctx
+
+
+def test_anchor_keeps_urgent_tail_over_goal(tmp_path):
+    """M9: a huge Goal must never evict Health and the compaction urge."""
+    seed_state(tmp_path, goal="g" * 1700)
+    seed_ctx(85)
+    ctx = anchor.handle(ev(tmp_path))["hookSpecificOutput"]["additionalContext"]
+    assert "Health:" in ctx
+    assert "run now: /compact" in ctx
+    assert len(ctx) <= 400 * 4
+
+
+def test_anchor_emitted_for_bloat_only_state(tmp_path):
+    """L6: 9k tokens of oversized results alone must produce an anchor that says so."""
+    paths.write_json_atomic(paths.session_dir("s1") / "summary.json", {
+        "context_total": 0, "output_total": 0,
+        "results": {"big": {"tool": "Bash", "tokens": 9000, "file": None, "stale": False}},
+        "reads": {}, "pending": {}, "agents": {}, "state_mark": None, "degraded": False,
+    })
+    out = anchor.handle(ev(tmp_path))
+    assert out is not None
+    assert "oversized results" in out["hookSpecificOutput"]["additionalContext"]

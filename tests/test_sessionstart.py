@@ -46,3 +46,17 @@ def test_home_directory_never_seeded():
     ))
     assert out is None
     assert not state.path_for(str(Path.home())).exists()
+
+
+def test_oversized_state_truncated_with_visible_marker(tmp_path):
+    """L10: a >16k STATE.md must say it was cut and where to read the rest."""
+    sp = state.path_for(str(tmp_path))
+    sp.parent.mkdir(parents=True)
+    sp.write_text("## Goal\nShip it\n" + ("filler line\n" * 2000), encoding="utf-8")
+    ctx = sessionstart.handle(ev(tmp_path))["hookSpecificOutput"]["additionalContext"]
+    assert "truncated" in ctx
+    assert str(sp) in ctx
+    assert len(ctx) < 17000
+    # cut lands on a line boundary: no half line right before the marker
+    body = ctx.split("\n[tend] STATE.md truncated")[0]
+    assert body.endswith("filler line")

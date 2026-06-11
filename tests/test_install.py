@@ -1,4 +1,6 @@
 import json
+import os
+import stat
 
 import pytest
 
@@ -132,16 +134,81 @@ def test_uninstall_removes_statusline_original(tmp_path, tend_home):
     assert not orig_file.exists(), "original should be deleted after uninstall"
 
 
-def test_install_without_statusline_leaves_no_original(tmp_path, tend_home):
-    """Install with no pre-existing statusLine must not leave a stale original file."""
-    settings_no_sl = {k: v for k, v in EXISTING.items() if k != "statusLine"}
+def test_reinstall_preserves_saved_original_when_statusline_removed(tmp_path, tend_home):
+    """L13: the saved original may be the only copy of the user's statusline - keep it."""
     sp = tmp_path / "settings.json"
-    sp.write_text(json.dumps(settings_no_sl))
-    # Seed a stale original from a previous install
-    stale = tend_home / "statusline-original.json"
-    stale.parent.mkdir(parents=True, exist_ok=True)
-    stale.write_text('{"type":"command","command":"stale"}')
+    sp.write_text(json.dumps(EXISTING))
+    install.install(sp)                     # saves the user's statusline.sh original
+    s = json.loads(sp.read_text())
+    del s["statusLine"]                     # user (or another tool) removed the wrapper
+    sp.write_text(json.dumps(s))
+    install.install(sp)                     # reinstall must NOT destroy the original
+    orig = paths.read_json(tend_home / "statusline-original.json")
+    assert orig and "statusline.sh" in orig["command"]
+    install.uninstall(sp)                   # and uninstall can still restore it
+    assert "statusline.sh" in json.loads(sp.read_text())["statusLine"]["command"]
+
+
+def test_uninstall_preserves_user_hook_in_shared_entry(tmp_path):
+    """M10: prune tend's inner command, keep the user's, keep entry metadata."""
+    sp = tmp_path / "settings.json"
+    sp.write_text(json.dumps({"hooks": {"PostToolUse": [{"matcher": "*", "hooks": [
+        {"type": "command", "command": "python3 -m other.hook"},
+        {"type": "command", "command": '"/usr/bin/python3" -m tend.hook'},
+    ]}]}}))
+    install.uninstall(sp)
+    s = json.loads(sp.read_text())
+    entry = s["hooks"]["PostToolUse"][0]
+    assert [h["command"] for h in entry["hooks"]] == ["python3 -m other.hook"]
+    assert entry["matcher"] == "*"
+
+
+def test_reinstall_repairs_dead_interpreter(tmp_path, tend_home):
+    """M11: a stale '/old/dead/python' must be rewritten to the current interpreter."""
+    dead_hook = '"/old/dead/python" -m tend.hook'
+    settings = {"hooks": {ev: [{"hooks": [{"type": "command", "command": dead_hook}]}]
+                          for ev in install.HOOK_EVENTS},
+                "statusLine": {"type": "command",
+                               "command": '"/old/dead/python" -m tend.statusline'}}
+    sp = tmp_path / "settings.json"
+    sp.write_text(json.dumps(settings))
     install.install(sp)
-    assert not stale.exists(), "stale original must be removed when no statusLine in settings"
+    s = json.loads(sp.read_text())
+    for ev in install.HOOK_EVENTS:
+        cmds = [h["command"] for e in s["hooks"][ev] for h in e["hooks"]]
+        assert cmds == [install.hook_command()], ev   # repaired, not duplicated
+    assert s["statusLine"]["command"] == install.statusline_command()
+    # repairing our own statusline must not overwrite the saved original
+    assert not (tend_home / "statusline-original.json").exists()
+
+
+def test_null_hooks_and_string_statusline_handled(tmp_path, tend_home):
+    """L14: malformed-but-parseable settings must round-trip, not AttributeError."""
+    sp = tmp_path / "settings.json"
+    sp.write_text(json.dumps({"hooks": None, "statusLine": "echo hi"}))
+    install.install(sp)
     s = json.loads(sp.read_text())
     assert "-m tend.statusline" in s["statusLine"]["command"]
+    assert paths.read_json(tend_home / "statusline-original.json") == "echo hi"
+    install.uninstall(sp)
+    assert json.loads(sp.read_text())["statusLine"] == "echo hi"
+
+
+def test_top_level_array_raises_settings_error(tmp_path):
+    sp = tmp_path / "settings.json"
+    sp.write_text("[1, 2]")
+    with pytest.raises(install.SettingsError):
+        install.install(sp)
+    with pytest.raises(install.SettingsError):
+        install.uninstall(sp)
+    assert sp.read_text() == "[1, 2]"
+
+
+def test_backup_and_settings_keep_restrictive_mode(tmp_path):
+    """L17: a 0600 settings file must yield a 0600 backup and stay 0600 itself."""
+    sp = tmp_path / "settings.json"
+    sp.write_text(json.dumps(EXISTING))
+    os.chmod(sp, 0o600)
+    install.install(sp)
+    assert stat.S_IMODE(os.stat(tmp_path / "settings.json.bak-tend").st_mode) == 0o600
+    assert stat.S_IMODE(os.stat(sp).st_mode) == 0o600

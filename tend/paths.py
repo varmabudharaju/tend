@@ -29,9 +29,11 @@ def read_json(path, default=None):
         return default
 
 
-def write_json_atomic(path, obj, indent=None) -> None:
+def write_json_atomic(path, obj, indent=None, mode=None) -> None:
     p = Path(path)
     p.parent.mkdir(parents=True, exist_ok=True)
     tmp = p.with_name(f"{p.name}.{os.getpid()}.tmp")
     tmp.write_text(json.dumps(obj, indent=indent), encoding="utf-8")
+    if mode is not None:
+        os.chmod(tmp, mode)
     tmp.replace(p)
