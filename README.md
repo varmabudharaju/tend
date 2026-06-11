@@ -87,7 +87,7 @@ flowchart LR
 
 ## See it
 
-You won't see tend *inside* a session — that's the point: it speaks to the model's context, not your screen. What you can see is everything it leaves behind. A 15-second tour, all real tool output:
+tend speaks to the model's context, not your chat — the conversation stays clean, while the transcript view (Ctrl+O) shows every injection verbatim. What's below is the rest of its visible surface. A 15-second tour, all real tool output:
 
 ![tend in action: status dashboard, automatic offloading, lossless handoff](docs/screenshots/demo.gif)
 
@@ -125,7 +125,7 @@ tend install-hook        # merges hooks + statusline into ~/.claude/settings.jso
 
 The installer is **non-destructive and reversible**: existing hooks and statusline are preserved and backed up (`settings.json.bak-tend`), and `tend uninstall-hook` puts everything back.
 
-**How you know it's working:** your statusline grows a quiet ` | tend: 3 filed, 29k stale` suffix (just `tend: on` when there's nothing to report), and each session opens with a one-line notice — `tend: restored session state from STATE.md`. Everything else is deliberately invisible.
+**How you know it's working:** your statusline grows a quiet ` | tend: 3 filed, 29k stale` suffix (just `tend: on` when there's nothing to report), and each session opens with a one-line notice — `tend: restored session state from STATE.md`. Everything else stays out of the chat view — but nothing is hidden: open the transcript view (Ctrl+O) and you'll see every `[tend anchor]` and injection exactly as the model reads it. Out of your face, fully auditable.
 
 ## Commands
 
