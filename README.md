@@ -12,7 +12,7 @@ tend is a small, invisible helper that rides along with [Claude Code](https://cl
 pip install -e . && tend install-hook    # 30 seconds, fully reversible, no daemon
 ```
 
-![tend in action: status dashboard, automatic offloading, lossless handoff](docs/screenshots/demo.gif)
+![what happens to a long session, with and without tend](docs/screenshots/the-problem.gif)
 
 ```mermaid
 flowchart LR
@@ -86,6 +86,10 @@ flowchart LR
 ```
 
 ## See it
+
+You won't see tend *inside* a session — that's the point: it speaks to the model's context, not your screen. What you can see is everything it leaves behind. A 15-second tour, all real tool output:
+
+![tend in action: status dashboard, automatic offloading, lossless handoff](docs/screenshots/demo.gif)
 
 | `tend status` | `tend report` | `tend handoff` |
 |---|---|---|
