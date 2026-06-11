@@ -74,3 +74,40 @@ def test_disabled_skips_tee_but_keeps_passthrough(monkeypatch, capsys, tend_home
     statusline.main()
     assert "ORIGINAL-LINE" in capsys.readouterr().out
     assert not (tend_home / "sessions" / "s9" / "ctx.json").exists()
+
+
+def test_statusline_appends_tend_segment(monkeypatch, capsys, tend_home):
+    """The user-visible heartbeat: offload count + stale tokens after the original line."""
+    paths.write_json_atomic(
+        tend_home / "statusline-original.json",
+        {"type": "command", "command": "echo ORIGINAL-LINE"},
+    )
+    outputs = tend_home / "sessions" / "s9" / "outputs"
+    outputs.mkdir(parents=True)
+    (outputs / "0001.txt").write_text("x")
+    (outputs / "0002.txt").write_text("y")
+    paths.write_json_atomic(tend_home / "sessions" / "s9" / "summary.json", {
+        "context_total": 1000, "output_total": 10,
+        "results": {"t1": {"tool": "Read", "tokens": 29352, "file": "/f", "stale": True}},
+        "reads": {}, "pending": {}, "agents": {}, "state_mark": None, "degraded": False,
+    })
+    monkeypatch.setattr("sys.stdin", io.StringIO(STATUS_JSON))
+    statusline.main()
+    out = capsys.readouterr().out
+    assert "ORIGINAL-LINE" in out
+    assert "tend: 2 filed, 29k stale" in out
+    assert out.count("\n") == 1          # still a single statusline
+
+
+def test_statusline_segment_quiet_when_nothing_to_report(monkeypatch, capsys, tend_home):
+    monkeypatch.setattr("sys.stdin", io.StringIO(STATUS_JSON))
+    statusline.main()
+    assert "tend: on" in capsys.readouterr().out
+
+
+def test_statusline_no_segment_when_disabled(monkeypatch, capsys, tend_home):
+    tend_home.mkdir(parents=True, exist_ok=True)
+    (tend_home / "disabled").touch()
+    monkeypatch.setattr("sys.stdin", io.StringIO(STATUS_JSON))
+    statusline.main()
+    assert "tend:" not in capsys.readouterr().out

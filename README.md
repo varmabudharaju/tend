@@ -125,6 +125,8 @@ tend install-hook        # merges hooks + statusline into ~/.claude/settings.jso
 
 The installer is **non-destructive and reversible**: existing hooks and statusline are preserved and backed up (`settings.json.bak-tend`), and `tend uninstall-hook` puts everything back.
 
+**How you know it's working:** your statusline grows a quiet ` | tend: 3 filed, 29k stale` suffix (just `tend: on` when there's nothing to report), and each session opens with a one-line notice — `tend: restored session state from STATE.md`. Everything else is deliberately invisible.
+
 ## Commands
 
 | Command | Does |

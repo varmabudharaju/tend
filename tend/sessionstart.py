@@ -29,21 +29,25 @@ def handle(event):
     sp = state.path_for(cwd)
     if not sp.exists():
         state.seed(sp)
-        return _ctx(CONVENTION)
+        return _ctx(CONVENTION, f"tend: seeded {sp.relative_to(cwd)} - Claude will maintain it")
     if state.is_fresh(sp, cfg.state_fresh_hours):
         text = sp.read_text(encoding="utf-8")
         if len(text) > MAX_INJECT_CHARS:
             cut = text.rfind("\n", 0, MAX_INJECT_CHARS)
             text = text[: cut if cut > 0 else MAX_INJECT_CHARS]
             text += f"\n[tend] STATE.md truncated for injection - read the rest at {sp}"
-        return _ctx(PREAMBLE + text)
+        return _ctx(PREAMBLE + text,
+                    f"tend: restored session state from STATE.md ({len(text.splitlines())} lines)")
     return None
 
 
-def _ctx(text):
-    return {
+def _ctx(text, note=None):
+    out = {
         "hookSpecificOutput": {
             "hookEventName": "SessionStart",
             "additionalContext": text,
         }
     }
+    if note:
+        out["systemMessage"] = note  # the one user-visible line per session
+    return out

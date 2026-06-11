@@ -60,3 +60,17 @@ def test_oversized_state_truncated_with_visible_marker(tmp_path):
     # cut lands on a line boundary: no half line right before the marker
     body = ctx.split("\n[tend] STATE.md truncated")[0]
     assert body.endswith("filler line")
+
+
+def test_seed_shows_user_visible_notice(tmp_path):
+    out = sessionstart.handle(ev(tmp_path))
+    assert "seeded" in out["systemMessage"]
+    assert "STATE.md" in out["systemMessage"]
+
+
+def test_restore_shows_user_visible_notice(tmp_path):
+    sp = state.path_for(str(tmp_path))
+    sp.parent.mkdir(parents=True)
+    sp.write_text("## Goal\nShip it\n")
+    out = sessionstart.handle(ev(tmp_path, "clear"))
+    assert "restored" in out["systemMessage"]
