@@ -6,10 +6,13 @@ tend v0.2: fix the 31 confirmed findings from the swarm review
 (varmabudharaju/tend, public — match agent-pd/capture repo style).
 
 ## Now
-Bug-fix round COMPLETE on branch fix/v0.2-swarm-findings: all 31 confirmed
-findings fixed TDD-style, 153 tests green (was 110). Plan executed:
-docs/superpowers/plans/2026-06-10-tend-v02-bugfixes.md. Next: merge to master,
-then professional README + push to GitHub (varmabudharaju/tend).
+Model tiering SHIPPED: swarm side (executor effective-model + session cap +
+final-retry fallback, validator allow-list, --session-model, skill/docs
+guidance, agent frontmatter tiers) merged to swarm master + installed; tend
+side (agentguard delegation nudge, session_model_tier, delegation_guard
+config, PreToolUse routing) merged to tend master, 164 tests green. Spec:
+swarm/docs/superpowers/specs/2026-06-10-model-tiering-design.md. Still
+pending from v0.2 goal: professional README + push to GitHub for tend.
 
 ## Decisions
 - state_stale_tokens now counts OUTPUT tokens (monotonic metric); default
@@ -31,6 +34,12 @@ then professional README + push to GitHub (varmabudharaju/tend).
   already fixed this pattern: swarm commit a51df19 — mirror it).
 - precompact: never block auto-compact when cwd == $HOME.
 
+## Confirmed in the wild
+- U2 (cwd drift) CONFIRMED live 2026-06-10 on CC 2.1.x: a persistent `cd` in
+  the session's shell changes hook-event cwd; anchor lost Goal/Now and fired a
+  false missing-STATE nag while working from another repo. v0.3 candidate:
+  ancestor-walk + project-root pinning for STATE.md resolution.
+
 ## Dead-ends
 - max(0, since) does NOT fix the negative-since bug — it disables staleness the
   same way. The metric itself must be monotonic (output_total).
@@ -44,3 +53,4 @@ then professional README + push to GitHub (varmabudharaju/tend).
   v0.1 tests that encoded overturned behavior).
 - README.md — Limitations section (M8, staleness semantics).
 - docs/superpowers/plans/2026-06-10-tend-v02-bugfixes.md — the executed plan.
+- tend/agentguard.py (new), ctxmetrics.py, config.py, hook.py — delegation guard.
