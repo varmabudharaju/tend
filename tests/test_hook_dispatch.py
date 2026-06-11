@@ -31,3 +31,18 @@ def test_userpromptsubmit_returns_anchor(tmp_path):
                             {"context_window": {"used_percentage": 30.0}})
     out = hook.dispatch(make_event(hook_event_name="UserPromptSubmit", cwd=str(tmp_path)))
     assert out["hookSpecificOutput"]["hookEventName"] == "UserPromptSubmit"
+
+
+def test_handler_still_runs_when_ingest_crashes(tmp_path, monkeypatch):
+    """M3: a poisoned ledger must degrade the ledger, not kill offload."""
+    from tend import ledger as ledger_mod
+
+    def boom(event):
+        raise TypeError("'<' not supported between instances of 'str' and 'int'")
+
+    monkeypatch.setattr(ledger_mod, "ingest", boom)
+    ev = make_event(hook_event_name="PostToolUse", transcript_path="/nonexistent",
+                    tool_name="Bash", tool_response="z" * 20000)
+    out = hook.dispatch(ev)
+    assert "updatedToolOutput" in out["hookSpecificOutput"]      # offload still ran
+    assert ledger.load_summary("s1")["degraded"] is True         # and it's visible

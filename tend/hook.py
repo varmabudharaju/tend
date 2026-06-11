@@ -11,7 +11,13 @@ def dispatch(event):
 
     name = event.get("hook_event_name")
     if name in INGEST:
-        ledger.ingest(event)
+        try:
+            ledger.ingest(event)
+        except Exception:
+            # The ledger is an amplifier: one crash here must degrade the
+            # ledger, not silently disable every handler behind it.
+            hookio.log_error()
+            ledger.mark_degraded(event.get("session_id"))
     if name in ("SubagentStart", "SubagentStop"):
         ledger.record_agent(event)
         return None

@@ -36,6 +36,19 @@ def load_summary(sid) -> dict:
     return paths.read_json(_summary_path(sid), _empty())
 
 
+def mark_degraded(sid) -> None:
+    """Best-effort flag: counts may be incomplete. Must never raise."""
+    if not sid:
+        return
+    try:
+        with _locked(sid):
+            s = load_summary(sid)
+            s["degraded"] = True
+            paths.write_json_atomic(_summary_path(sid), s)
+    except Exception:
+        pass
+
+
 @contextmanager
 def _locked(sid):
     lock_path = paths.session_dir(sid) / "ledger.lock"
