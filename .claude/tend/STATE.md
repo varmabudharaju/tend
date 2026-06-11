@@ -6,7 +6,10 @@ tend v0.2: fix the 31 confirmed findings from the swarm review
 (varmabudharaju/tend, public — match agent-pd/capture repo style).
 
 ## Now
-Model tiering SHIPPED: swarm side (executor effective-model + session cap +
+ADOPTION POLISH COMPLETE (2026-06-10): name decision = keep "tend"; both repos
+have MIT LICENSE, CI green on first run (badges live), v0.2.0 metadata,
+GitHub topics, install teasers; planning docs removed from public HEAD.
+Previously: model tiering SHIPPED: swarm side (executor effective-model + session cap +
 final-retry fallback, validator allow-list, --session-model, skill/docs
 guidance, agent frontmatter tiers) merged to swarm master + installed; tend
 side (agentguard delegation nudge, session_model_tier, delegation_guard
