@@ -141,15 +141,17 @@ def _ingest_record(summary, obj) -> None:
 def set_state_mark(sid, mtime) -> None:
     with _locked(sid):
         s = load_summary(sid)
-        s["state_mark"] = {"mtime": mtime, "context_total": s.get("context_total", 0)}
+        # output_total only grows while the session lives (compaction shrinks
+        # context_total), so "work since the mark" can never go negative.
+        s["state_mark"] = {"mtime": mtime, "output_total": s.get("output_total", 0)}
         paths.write_json_atomic(_summary_path(sid), s)
 
 
 def tokens_since_state_mark(summary):
     mark = summary.get("state_mark")
-    if not mark:
-        return None
-    return summary.get("context_total", 0) - mark.get("context_total", 0)
+    if not mark or "output_total" not in mark:
+        return None  # no mark, or a pre-v0.2 mark awaiting re-baseline
+    return max(0, summary.get("output_total", 0) - mark["output_total"])
 
 
 def top_results(summary, n=5):

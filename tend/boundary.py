@@ -13,9 +13,10 @@ def handle(event):
     if sp.exists():
         mtime = sp.stat().st_mtime
         mark = summary.get("state_mark")
-        if not mark or mark.get("mtime") != mtime:
+        is_update = bool(mark) and mark.get("mtime") != mtime
+        if not mark or is_update or "output_total" not in mark:
             ledger.set_state_mark(sid, mtime)
-            flags.update(sid, state_reminder=False, boundary=True)
+            flags.update(sid, state_reminder=False, boundary=is_update)
         else:
             since = ledger.tokens_since_state_mark(summary)
             flags.update(
@@ -26,7 +27,7 @@ def handle(event):
     else:
         flags.update(
             sid,
-            state_reminder=summary.get("context_total", 0) > cfg.state_stale_tokens,
+            state_reminder=summary.get("output_total", 0) > cfg.state_stale_tokens,
             boundary=False,
         )
     return None

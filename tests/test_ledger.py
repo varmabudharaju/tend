@@ -78,8 +78,22 @@ def test_state_mark_roundtrip(tmp_path):
     ledger.ingest(make_event(transcript_path=str(tp)))
     ledger.set_state_mark("s1", 123.0)
     s = ledger.load_summary("s1")
-    assert s["state_mark"] == {"mtime": 123.0, "context_total": 2502}
+    assert s["state_mark"] == {"mtime": 123.0, "output_total": 170}  # 50+80+40
     assert ledger.tokens_since_state_mark(s) == 0
+
+
+def test_since_never_negative_after_context_shrink():
+    """H2: compaction shrinks context_total; output-based since stays correct."""
+    summary = {"context_total": 30_000, "output_total": 5_000,
+               "state_mark": {"mtime": 1.0, "output_total": 2_000}}
+    assert ledger.tokens_since_state_mark(summary) == 3_000
+
+
+def test_legacy_context_total_mark_returns_none():
+    """Pre-v0.2 marks lack output_total: report unknown, never a bogus number."""
+    summary = {"context_total": 10_000, "output_total": 100,
+               "state_mark": {"mtime": 1.0, "context_total": 140_000}}
+    assert ledger.tokens_since_state_mark(summary) is None
 
 
 def test_record_agent():

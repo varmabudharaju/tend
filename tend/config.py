@@ -11,7 +11,7 @@ DEFAULTS = {
     "offload_tail_tokens": 600,
     "read_guard_bytes": 65536,
     "anchor_max_tokens": 400,
-    "state_stale_tokens": 25000,
+    "state_stale_tokens": 3000,  # OUTPUT tokens since the last STATE.md mark (monotonic)
     "state_fresh_hours": 48,
     "advise_pct": 55,
     "urge_pct": 70,
