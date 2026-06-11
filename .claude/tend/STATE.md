@@ -6,12 +6,13 @@ tend v0.2: fix the 31 confirmed findings from the swarm review
 (varmabudharaju/tend, public — match agent-pd/capture repo style).
 
 ## Now
-PLUGIN PACKAGING READY (0.3.0, branch feat/plugin-packaging, UNCOMMITTED -
-varma commits himself now): .claude-plugin/{plugin,marketplace}.json,
-hooks/hooks.json (8 events via PYTHONPATH=$CLAUDE_PLUGIN_ROOT), bin/tend,
-pyyaml dropped (stdlib flat-config parser), wrap-statusline CLI for plugin
-installs. `claude plugin validate .` passes clean. 172 tests. Next: varma
-commits/merges/pushes, then submits at platform.claude.com/plugins/submit.
+PLUGIN SHIPPED (0.3.0, merge c5f4b44 on master, CI green): tend is a valid
+Claude Code plugin - .claude-plugin/{plugin,marketplace}.json, hooks/hooks.json
+(8 events via PYTHONPATH=$CLAUDE_PLUGIN_ROOT), bin/tend, pyyaml dropped,
+wrap-statusline CLI. Self-serve install LIVE: /plugin marketplace add
+varmabudharaju/tend. AWAITING VARMA: submit at
+platform.claude.com/plugins/submit (form needs his login; ~24h to listing).
+swarm pluginization parked (needs workflow-bootstrap hook).
 VISIBLE HEARTBEAT SHIPPED (0.2.1): statusline suffix "| tend: N filed, Xk
 stale" (or "on"; absent when disabled) + SessionStart systemMessage
 ("restored/seeded STATE.md") - the two user-visible surfaces; everything else
