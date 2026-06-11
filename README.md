@@ -24,6 +24,24 @@ On long tasks the desk fills up with old papers: a 5,000-line log it needed once
 
 tend is the colleague who quietly keeps the desk tidy.
 
+```mermaid
+flowchart TB
+    subgraph without ["Without tend"]
+        direction TB
+        a1["Desk fills with old papers"] --> a2["Important notes get buried"]
+        a2 --> a3["Desk overflows"]
+        a3 --> a4["Cleanup sweeps away<br/>decisions and lessons learned"]
+        a4 --> a5["Assistant repeats old mistakes"]
+    end
+    subgraph withtend ["With tend"]
+        direction TB
+        b1["Big papers filed in drawers"] --> b2["Goal pinned on top,<br/>always visible"]
+        b2 --> b3["Cleanup happens between tasks,<br/>never mid-thought"]
+        b3 --> b4["Notebook survives everything"]
+        b4 --> b5["Assistant stays sharp"]
+    end
+```
+
 ## What tend does — four habits
 
 | Habit | In plain words | In Claude Code terms |
@@ -38,6 +56,24 @@ And one bonus habit, added after watching real usage bills:
 | Habit | In plain words | In Claude Code terms |
 |---|---|---|
 | **Right-sized helpers** | When the assistant hires a helper, a note suggests: this errand doesn't need the most expensive expert. | When a subagent is spawned without an explicit model, tend suggests the cheapest model tier that fits the job (see [swarm](https://github.com/varmabudharaju/swarm) for the full tiering system). |
+
+The first habit, in one picture:
+
+```mermaid
+flowchart LR
+    big["A tool returns 20,000 tokens<br/>of build logs"] --> tend{"tend"}
+    tend -->|"stays in working memory"| ex["First lines + last lines<br/>+ a note naming the drawer"]
+    tend -->|"goes to disk"| file["The full output, saved.<br/>Any slice readable later."]
+```
+
+And the notebook habit — why nothing important ever dies:
+
+```mermaid
+flowchart LR
+    s1["Session 1 works,<br/>writing the notebook as it goes"] --> n["STATE.md<br/>Goal / Now / Decisions / Dead-ends"]
+    n --> e{"Session ends:<br/>crash, /clear, or just Friday"}
+    e --> s2["Session 2 auto-loads the notebook<br/>and picks up where 1 left off"]
+```
 
 ## See it
 
