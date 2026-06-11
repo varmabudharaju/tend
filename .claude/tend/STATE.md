@@ -13,8 +13,10 @@ side (agentguard delegation nudge, session_model_tier, delegation_guard
 config, PreToolUse routing) merged to tend master, 164 tests green. Spec:
 swarm/docs/superpowers/specs/2026-06-10-model-tiering-design.md.
 PUBLISHED 2026-06-10: github.com/varmabudharaju/{tend,swarm} (public, full
-per-feature history, plain-language READMEs with mermaid diagrams; render
-verified by capture screenshots). v0.2 goal COMPLETE.
+per-feature history). READMEs now have THREE diagram layers, all mermaid,
+render-verified via capture: concept (analogies), engineering (system design,
+component layers, advisor/block flowcharts, scheduler loop, run state
+machine). v0.2 goal COMPLETE.
 
 ## Decisions
 - state_stale_tokens now counts OUTPUT tokens (monotonic metric); default
