@@ -86,3 +86,21 @@ def test_delegation_guard_default_and_bool_validation(tend_home):
     assert config.load().delegation_guard is True
     (tend_home / "config.yaml").write_text("delegation_guard: false\n")
     assert config.load().delegation_guard is False
+
+
+def test_comments_and_blank_lines_ignored(tend_home):
+    tend_home.mkdir(parents=True, exist_ok=True)
+    (tend_home / "config.yaml").write_text(
+        "# tuning\n\nadvise_pct: 60   # nudge earlier\n")
+    assert config.load().advise_pct == 60
+
+
+def test_no_yaml_dependency():
+    """Plugin constraint: tend must be stdlib-only."""
+    import sys
+    mods_before = "yaml" in sys.modules
+    cfg = config.load()
+    assert cfg.advise_pct  # config works
+    import tend.config as c
+    src = open(c.__file__).read()
+    assert "import yaml" not in src

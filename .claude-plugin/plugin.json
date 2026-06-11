@@ -1,0 +1,12 @@
+{
+  "name": "tend",
+  "displayName": "tend",
+  "version": "0.3.0",
+  "description": "Context hygiene for Claude Code - offloads oversized outputs to disk, externalizes session state to STATE.md, anchors the goal on every prompt, and curates compaction. Fail-open: it can never break a session.",
+  "author": { "name": "Varma Budharaju" },
+  "homepage": "https://github.com/varmabudharaju/tend",
+  "repository": "https://github.com/varmabudharaju/tend",
+  "license": "MIT",
+  "keywords": ["context", "hooks", "memory", "context-window", "hygiene"],
+  "hooks": "./hooks/hooks.json"
+}

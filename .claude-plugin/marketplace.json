@@ -1,0 +1,16 @@
+{
+  "name": "tend",
+  "owner": {
+    "name": "Varma Budharaju"
+  },
+  "plugins": [
+    {
+      "name": "tend",
+      "source": "./",
+      "description": "Context hygiene for Claude Code - keeps long sessions sharp.",
+      "license": "MIT",
+      "homepage": "https://github.com/varmabudharaju/tend"
+    }
+  ],
+  "description": "tend - context hygiene for Claude Code"
+}
