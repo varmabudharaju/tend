@@ -77,3 +77,12 @@ def test_empty_offload_tools_disables_offload(tend_home):
     tend_home.mkdir(parents=True, exist_ok=True)
     (tend_home / "config.yaml").write_text("offload_tools: []\n")
     assert config.load().offload_tools == ()
+
+
+def test_delegation_guard_default_and_bool_validation(tend_home):
+    assert config.load().delegation_guard is True
+    tend_home.mkdir(parents=True, exist_ok=True)
+    (tend_home / "config.yaml").write_text("delegation_guard: 42\n")  # not a bool
+    assert config.load().delegation_guard is True
+    (tend_home / "config.yaml").write_text("delegation_guard: false\n")
+    assert config.load().delegation_guard is False

@@ -7,7 +7,7 @@ INGEST = {"PostToolUse", "UserPromptSubmit", "Stop", "PreCompact"}
 
 
 def dispatch(event):
-    from . import anchor, boundary, ledger, offload, precompact, readguard, sessionstart
+    from . import agentguard, anchor, boundary, ledger, offload, precompact, readguard, sessionstart
 
     name = event.get("hook_event_name")
     if name in INGEST:
@@ -23,7 +23,7 @@ def dispatch(event):
         return None
     handlers = {
         "PostToolUse": offload.handle,
-        "PreToolUse": readguard.handle,
+        "PreToolUse": lambda e: readguard.handle(e) or agentguard.handle(e),
         "UserPromptSubmit": anchor.handle,
         "Stop": boundary.handle,
         "SessionStart": sessionstart.handle,
