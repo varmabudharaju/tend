@@ -54,33 +54,50 @@ def ingest(event) -> None:
 
 
 def _ingest_locked(sid, tp) -> None:
-    cur = paths.read_json(_cursor_path(sid), {"offset": 0})
     summary = load_summary(sid)
-    # If the stored cursor exceeds the current file size, the transcript was truncated/rewritten.
-    # Reset to re-parse from the beginning, preserving agents and state_mark.
-    if cur["offset"] > os.path.getsize(tp):
-        preserved = {"agents": summary.get("agents", {}), "state_mark": summary.get("state_mark")}
-        summary = _empty() | preserved
-        summary["degraded"] = True  # signals a reset happened; counts rebuilt from new file
+    cur = summary.get("cursor")
+    if cur is None:
+        # pre-v0.2 sessions kept the cursor in a separate file; migrate it once
+        cur = paths.read_json(_cursor_path(sid), {"offset": 0})
+    off = cur.get("offset") if isinstance(cur, dict) else None
+    if type(off) is not int or off < 0:
         cur = {"offset": 0}
-    with open(tp, "r", encoding="utf-8") as f:
+    # If the stored cursor exceeds the current file size, the transcript was
+    # truncated/rewritten. Re-parse from the beginning, keeping only agents:
+    # counters are rebuilt and the state_mark baseline is gone with them.
+    if cur["offset"] > os.path.getsize(tp):
+        summary = _empty() | {"agents": summary.get("agents", {})}
+        summary["degraded"] = True  # signals a reset happened
+        cur = {"offset": 0}
+    with open(tp, "rb") as f:
         f.seek(cur["offset"])
-        for line in f:
-            _ingest_line(summary, line)
-        cur["offset"] = f.tell()
+        data = f.read()
+    # Only consume through the last complete line; a partial trailing line
+    # (a writer mid-append) stays unread until its newline arrives.
+    nl = data.rfind(b"\n")
+    if nl >= 0:
+        for raw in data[: nl + 1].splitlines():
+            _ingest_line(summary, raw)
+        cur["offset"] += nl + 1
+    summary["cursor"] = cur
     paths.write_json_atomic(_summary_path(sid), summary)
-    paths.write_json_atomic(_cursor_path(sid), cur)
+    _cursor_path(sid).unlink(missing_ok=True)
 
 
-def _ingest_line(summary, line) -> None:
-    line = line.strip()
-    if not line:
-        return
+def _ingest_line(summary, raw: bytes) -> None:
     try:
+        line = raw.decode("utf-8").strip()
+        if not line:
+            return
         obj = json.loads(line)
+        if not isinstance(obj, dict):
+            return  # valid JSON but not a transcript record: carries no data
+        _ingest_record(summary, obj)
     except Exception:
         summary["degraded"] = True
-        return
+
+
+def _ingest_record(summary, obj) -> None:
     msg = obj.get("message") or {}
     usage = msg.get("usage") or {}
     if usage:
@@ -100,7 +117,8 @@ def _ingest_line(summary, line) -> None:
             continue
         btype = block.get("type")
         if btype == "tool_use":
-            fp = (block.get("input") or {}).get("file_path")
+            inp = block.get("input") or {}
+            fp = inp.get("file_path") or inp.get("notebook_path")
             summary["pending"][block.get("id")] = {"tool": block.get("name"), "file": fp}
             if block.get("name") in EDIT_TOOLS and fp:
                 for rid in summary["reads"].get(fp, []):
