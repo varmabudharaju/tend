@@ -1,5 +1,9 @@
 # tend
 
+[![tests](https://github.com/varmabudharaju/tend/actions/workflows/ci.yml/badge.svg)](https://github.com/varmabudharaju/tend/actions/workflows/ci.yml)
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](pyproject.toml)
+
 **Keep Claude Code sharp in long sessions.**
 
 tend is a small, invisible helper that rides along with [Claude Code](https://claude.com/claude-code) and keeps its limited "working memory" clean — so the assistant stays smart ten hours into a big task instead of slowly losing the plot.
