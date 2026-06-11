@@ -7,19 +7,29 @@ from . import paths
 
 
 def main() -> int:
+    try:
+        return _main()
+    except Exception:
+        sys.stdout.write("tend\n")  # a broken wrapper must never blank the statusbar
+        return 0
+
+
+def _main() -> int:
     raw = sys.stdin.read()
     try:
         data = json.loads(raw)
     except Exception:
         data = {}
+    if not isinstance(data, dict):
+        data = {}
     sid = data.get("session_id")
-    if sid:
+    if sid and not paths.disabled():  # kill switch: no tend writes while off
         try:
             paths.write_json_atomic(paths.session_dir(sid) / "ctx.json", data)
         except Exception:
             pass
     orig = paths.read_json(paths.home() / "statusline-original.json")
-    if orig and orig.get("command"):
+    if isinstance(orig, dict) and orig.get("command"):
         try:
             res = subprocess.run(
                 orig["command"], shell=True, input=raw, capture_output=True, text=True, timeout=10
@@ -38,7 +48,10 @@ def main() -> int:
     pct = (data.get("context_window") or {}).get("used_percentage")
     line = model or "tend"
     if pct is not None:
-        line += f" | ctx {pct:.0f}%"
+        try:
+            line += f" | ctx {float(pct):.0f}%"
+        except (TypeError, ValueError):
+            pass
     sys.stdout.write(line + "\n")
     return 0
 

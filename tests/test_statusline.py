@@ -50,3 +50,27 @@ def test_failing_original_falls_through_to_fallback(monkeypatch, capsys, tend_ho
     statusline.main()
     out = capsys.readouterr().out
     assert "Fable" in out
+
+
+def test_non_numeric_pct_never_blanks_the_bar(monkeypatch, capsys, tend_home):
+    """L15: a weird used_percentage must degrade to a line without ctx, not crash."""
+    bad = json.dumps({"session_id": "s9", "model": {"display_name": "Fable"},
+                      "context_window": {"used_percentage": "??"}})
+    monkeypatch.setattr("sys.stdin", io.StringIO(bad))
+    assert statusline.main() == 0
+    out = capsys.readouterr().out
+    assert "Fable" in out
+
+
+def test_disabled_skips_tee_but_keeps_passthrough(monkeypatch, capsys, tend_home):
+    """L18: tend off = no tend writes; the user's statusline still renders."""
+    tend_home.mkdir(parents=True, exist_ok=True)
+    (tend_home / "disabled").touch()
+    paths.write_json_atomic(
+        tend_home / "statusline-original.json",
+        {"type": "command", "command": "echo ORIGINAL-LINE"},
+    )
+    monkeypatch.setattr("sys.stdin", io.StringIO(STATUS_JSON))
+    statusline.main()
+    assert "ORIGINAL-LINE" in capsys.readouterr().out
+    assert not (tend_home / "sessions" / "s9" / "ctx.json").exists()
