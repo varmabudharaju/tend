@@ -55,3 +55,12 @@ def test_stale_auto_compact_blocked_even_after_context_shrink(tmp_path):
     })
     out = precompact.handle(ev("auto", tmp_path))
     assert out == {"decision": "block", "reason": precompact.BLOCK_REASON}
+
+
+def test_auto_compact_never_blocked_in_home(tend_home):
+    """M5: sessionstart never seeds $HOME, so STATE.md can't exist there - don't block."""
+    from pathlib import Path
+
+    out = precompact.handle(make_event(
+        hook_event_name="PreCompact", trigger="auto", cwd=str(Path.home())))
+    assert out is None
