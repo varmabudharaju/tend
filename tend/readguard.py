@@ -20,6 +20,12 @@ def handle(event):
         return None
     if size <= cfg.read_guard_bytes:
         return None
+    try:
+        with open(fp, "rb") as fh:
+            if b"\0" in fh.read(4096):
+                return None  # binary: token math and offset/limit advice don't apply
+    except OSError:
+        return None
     return {
         "hookSpecificOutput": {
             "hookEventName": "PreToolUse",
