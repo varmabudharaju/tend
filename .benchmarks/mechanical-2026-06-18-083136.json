@@ -1,0 +1,458 @@
+{
+  "stamp": "2026-06-18-083136",
+  "host": {
+    "platform": "darwin",
+    "python": "3.11.1",
+    "uname": "Darwin sairams-MacBook-Air.local 25.3.0 Darwin Kernel Version 25.3.0: Wed Jan 28 20:53:31 PST 2026; root:xnu-12377.81.4~5/RELEASE_ARM64_T8122 arm64"
+  },
+  "config": {
+    "anchor_max_tokens": 400
+  },
+  "offload": {
+    "rows": [
+      {
+        "name": "real:34296d33/0001.txt",
+        "full_tokens": 5217,
+        "kept_tokens": 1257,
+        "saved_tokens": 3960,
+        "reduction_pct": 75.9,
+        "offloaded": true
+      },
+      {
+        "name": "real:34296d33/0002.txt",
+        "full_tokens": 23488,
+        "kept_tokens": 1257,
+        "saved_tokens": 22231,
+        "reduction_pct": 94.6,
+        "offloaded": true
+      },
+      {
+        "name": "real:34296d33/0003.txt",
+        "full_tokens": 23488,
+        "kept_tokens": 1257,
+        "saved_tokens": 22231,
+        "reduction_pct": 94.6,
+        "offloaded": true
+      },
+      {
+        "name": "real:34296d33/0004.txt",
+        "full_tokens": 6468,
+        "kept_tokens": 1257,
+        "saved_tokens": 5211,
+        "reduction_pct": 80.6,
+        "offloaded": true
+      },
+      {
+        "name": "real:34296d33/0005.txt",
+        "full_tokens": 15598,
+        "kept_tokens": 1257,
+        "saved_tokens": 14341,
+        "reduction_pct": 91.9,
+        "offloaded": true
+      },
+      {
+        "name": "real:34296d33/0006.txt",
+        "full_tokens": 20057,
+        "kept_tokens": 1257,
+        "saved_tokens": 18800,
+        "reduction_pct": 93.7,
+        "offloaded": true
+      },
+      {
+        "name": "real:34296d33/0007.txt",
+        "full_tokens": 6163,
+        "kept_tokens": 1257,
+        "saved_tokens": 4906,
+        "reduction_pct": 79.6,
+        "offloaded": true
+      },
+      {
+        "name": "real:34296d33/0008.txt",
+        "full_tokens": 15597,
+        "kept_tokens": 1257,
+        "saved_tokens": 14340,
+        "reduction_pct": 91.9,
+        "offloaded": true
+      },
+      {
+        "name": "real:34296d33/0009.txt",
+        "full_tokens": 4281,
+        "kept_tokens": 1257,
+        "saved_tokens": 3024,
+        "reduction_pct": 70.6,
+        "offloaded": true
+      },
+      {
+        "name": "real:34296d33/0010.txt",
+        "full_tokens": 4401,
+        "kept_tokens": 1257,
+        "saved_tokens": 3144,
+        "reduction_pct": 71.4,
+        "offloaded": true
+      },
+      {
+        "name": "real:34296d33/0011.txt",
+        "full_tokens": 2777,
+        "kept_tokens": 1257,
+        "saved_tokens": 1520,
+        "reduction_pct": 54.7,
+        "offloaded": true
+      },
+      {
+        "name": "real:bcc84aed/0001.txt",
+        "full_tokens": 2868,
+        "kept_tokens": 1257,
+        "saved_tokens": 1611,
+        "reduction_pct": 56.2,
+        "offloaded": true
+      },
+      {
+        "name": "real:bcc84aed/0002.txt",
+        "full_tokens": 7669,
+        "kept_tokens": 1257,
+        "saved_tokens": 6412,
+        "reduction_pct": 83.6,
+        "offloaded": true
+      },
+      {
+        "name": "real:bcc84aed/0003.txt",
+        "full_tokens": 6435,
+        "kept_tokens": 1257,
+        "saved_tokens": 5178,
+        "reduction_pct": 80.5,
+        "offloaded": true
+      },
+      {
+        "name": "real:smoke-li/0001.txt",
+        "full_tokens": 3750,
+        "kept_tokens": 1257,
+        "saved_tokens": 2493,
+        "reduction_pct": 66.5,
+        "offloaded": true
+      },
+      {
+        "name": "synthetic:500tok",
+        "full_tokens": 500,
+        "kept_tokens": 500,
+        "saved_tokens": 0,
+        "reduction_pct": 0.0,
+        "offloaded": false
+      },
+      {
+        "name": "synthetic:1500tok",
+        "full_tokens": 1500,
+        "kept_tokens": 1500,
+        "saved_tokens": 0,
+        "reduction_pct": 0.0,
+        "offloaded": false
+      },
+      {
+        "name": "synthetic:2500tok",
+        "full_tokens": 2500,
+        "kept_tokens": 1257,
+        "saved_tokens": 1243,
+        "reduction_pct": 49.7,
+        "offloaded": true
+      },
+      {
+        "name": "synthetic:5000tok",
+        "full_tokens": 5000,
+        "kept_tokens": 1257,
+        "saved_tokens": 3743,
+        "reduction_pct": 74.9,
+        "offloaded": true
+      },
+      {
+        "name": "synthetic:10000tok",
+        "full_tokens": 10000,
+        "kept_tokens": 1257,
+        "saved_tokens": 8743,
+        "reduction_pct": 87.4,
+        "offloaded": true
+      },
+      {
+        "name": "synthetic:25000tok",
+        "full_tokens": 25000,
+        "kept_tokens": 1257,
+        "saved_tokens": 23743,
+        "reduction_pct": 95.0,
+        "offloaded": true
+      },
+      {
+        "name": "synthetic:50000tok",
+        "full_tokens": 50000,
+        "kept_tokens": 1257,
+        "saved_tokens": 48743,
+        "reduction_pct": 97.5,
+        "offloaded": true
+      }
+    ],
+    "n_outputs": 22,
+    "n_offloaded": 20,
+    "total_full_tokens": 242757,
+    "total_kept_tokens": 27140,
+    "total_saved_tokens": 215617,
+    "overall_reduction_pct": 88.8
+  },
+  "invariants": [
+    {
+      "invariant": "large Bash output is offloaded",
+      "expected": "offload",
+      "result": "offloaded",
+      "pass": true
+    },
+    {
+      "invariant": "non-offload tool (Read) left alone",
+      "expected": "leave alone",
+      "result": "left alone",
+      "pass": true
+    },
+    {
+      "invariant": "tiny output left alone",
+      "expected": "leave alone",
+      "result": "left alone",
+      "pass": true
+    },
+    {
+      "invariant": "MCP structured (non-str) output skipped",
+      "expected": "leave alone",
+      "result": "left alone",
+      "pass": true
+    },
+    {
+      "invariant": "Bash {stdout,stderr} dict payload offloaded",
+      "expected": "offload",
+      "result": "offloaded",
+      "pass": true
+    },
+    {
+      "invariant": "tend never inflates context (kept <= full, all outputs)",
+      "expected": "kept <= full",
+      "result": "held",
+      "pass": true
+    }
+  ],
+  "anchor": {
+    "rows": [
+      {
+        "state_text_chars": 108,
+        "anchor_chars": 623,
+        "anchor_tokens": 155,
+        "within_budget": true
+      },
+      {
+        "state_text_chars": 260,
+        "anchor_chars": 839,
+        "anchor_tokens": 209,
+        "within_budget": true
+      },
+      {
+        "state_text_chars": 856,
+        "anchor_chars": 1054,
+        "anchor_tokens": 263,
+        "within_budget": true
+      },
+      {
+        "state_text_chars": 4040,
+        "anchor_chars": 1054,
+        "anchor_tokens": 263,
+        "within_budget": true
+      },
+      {
+        "state_text_chars": 40052,
+        "anchor_chars": 1054,
+        "anchor_tokens": 263,
+        "within_budget": true
+      }
+    ],
+    "budget_tokens": 400,
+    "max_observed_tokens": 263
+  },
+  "latency_subprocess_ms": {
+    "_baseline(python -c pass)": {
+      "n": 40,
+      "mean_ms": 17.74,
+      "p50_ms": 17.7,
+      "p95_ms": 18.34,
+      "p99_ms": 18.39
+    },
+    "PostToolUse(offload)": {
+      "n": 40,
+      "mean_ms": 27.29,
+      "p50_ms": 27.24,
+      "p95_ms": 28.11,
+      "p99_ms": 28.17
+    },
+    "PreToolUse(guards)": {
+      "n": 40,
+      "mean_ms": 27.05,
+      "p50_ms": 26.86,
+      "p95_ms": 29.31,
+      "p99_ms": 32.86
+    },
+    "UserPromptSubmit(anchor)": {
+      "n": 40,
+      "mean_ms": 27.54,
+      "p50_ms": 27.21,
+      "p95_ms": 29.62,
+      "p99_ms": 32.6
+    },
+    "Stop(boundary)": {
+      "n": 40,
+      "mean_ms": 27.56,
+      "p50_ms": 27.5,
+      "p95_ms": 28.34,
+      "p99_ms": 28.53
+    },
+    "SessionStart": {
+      "n": 40,
+      "mean_ms": 26.97,
+      "p50_ms": 26.98,
+      "p95_ms": 27.69,
+      "p99_ms": 27.7
+    },
+    "PreCompact": {
+      "n": 40,
+      "mean_ms": 27.5,
+      "p50_ms": 27.46,
+      "p95_ms": 28.2,
+      "p99_ms": 28.89
+    }
+  },
+  "latency_inprocess_ms": {
+    "PostToolUse(offload)": {
+      "n": 300,
+      "mean_ms": 0.3,
+      "p50_ms": 0.27,
+      "p95_ms": 0.57,
+      "p99_ms": 0.75
+    },
+    "PreToolUse(guards)": {
+      "n": 300,
+      "mean_ms": 0.02,
+      "p50_ms": 0.02,
+      "p95_ms": 0.02,
+      "p99_ms": 0.02
+    },
+    "UserPromptSubmit(anchor)": {
+      "n": 300,
+      "mean_ms": 0.17,
+      "p50_ms": 0.17,
+      "p95_ms": 0.17,
+      "p99_ms": 0.2
+    },
+    "Stop(boundary)": {
+      "n": 300,
+      "mean_ms": 0.32,
+      "p50_ms": 0.29,
+      "p95_ms": 0.42,
+      "p99_ms": 0.57
+    },
+    "SessionStart": {
+      "n": 300,
+      "mean_ms": 0.0,
+      "p50_ms": 0.0,
+      "p95_ms": 0.0,
+      "p99_ms": 0.0
+    },
+    "PreCompact": {
+      "n": 300,
+      "mean_ms": 0.24,
+      "p50_ms": 0.23,
+      "p95_ms": 0.28,
+      "p99_ms": 0.37
+    }
+  },
+  "footprint": [
+    {
+      "step": 1,
+      "name": "real:34296d33/0001.txt",
+      "cum_without_tend": 5217,
+      "cum_with_tend": 1257
+    },
+    {
+      "step": 2,
+      "name": "real:34296d33/0002.txt",
+      "cum_without_tend": 28705,
+      "cum_with_tend": 2514
+    },
+    {
+      "step": 3,
+      "name": "real:34296d33/0003.txt",
+      "cum_without_tend": 52193,
+      "cum_with_tend": 3771
+    },
+    {
+      "step": 4,
+      "name": "real:34296d33/0004.txt",
+      "cum_without_tend": 58661,
+      "cum_with_tend": 5028
+    },
+    {
+      "step": 5,
+      "name": "real:34296d33/0005.txt",
+      "cum_without_tend": 74259,
+      "cum_with_tend": 6285
+    },
+    {
+      "step": 6,
+      "name": "real:34296d33/0006.txt",
+      "cum_without_tend": 94316,
+      "cum_with_tend": 7542
+    },
+    {
+      "step": 7,
+      "name": "real:34296d33/0007.txt",
+      "cum_without_tend": 100479,
+      "cum_with_tend": 8799
+    },
+    {
+      "step": 8,
+      "name": "real:34296d33/0008.txt",
+      "cum_without_tend": 116076,
+      "cum_with_tend": 10056
+    },
+    {
+      "step": 9,
+      "name": "real:34296d33/0009.txt",
+      "cum_without_tend": 120357,
+      "cum_with_tend": 11313
+    },
+    {
+      "step": 10,
+      "name": "real:34296d33/0010.txt",
+      "cum_without_tend": 124758,
+      "cum_with_tend": 12570
+    },
+    {
+      "step": 11,
+      "name": "real:34296d33/0011.txt",
+      "cum_without_tend": 127535,
+      "cum_with_tend": 13827
+    },
+    {
+      "step": 12,
+      "name": "real:bcc84aed/0001.txt",
+      "cum_without_tend": 130403,
+      "cum_with_tend": 15084
+    },
+    {
+      "step": 13,
+      "name": "real:bcc84aed/0002.txt",
+      "cum_without_tend": 138072,
+      "cum_with_tend": 16341
+    },
+    {
+      "step": 14,
+      "name": "real:bcc84aed/0003.txt",
+      "cum_without_tend": 144507,
+      "cum_with_tend": 17598
+    },
+    {
+      "step": 15,
+      "name": "real:smoke-li/0001.txt",
+      "cum_without_tend": 148257,
+      "cum_with_tend": 18855
+    }
+  ]
+}

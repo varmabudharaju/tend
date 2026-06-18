@@ -8,3 +8,7 @@ shots:
   - kind: cli
     command: tend handoff --cwd /Users/varma/tend
     name: tend-handoff
+  - kind: cli
+    command: python3 -m bench mechanical --iters 8
+    name: bench-mechanical
+    cwd: /Users/varma/tend
