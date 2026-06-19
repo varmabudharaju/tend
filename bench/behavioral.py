@@ -326,11 +326,19 @@ def _summarize(sessions, arms):
 
 def render_markdown(r, arms):
     s = r["summary"]
-    L = ["# tend behavioral A/B (pilot)", "",
+    kind = r.get("kind", "recall")
+    if kind == "handoff":
+        desc = ("Plant 4 project facts in STATE.md, then a **fresh session** probes "
+                "recall with tools blocked — only tend can auto-restore STATE on a new "
+                "context. Identical in both arms; only difference: tend on/off.")
+    else:
+        desc = ("Identical scripted session in both arms (plant 4 facts → flood context "
+                "with large Bash outputs → probe recall from memory). Only difference: "
+                "tend on/off.")
+    L = [f"# tend behavioral A/B — {kind}", "",
          f"_Generated {r['stamp']} · model `{r['model']}` · {r['repeats']} repeats/arm · "
-         "recall-under-load workload._", "",
-         "Identical scripted session in both arms (plant 4 facts → flood context with "
-         "large Bash outputs → probe recall from memory). Only difference: tend on/off.",
+         f"{kind} workload._", "",
+         desc,
          "", "## Summary (medians)", "",
          "| metric | tend ON | tend OFF | delta |", "|---|--:|--:|--:|"]
     if "on" in s and "off" in s:
