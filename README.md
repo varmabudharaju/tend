@@ -1,18 +1,26 @@
+<div align="center">
+
 # tend
+
+**Keep Claude Code sharp in long sessions.**
 
 [![tests](https://github.com/varmabudharaju/tend/actions/workflows/ci.yml/badge.svg)](https://github.com/varmabudharaju/tend/actions/workflows/ci.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](pyproject.toml)
 
-**Keep Claude Code sharp in long sessions.**
+tend is a small, invisible helper that rides along with [Claude Code](https://claude.com/claude-code)
+and keeps its limited *working memory* clean — so the assistant stays smart ten hours
+into a big task instead of slowly losing the plot.
 
-tend is a small, invisible helper that rides along with [Claude Code](https://claude.com/claude-code) and keeps its limited "working memory" clean — so the assistant stays smart ten hours into a big task instead of slowly losing the plot.
+</div>
 
 ```bash
 pip install -e . && tend install-hook    # 30 seconds, fully reversible, no daemon
 ```
 
-![what happens to a long session, with and without tend](docs/screenshots/the-problem.gif)
+<p align="center">
+  <img src="docs/screenshots/the-problem.gif" alt="what happens to a long session, with and without tend" width="100%"/>
+</p>
 
 ```mermaid
 flowchart LR
@@ -22,6 +30,20 @@ flowchart LR
     T --> A["Pins the goal + health<br/>to every prompt"]
     T --> C["Times memory cleanup<br/>so nothing is lost"]
 ```
+
+## Results at a glance
+
+We didn't just claim tend works — we [benchmarked it](docs/benchmark-results.md).
+
+| What we measured | Result |
+|---|---|
+| In-context size of oversized tool outputs | **88.8% smaller** (on real recorded outputs) |
+| Recall across a context reset (`/clear` / new session) | **4/4 with tend → 0/4 without** — every run |
+| tend's own per-event overhead | **~9 ms** (the handler itself is <0.3 ms) |
+| Correctness invariants | **6 / 6** held |
+| Install footprint | daemon-less, fully reversible, fails open |
+
+Details and the honest caveats are in [**Does it actually work?**](#does-it-actually-work) below.
 
 ## The problem, in plain words
 
@@ -89,11 +111,43 @@ flowchart LR
 
 tend speaks to the model's context, not your chat — the conversation stays clean, while the transcript view (Ctrl+O) shows every injection verbatim. What's below is the rest of its visible surface. A 15-second tour, all real tool output:
 
-![tend in action: status dashboard, automatic offloading, lossless handoff](docs/screenshots/demo.gif)
+<p align="center">
+  <img src="docs/screenshots/demo.gif" alt="tend in action: status dashboard, automatic offloading, lossless handoff" width="100%"/>
+</p>
 
 | `tend status` | `tend report` | `tend handoff` |
 |---|---|---|
 | ![tend status](docs/screenshots/01-tend-status.png) | ![tend report](docs/screenshots/02-tend-report.png) | ![tend handoff](docs/screenshots/03-tend-handoff.png) |
+
+## Does it actually work?
+
+Short answer: **yes for context management, at near-zero cost** — and we measured it instead of asserting it. The harness lives in [`bench/`](bench); the full methodology and honest caveats are in [`docs/benchmark-results.md`](docs/benchmark-results.md).
+
+### 1. It shrinks the desk — 88.8% less, only where it should
+
+<p align="center">
+  <img src="docs/screenshots/submission/01-bench-savings.png" alt="Mechanical benchmark: 88.8% context reduction with the savings curve by output size" width="78%"/>
+</p>
+
+Replaying 22 tool outputs (15 **real** ones tend offloaded in production + a synthetic size ladder), big outputs collapse to a fixed ~1,250-token excerpt — full text saved to disk, retrievable on demand — while small ones are left untouched. The bigger the output, the bigger the win, and tend **never inflates** context (6/6 invariants held). All deterministic and free to reproduce:
+
+```bash
+python3 -m bench mechanical
+```
+
+### 2. It survives a reset — 4/4 vs 0/4
+
+<p align="center">
+  <img src="docs/screenshots/submission/02-bench-handoff.png" alt="Handoff A/B: 4/4 recall with tend versus 0/4 without, consistent across all 5 runs per arm" width="92%"/>
+</p>
+
+The real test of *lossless handoff*: plant four project decisions, reset the context, then ask for them back **from memory only** (no file access). With tend, a fresh session auto-restores `STATE.md` and recalls **all four — every single run**. Without tend, the model answers *"this appears to be the start of a new session"* and recalls **nothing**.
+
+```bash
+python3 -m bench behavioral --workload handoff --repeats 5
+```
+
+> **Honest boundary.** When there are *no* large outputs to offload and *no* reset, tend's per-turn anchor is a small net cost (it added ~14% in one stress test that triggered neither feature). tend earns its keep on **long, multi-session, decision-heavy work** — the deep tasks where losing the *reasoning* (why we chose X, which approaches are dead-ends) is expensive. On short tasks the code and `CLAUDE.md` already cover, it's roughly neutral.
 
 ## How it fits into a session
 
@@ -294,7 +348,7 @@ tend/
   cli.py           status / report / handoff / on / off / (un)install-hook
 ```
 
-164 tests (`python3 -m pytest`). Every bug fixed in v0.2 carries a regression test written from the bug's reproduction.
+172 tests (`python3 -m pytest`). Every bug fixed in v0.2 carries a regression test written from the bug's reproduction.
 
 ## Battle-tested by its sibling
 
