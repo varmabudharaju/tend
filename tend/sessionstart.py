@@ -1,7 +1,7 @@
 """Pillar 4: lossless continuation - restore STATE.md into fresh sessions; seed convention."""
 from pathlib import Path
 
-from . import config, state
+from . import config, retention, state
 
 CONVENTION = (
     "[tend] This project uses .claude/tend/STATE.md as the session's external state file "
@@ -23,9 +23,10 @@ def handle(event):
     if event.get("source") not in ("startup", "clear"):
         return None
     cwd = event.get("cwd") or "."
+    cfg = config.load(cwd)
+    retention.maybe_sweep(cfg.retention_days)  # never raises; never blocks restore
     if Path(cwd).resolve() == Path.home().resolve():
         return None  # never seed the home directory
-    cfg = config.load(cwd)
     sp = state.path_for(cwd)
     if not sp.exists():
         state.seed(sp)

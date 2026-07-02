@@ -40,12 +40,16 @@ def test_resume_and_compact_sources_ignored(tmp_path):
     assert sessionstart.handle(ev(tmp_path, "compact")) is None
 
 
-def test_home_directory_never_seeded():
+def test_home_directory_never_seeded(tmp_path, monkeypatch):
+    # hermetic: a real ~/.claude/tend/STATE.md on the host must not fail this
+    fake_home = tmp_path / "home"
+    fake_home.mkdir()
+    monkeypatch.setattr(Path, "home", lambda: fake_home)
     out = sessionstart.handle(make_event(
-        hook_event_name="SessionStart", source="startup", cwd=str(Path.home())
+        hook_event_name="SessionStart", source="startup", cwd=str(fake_home)
     ))
     assert out is None
-    assert not state.path_for(str(Path.home())).exists()
+    assert not state.path_for(str(fake_home)).exists()
 
 
 def test_oversized_state_truncated_with_visible_marker(tmp_path):
@@ -74,3 +78,12 @@ def test_restore_shows_user_visible_notice(tmp_path):
     sp.write_text("## Goal\nShip it\n")
     out = sessionstart.handle(ev(tmp_path, "clear"))
     assert "restored" in out["systemMessage"]
+
+
+def test_sessionstart_triggers_retention_sweep(tmp_path, monkeypatch):
+    from tend import retention
+    called = {}
+    monkeypatch.setattr(retention, "maybe_sweep",
+                        lambda days: called.setdefault("days", days))
+    sessionstart.handle(ev(tmp_path))
+    assert called["days"] == 30

@@ -96,7 +96,7 @@ def test_report_ghost_session_returns_1(capsys, tend_home):
     assert not (paths.home() / "sessions" / "ghost").exists()
 
 
-def test_session_mtime_tolerates_vanishing_files(tmp_path, monkeypatch):
+def test_newest_mtime_tolerates_vanishing_files(tmp_path, monkeypatch):
     """L16: a .tmp file deleted between listing and stat must not crash status."""
     import contextlib
 
@@ -116,5 +116,29 @@ def test_session_mtime_tolerates_vanishing_files(tmp_path, monkeypatch):
     def fake_scandir(path):
         yield iter([Vanished()])
 
-    monkeypatch.setattr(cli.os, "scandir", fake_scandir)
-    assert cli._session_mtime(d) == d.stat().st_mtime
+    monkeypatch.setattr(paths.os, "scandir", fake_scandir)
+    assert paths.newest_mtime(d) == d.stat().st_mtime
+
+
+def _ancient_session(sid="ancient", days=90):
+    import os, time
+    d = paths.session_dir(sid)
+    (d / "summary.json").write_text("{}")
+    old = time.time() - days * 86400
+    os.utime(d / "summary.json", (old, old))
+    os.utime(d, (old, old))
+    return d
+
+
+def test_clean_removes_old_sessions(capsys, tend_home):
+    d = _ancient_session()
+    assert cli.main(["clean", "--days", "30"]) == 0
+    assert "removed 1 session(s)" in capsys.readouterr().out
+    assert not d.exists()
+
+
+def test_clean_dry_run(capsys, tend_home):
+    d = _ancient_session()
+    assert cli.main(["clean", "--days", "30", "--dry-run"]) == 0
+    assert "would remove 1" in capsys.readouterr().out
+    assert d.exists()

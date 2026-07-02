@@ -14,6 +14,27 @@ def session_dir(session_id: str) -> Path:
     return d
 
 
+def newest_mtime(d) -> float:
+    """Newest file mtime in d, tolerating files that vanish mid-scan; 0.0 on error."""
+    times = []
+    try:
+        with os.scandir(d) as it:
+            for entry in it:
+                try:
+                    if entry.is_file():
+                        times.append(entry.stat().st_mtime)
+                except OSError:
+                    continue
+    except OSError:
+        return 0.0
+    if times:
+        return max(times)
+    try:
+        return Path(d).stat().st_mtime
+    except OSError:
+        return 0.0
+
+
 def disabled() -> bool:
     return (home() / "disabled").exists()
 
