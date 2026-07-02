@@ -4,3 +4,5 @@ __pycache__/
 build/
 dist/
 .benchmarks/interactive/
+docs/screenshots/**/index.html
+docs/screenshots/**/manifest.json

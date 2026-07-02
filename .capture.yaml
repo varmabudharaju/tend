@@ -5,10 +5,10 @@ output:
 shots:
   - name: bench-savings
     kind: cli
-    command: "sed -n '5,29p' .benchmarks/mechanical-2026-06-18-083136.md"
+    command: "sed -n '5,29p' .benchmarks/mechanical-2026-07-01-210532.md"
     cols: 96
     rows: 30
-    alt: "Mechanical benchmark verdict: 88.8% context reduction on real tool outputs, with the savings curve by size"
+    alt: "Mechanical benchmark verdict: 86.6% context reduction on the frozen corpus of real tool outputs, with the savings curve by size"
   - name: bench-handoff
     kind: cli
     command: "sed -n '7,28p' .benchmarks/behavioral-2026-06-18-125330.md"
