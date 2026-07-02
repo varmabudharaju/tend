@@ -1,0 +1,170 @@
+{
+  "stamp": "2026-07-01-210843",
+  "model": "claude-sonnet-5",
+  "repeats": 3,
+  "kind": "handoff",
+  "flood_turns": 3,
+  "log_tokens": 9000,
+  "sessions": [
+    {
+      "arm": "on",
+      "repeat": 1,
+      "model": "claude-sonnet-5",
+      "kind": "handoff",
+      "recall": 4,
+      "recall_hits": {
+        "codename": true,
+        "db_driver": true,
+        "retry_budget": true,
+        "dead_end_flag": true
+      },
+      "state_written": true,
+      "peak_ctx_tokens": 26114,
+      "total_cost_usd": 0.0743,
+      "total_output_tokens": 1162,
+      "offload_files": 0,
+      "snapshots": 0,
+      "compacted": false,
+      "errored": false,
+      "seconds": 14.9,
+      "turns_ctx": [],
+      "probe_answer": "From the session state already in context:\n\n(a) **Saffron-Quill**\n(b) **pgx-v5.2**\n(c) **137**\n(d) **turbo-merge** (corrupts the WAL)\n\nNote: this is unverified session state restored from a prior run \u2014 worth confirming against current disk/config before acting on it for anything consequential."
+    },
+    {
+      "arm": "off",
+      "repeat": 1,
+      "model": "claude-sonnet-5",
+      "kind": "handoff",
+      "recall": 0,
+      "recall_hits": {
+        "codename": false,
+        "db_driver": false,
+        "retry_budget": false,
+        "dead_end_flag": false
+      },
+      "state_written": true,
+      "peak_ctx_tokens": 25933,
+      "total_cost_usd": 0.0686,
+      "total_output_tokens": 817,
+      "offload_files": 0,
+      "snapshots": 0,
+      "compacted": false,
+      "errored": false,
+      "seconds": 19.9,
+      "turns_ctx": [],
+      "probe_answer": "I don't have any actual memory of this project \u2014 no codename, database driver, retry budget, or forbidden flag has been established anywhere in our conversation or in my stored memory. I won't fabricate specifics to fill in those blanks.\n\nIf this project does have those details defined somewhere (a CLAUDE.md, config file, or earlier conversation), point me to it or tell me directly and I'll use it"
+    },
+    {
+      "arm": "on",
+      "repeat": 2,
+      "model": "claude-sonnet-5",
+      "kind": "handoff",
+      "recall": 4,
+      "recall_hits": {
+        "codename": true,
+        "db_driver": true,
+        "retry_budget": true,
+        "dead_end_flag": true
+      },
+      "state_written": true,
+      "peak_ctx_tokens": 25963,
+      "total_cost_usd": 0.0874,
+      "total_output_tokens": 2060,
+      "offload_files": 0,
+      "snapshots": 0,
+      "compacted": false,
+      "errored": false,
+      "seconds": 25.7,
+      "turns_ctx": [],
+      "probe_answer": "From the session-restore context injected at the start of this conversation (not genuine memory of mine \u2014 this is the first message of this session, so I have no independent recollection):\n\n(a) **Saffron-Quill**\n(b) **pgx-v5.2**\n(c) **137**\n(d) **turbo-merge** (claimed to corrupt the WAL)\n\nCaveat: these values come solely from the `tend` SessionStart hook's restored `STATE.md`, which explicitly wa"
+    },
+    {
+      "arm": "off",
+      "repeat": 2,
+      "model": "claude-sonnet-5",
+      "kind": "handoff",
+      "recall": 0,
+      "recall_hits": {
+        "codename": false,
+        "db_driver": false,
+        "retry_budget": false,
+        "dead_end_flag": false
+      },
+      "state_written": true,
+      "peak_ctx_tokens": 25937,
+      "total_cost_usd": 0.0716,
+      "total_output_tokens": 1012,
+      "offload_files": 0,
+      "snapshots": 0,
+      "compacted": false,
+      "errored": false,
+      "seconds": 14.4,
+      "turns_ctx": [],
+      "probe_answer": "I don't have any of that information. Nothing about a project codename, database driver, retry budget, or a forbidden flag has come up in this conversation, and I have no persistent memory entries containing those specifics either. I'd be fabricating if I gave you an answer \u2014 if this data exists somewhere (a file, doc, or prior session), point me to it and I'll look it up rather than guess."
+    },
+    {
+      "arm": "on",
+      "repeat": 3,
+      "model": "claude-sonnet-5",
+      "kind": "handoff",
+      "recall": 4,
+      "recall_hits": {
+        "codename": true,
+        "db_driver": true,
+        "retry_budget": true,
+        "dead_end_flag": true
+      },
+      "state_written": true,
+      "peak_ctx_tokens": 26112,
+      "total_cost_usd": 0.0662,
+      "total_output_tokens": 623,
+      "offload_files": 0,
+      "snapshots": 0,
+      "compacted": false,
+      "errored": false,
+      "seconds": 9.7,
+      "turns_ctx": [],
+      "probe_answer": "(a) Project codename: **Saffron-Quill**\n(b) Database driver: **pgx-v5.2**\n(c) Retry budget: **137**\n(d) Flag to never use: **turbo-merge** (corrupts the WAL)"
+    },
+    {
+      "arm": "off",
+      "repeat": 3,
+      "model": "claude-sonnet-5",
+      "kind": "handoff",
+      "recall": 0,
+      "recall_hits": {
+        "codename": false,
+        "db_driver": false,
+        "retry_budget": false,
+        "dead_end_flag": false
+      },
+      "state_written": true,
+      "peak_ctx_tokens": 25937,
+      "total_cost_usd": 0.0578,
+      "total_output_tokens": 92,
+      "offload_files": 0,
+      "snapshots": 0,
+      "compacted": false,
+      "errored": false,
+      "seconds": 4.7,
+      "turns_ctx": [],
+      "probe_answer": "I have no prior context, memory, or files loaded about a \"project codename,\" database driver, retry budget, or a forbidden flag \u2014 nothing like that appears anywhere in this conversation or in my accessible memory. I can't answer (a)\u2013(d) from memory because that information was never provided to me."
+    }
+  ],
+  "summary": {
+    "on": {
+      "n": 3,
+      "median_recall": 4,
+      "median_peak_ctx": 26112,
+      "median_cost_usd": 0.0743,
+      "total_cost_usd": 0.2279
+    },
+    "off": {
+      "n": 3,
+      "median_recall": 0,
+      "median_peak_ctx": 25937,
+      "median_cost_usd": 0.0686,
+      "total_cost_usd": 0.198
+    }
+  }
+}

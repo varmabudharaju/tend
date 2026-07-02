@@ -1,0 +1,256 @@
+{
+  "stamp": "2026-07-01-210558",
+  "model": "claude-haiku-4-5-20251001",
+  "repeats": 5,
+  "kind": "discovery",
+  "flood_turns": 3,
+  "log_tokens": 9000,
+  "sessions": [
+    {
+      "arm": "on",
+      "repeat": 1,
+      "model": "claude-haiku-4-5-20251001",
+      "kind": "discovery",
+      "recall": 4,
+      "recall_hits": {
+        "codename": true,
+        "db_driver": true,
+        "retry_budget": true,
+        "dead_end_flag": true
+      },
+      "peak_ctx_tokens": 27471,
+      "total_cost_usd": 0.0214,
+      "total_output_tokens": 252,
+      "offload_files": 0,
+      "snapshots": 0,
+      "compacted": false,
+      "errored": false,
+      "seconds": 4.8,
+      "turns_ctx": [],
+      "probe_answer": "From the restored session state:\n\n(a) **Project Saffron-Quill**\n(b) **pgx-v5.2**\n(c) **137**\n(d) **turbo-merge flag** \u2014 corrupts the WAL"
+    },
+    {
+      "arm": "off",
+      "repeat": 1,
+      "model": "claude-haiku-4-5-20251001",
+      "kind": "discovery",
+      "recall": 4,
+      "recall_hits": {
+        "codename": true,
+        "db_driver": true,
+        "retry_budget": true,
+        "dead_end_flag": true
+      },
+      "peak_ctx_tokens": 29872,
+      "total_cost_usd": 0.0453,
+      "total_output_tokens": 2343,
+      "offload_files": 0,
+      "snapshots": 0,
+      "compacted": false,
+      "errored": false,
+      "seconds": 33.3,
+      "turns_ctx": [],
+      "probe_answer": "Based on the project state file:\n\n**(a) Project codename:** Saffron-Quill\n\n**(b) Database driver:** pgx-v5.2\n\n**(c) Retry budget number:** 137\n\n**(d) Flag to never use:** `turbo-merge` \u2014 corrupts the WAL"
+    },
+    {
+      "arm": "on",
+      "repeat": 2,
+      "model": "claude-haiku-4-5-20251001",
+      "kind": "discovery",
+      "recall": 4,
+      "recall_hits": {
+        "codename": true,
+        "db_driver": true,
+        "retry_budget": true,
+        "dead_end_flag": true
+      },
+      "peak_ctx_tokens": 27473,
+      "total_cost_usd": 0.0221,
+      "total_output_tokens": 398,
+      "offload_files": 0,
+      "snapshots": 0,
+      "compacted": false,
+      "errored": false,
+      "seconds": 6.6,
+      "turns_ctx": [],
+      "probe_answer": "Based on the session state restored from your previous session:\n\n**(a) Project codename:** Saffron-Quill\n\n**(b) Database driver:** pgx-v5.2\n\n**(c) Retry budget:** 137\n\n**(d) Flag to never use:** turbo-merge \u2014 corrupts the WAL"
+    },
+    {
+      "arm": "off",
+      "repeat": 2,
+      "model": "claude-haiku-4-5-20251001",
+      "kind": "discovery",
+      "recall": 4,
+      "recall_hits": {
+        "codename": true,
+        "db_driver": true,
+        "retry_budget": true,
+        "dead_end_flag": true
+      },
+      "peak_ctx_tokens": 28462,
+      "total_cost_usd": 0.0372,
+      "total_output_tokens": 787,
+      "offload_files": 0,
+      "snapshots": 0,
+      "compacted": false,
+      "errored": false,
+      "seconds": 13.7,
+      "turns_ctx": [],
+      "probe_answer": "Based on the project state:\n\n**(a) Project codename:** Saffron-Quill\n\n**(b) Database driver:** pgx-v5.2\n\n**(c) Retry budget number:** 137\n\n**(d) Flag to never use:** `turbo-merge` (corrupts the WAL)"
+    },
+    {
+      "arm": "on",
+      "repeat": 3,
+      "model": "claude-haiku-4-5-20251001",
+      "kind": "discovery",
+      "recall": 4,
+      "recall_hits": {
+        "codename": true,
+        "db_driver": true,
+        "retry_budget": true,
+        "dead_end_flag": true
+      },
+      "peak_ctx_tokens": 27364,
+      "total_cost_usd": 0.0214,
+      "total_output_tokens": 312,
+      "offload_files": 0,
+      "snapshots": 0,
+      "compacted": false,
+      "errored": false,
+      "seconds": 5.4,
+      "turns_ctx": [],
+      "probe_answer": "(a) **Project Saffron-Quill**\n\n(b) **pgx-v5.2** (database driver)\n\n(c) **137** (retry budget)\n\n(d) **turbo-merge flag** \u2014 it corrupts the WAL"
+    },
+    {
+      "arm": "off",
+      "repeat": 3,
+      "model": "claude-haiku-4-5-20251001",
+      "kind": "discovery",
+      "recall": 4,
+      "recall_hits": {
+        "codename": true,
+        "db_driver": true,
+        "retry_budget": true,
+        "dead_end_flag": true
+      },
+      "peak_ctx_tokens": 30862,
+      "total_cost_usd": 0.058,
+      "total_output_tokens": 2110,
+      "offload_files": 0,
+      "snapshots": 0,
+      "compacted": false,
+      "errored": false,
+      "seconds": 33.0,
+      "turns_ctx": [],
+      "probe_answer": "Here are the key details for Project Saffron-Quill:\n\n**(a) Project codename:** Saffron-Quill\n\n**(b) Database driver:** pgx-v5.2\n\n**(c) Retry budget number:** 137\n\n**(d) Flag we must never use:** `turbo-merge` (corrupts the WAL)\n\nI've saved these to memory for future reference."
+    },
+    {
+      "arm": "on",
+      "repeat": 4,
+      "model": "claude-haiku-4-5-20251001",
+      "kind": "discovery",
+      "recall": 4,
+      "recall_hits": {
+        "codename": true,
+        "db_driver": true,
+        "retry_budget": true,
+        "dead_end_flag": true
+      },
+      "peak_ctx_tokens": 27473,
+      "total_cost_usd": 0.0218,
+      "total_output_tokens": 335,
+      "offload_files": 0,
+      "snapshots": 0,
+      "compacted": false,
+      "errored": false,
+      "seconds": 8.8,
+      "turns_ctx": [],
+      "probe_answer": "Based on the session state restored from your previous session:\n\n**(a) Project codename:** Saffron-Quill\n\n**(b) Database driver:** pgx-v5.2\n\n**(c) Retry budget:** 137\n\n**(d) Flag to never use:** `turbo-merge` \u2014 corrupts the WAL"
+    },
+    {
+      "arm": "off",
+      "repeat": 4,
+      "model": "claude-haiku-4-5-20251001",
+      "kind": "discovery",
+      "recall": 4,
+      "recall_hits": {
+        "codename": true,
+        "db_driver": true,
+        "retry_budget": true,
+        "dead_end_flag": true
+      },
+      "peak_ctx_tokens": 29005,
+      "total_cost_usd": 0.0411,
+      "total_output_tokens": 1328,
+      "offload_files": 0,
+      "snapshots": 0,
+      "compacted": false,
+      "errored": false,
+      "seconds": 29.7,
+      "turns_ctx": [],
+      "probe_answer": "Based on the STATE.md file in this project:\n\n**(a) Project codename:** Saffron-Quill\n\n**(b) Database driver:** pgx-v5.2\n\n**(c) Retry budget number:** 137\n\n**(d) Flag we must never use:** turbo-merge (corrupts the WAL)"
+    },
+    {
+      "arm": "on",
+      "repeat": 5,
+      "model": "claude-haiku-4-5-20251001",
+      "kind": "discovery",
+      "recall": 4,
+      "recall_hits": {
+        "codename": true,
+        "db_driver": true,
+        "retry_budget": true,
+        "dead_end_flag": true
+      },
+      "peak_ctx_tokens": 27471,
+      "total_cost_usd": 0.0215,
+      "total_output_tokens": 289,
+      "offload_files": 0,
+      "snapshots": 0,
+      "compacted": false,
+      "errored": false,
+      "seconds": 5.0,
+      "turns_ctx": [],
+      "probe_answer": "From the session state provided:\n\n(a) **Project codename:** Saffron-Quill\n\n(b) **Database driver:** pgx-v5.2\n\n(c) **Retry budget:** 137\n\n(d) **Flag to never use:** turbo-merge (it corrupts the WAL)"
+    },
+    {
+      "arm": "off",
+      "repeat": 5,
+      "model": "claude-haiku-4-5-20251001",
+      "kind": "discovery",
+      "recall": 4,
+      "recall_hits": {
+        "codename": true,
+        "db_driver": true,
+        "retry_budget": true,
+        "dead_end_flag": true
+      },
+      "peak_ctx_tokens": 29704,
+      "total_cost_usd": 0.0455,
+      "total_output_tokens": 1268,
+      "offload_files": 0,
+      "snapshots": 0,
+      "compacted": false,
+      "errored": false,
+      "seconds": 20.9,
+      "turns_ctx": [],
+      "probe_answer": "Based on the project state file, here are the answers:\n\n**(a) Project codename:** Saffron-Quill\n\n**(b) Database driver:** pgx-v5.2\n\n**(c) Retry budget number:** 137\n\n**(d) Flag to never use:** turbo-merge (corrupts the WAL)\n\nAll found in `.claude/tend/STATE.md`."
+    }
+  ],
+  "summary": {
+    "on": {
+      "n": 5,
+      "median_recall": 4,
+      "median_peak_ctx": 27471,
+      "median_cost_usd": 0.0215,
+      "total_cost_usd": 0.1082
+    },
+    "off": {
+      "n": 5,
+      "median_recall": 4,
+      "median_peak_ctx": 29704,
+      "median_cost_usd": 0.0453,
+      "total_cost_usd": 0.2271
+    }
+  }
+}

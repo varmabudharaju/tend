@@ -1,0 +1,218 @@
+{
+  "stamp": "2026-07-01-211003",
+  "model": "claude-sonnet-5",
+  "repeats": 2,
+  "kind": "recall",
+  "flood_turns": 3,
+  "log_tokens": 9000,
+  "sessions": [
+    {
+      "arm": "on",
+      "repeat": 1,
+      "model": "claude-sonnet-5",
+      "kind": "recall",
+      "recall": 4,
+      "recall_hits": {
+        "codename": true,
+        "db_driver": true,
+        "retry_budget": true,
+        "dead_end_flag": true
+      },
+      "peak_ctx_tokens": 46468,
+      "total_cost_usd": 0.5235,
+      "total_output_tokens": 2693,
+      "offload_files": 3,
+      "snapshots": 0,
+      "compacted": false,
+      "errored": false,
+      "seconds": 65.8,
+      "turns_ctx": [
+        {
+          "turn": "plant",
+          "ctx": 39057
+        },
+        {
+          "turn": "flood-1",
+          "ctx": 41325
+        },
+        {
+          "turn": "flood-2",
+          "ctx": 43543
+        },
+        {
+          "turn": "flood-3",
+          "ctx": 45642
+        },
+        {
+          "turn": "distractor",
+          "ctx": 46468
+        },
+        {
+          "turn": "probe",
+          "ctx": 36817
+        }
+      ],
+      "probe_answer": "(a) Saffron-Quill (b) pgx-v5.2 (c) 137 (d) turbo-merge"
+    },
+    {
+      "arm": "off",
+      "repeat": 1,
+      "model": "claude-sonnet-5",
+      "kind": "recall",
+      "recall": 4,
+      "recall_hits": {
+        "codename": true,
+        "db_driver": true,
+        "retry_budget": true,
+        "dead_end_flag": true
+      },
+      "peak_ctx_tokens": 41895,
+      "total_cost_usd": 0.4,
+      "total_output_tokens": 2055,
+      "offload_files": 0,
+      "snapshots": 0,
+      "compacted": false,
+      "errored": false,
+      "seconds": 48.1,
+      "turns_ctx": [
+        {
+          "turn": "plant",
+          "ctx": 38233
+        },
+        {
+          "turn": "flood-1",
+          "ctx": 40462
+        },
+        {
+          "turn": "flood-2",
+          "ctx": 41083
+        },
+        {
+          "turn": "flood-3",
+          "ctx": 41457
+        },
+        {
+          "turn": "distractor",
+          "ctx": 41895
+        },
+        {
+          "turn": "probe",
+          "ctx": 32188
+        }
+      ],
+      "probe_answer": "(a) Saffron-Quill (b) pgx-v5.2 (c) 137 (d) turbo-merge\n\nNote: this is recalled from earlier in our conversation, not from persisted memory \u2014 the STATE.md write was blocked by the sandbox, so nothing was actually saved to disk."
+    },
+    {
+      "arm": "on",
+      "repeat": 2,
+      "model": "claude-sonnet-5",
+      "kind": "recall",
+      "recall": 4,
+      "recall_hits": {
+        "codename": true,
+        "db_driver": true,
+        "retry_budget": true,
+        "dead_end_flag": true
+      },
+      "peak_ctx_tokens": 43193,
+      "total_cost_usd": 0.4644,
+      "total_output_tokens": 2735,
+      "offload_files": 1,
+      "snapshots": 0,
+      "compacted": false,
+      "errored": false,
+      "seconds": 61.9,
+      "turns_ctx": [
+        {
+          "turn": "plant",
+          "ctx": 39804
+        },
+        {
+          "turn": "flood-1",
+          "ctx": 41694
+        },
+        {
+          "turn": "flood-2",
+          "ctx": 42154
+        },
+        {
+          "turn": "flood-3",
+          "ctx": 42831
+        },
+        {
+          "turn": "distractor",
+          "ctx": 43193
+        },
+        {
+          "turn": "probe",
+          "ctx": 33538
+        }
+      ],
+      "probe_answer": "(a) Saffron-Quill, (b) pgx-v5.2, (c) 137, (d) turbo-merge."
+    },
+    {
+      "arm": "off",
+      "repeat": 2,
+      "model": "claude-sonnet-5",
+      "kind": "recall",
+      "recall": 4,
+      "recall_hits": {
+        "codename": true,
+        "db_driver": true,
+        "retry_budget": true,
+        "dead_end_flag": true
+      },
+      "peak_ctx_tokens": 44768,
+      "total_cost_usd": 0.4616,
+      "total_output_tokens": 1909,
+      "offload_files": 0,
+      "snapshots": 0,
+      "compacted": false,
+      "errored": false,
+      "seconds": 68.1,
+      "turns_ctx": [
+        {
+          "turn": "plant",
+          "ctx": 38092
+        },
+        {
+          "turn": "flood-1",
+          "ctx": 40191
+        },
+        {
+          "turn": "flood-2",
+          "ctx": 41910
+        },
+        {
+          "turn": "flood-3",
+          "ctx": 44096
+        },
+        {
+          "turn": "distractor",
+          "ctx": 44768
+        },
+        {
+          "turn": "probe",
+          "ctx": 35057
+        }
+      ],
+      "probe_answer": "(a) Saffron-Quill\n(b) pgx-v5.2\n(c) 137\n(d) turbo-merge"
+    }
+  ],
+  "summary": {
+    "on": {
+      "n": 2,
+      "median_recall": 4.0,
+      "median_peak_ctx": 44830.5,
+      "median_cost_usd": 0.494,
+      "total_cost_usd": 0.9879
+    },
+    "off": {
+      "n": 2,
+      "median_recall": 4.0,
+      "median_peak_ctx": 43331.5,
+      "median_cost_usd": 0.4308,
+      "total_cost_usd": 0.8616
+    }
+  }
+}
