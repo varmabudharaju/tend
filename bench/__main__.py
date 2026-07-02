@@ -13,6 +13,9 @@ def main(argv=None):
     m.add_argument("--out", default=".benchmarks", help="output directory")
     m.add_argument("--iters", type=int, default=40,
                    help="subprocess latency iterations per hook")
+    m.add_argument("--live-corpus", action="store_true",
+                   help="benchmark your own ~/.claude/tend offloaded outputs "
+                        "instead of the frozen corpus")
 
     b = sub.add_parser("behavioral", help="run the live tend ON/OFF A/B (uses API key)")
     b.add_argument("--out", default=".benchmarks", help="output directory")
@@ -20,9 +23,10 @@ def main(argv=None):
     b.add_argument("--repeats", type=int, default=2, help="repeats per arm")
     b.add_argument("--arms", default="on,off", help="comma list: on,off")
     b.add_argument("--workload", default="recall",
-                   choices=["recall", "highload", "handoff"],
+                   choices=["recall", "highload", "handoff", "discovery"],
                    help="recall=light flood; highload=force toward compaction; "
-                        "handoff=fresh-session STATE restore A/B")
+                        "handoff=fresh-session STATE restore A/B; "
+                        "discovery=fresh session, tools allowed, file unnamed")
     b.add_argument("--flood-turns", type=int, default=3,
                    help="number of forcing flood turns (highload)")
     b.add_argument("--log-tokens", type=int, default=9000,
@@ -37,9 +41,14 @@ def main(argv=None):
     stamp = datetime.datetime.now().strftime("%Y-%m-%d-%H%M%S")
 
     if args.cmd == "mechanical":
-        _results, md = mechanical.run(args.out, stamp, iters=args.iters)
+        results, md = mechanical.run(args.out, stamp, iters=args.iters,
+                                     live_corpus=args.live_corpus)
         print(md)
         print(f"\n[bench] wrote {args.out}/mechanical-{stamp}.{{json,md}}")
+        failed = [c["invariant"] for c in results["invariants"] if not c["pass"]]
+        if failed:
+            print(f"[bench] INVARIANT FAILURES: {failed}", file=sys.stderr)
+            return 1
         return 0
     if args.cmd == "behavioral":
         from . import behavioral

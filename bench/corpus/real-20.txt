@@ -1,0 +1,187 @@
+{
+  "version": 1,
+  "run_id": "2026-07-01-shotlist-roadmap",
+  "goal": "Implement the 7-item shotlist roadmap: tolerance-based check with --json/--update --only/check-report.html, determinism kit (web mask, CLI scrub, embedded JetBrains Mono font), manifest enrichment (environment/git_sha/source, output.title, output.evidence), CI fixes (verify-source job, action package/diff-dir inputs with step summary + artifacts, macOS CI, coverage gate), and docs (CHANGELOG, pipeline.md drift fixes, README/recipes updates) — merged onto one integration branch, fully green (pytest/ruff/mypy strict/coverage), dogfood-verified.",
+  "project": "/home/user/capture",
+  "graph_hash": "e6119cb186a20c19",
+  "budget_tokens": null,
+  "agent_ceiling": 12,
+  "tasks": [
+    {
+      "id": "impl-check",
+      "title": "Tolerance-based check + --json + --update --only + check-report.html",
+      "type": "implement",
+      "prompt": "Implement the tolerance-based, CI-friendly `shotlist check` for the repo /home/user/capture per your packet. You own src/shotlist/{check.py,diff.py,cli.py}, additive-only CheckSpec in config.py, and tests/{test_check.py,test_diff.py,test_cli_app.py}. Deliverables: check.max_diff_pixel_ratio config with pixel-ratio comparison reusing diff.diff_images (sha-equal fast path); drift stats in human output; a --json flag emitting EXACTLY the Contract-B document from the packet on stdout with exit 1 on drift; check --update --only NAME selective re-bless preserving baseline numbering and unknown manifest keys; check-report.html (replacing diff.html) listing every shot with status badges and inline 3-up diffs; environment-mismatch warnings read from the baseline manifest's optional Contract-A environment block via a local helper (do not import from report.py). TDD; pytest+ruff+mypy strict green; stay strictly inside your file lane.",
+      "packet": "packets/impl-check.md",
+      "deps": [],
+      "agent_type": "swarm-implementer",
+      "isolation": "worktree",
+      "model": "opus",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "summary": {"type": "string", "maxLength": 2000},
+          "branch": {"type": "string"},
+          "worktree_path": {"type": "string"},
+          "files_touched": {"type": "array", "items": {"type": "string"}},
+          "commits": {"type": "array", "items": {"type": "string"}},
+          "user_surface": {"type": "array", "items": {"type": "string"}}
+        },
+        "required": ["summary", "branch", "worktree_path", "files_touched", "commits", "user_surface"]
+      },
+      "max_retries": 1
+    },
+    {
+      "id": "impl-determinism",
+      "title": "Determinism kit: web mask, CLI scrub, embedded font",
+      "type": "implement",
+      "prompt": "Make shotlist captures genuinely deterministic for the repo /home/user/capture per your packet. You own src/shotlist/backends/{web.py,cli.py}, src/shotlist/render.py, new src/shotlist/assets/, additive-only mask/ScrubRule+scrub fields in config.py, and tests/{test_web.py,test_cli_backend.py}. Deliverables: WebShot.mask selectors passed as Playwright mask locators plus animations='disabled' on both screenshot paths; CliShot.scrub regex rules (compile-validated) applied to raw ANSI before ansi_to_html; JetBrains Mono Regular+Bold woff2 (staged files listed in the packet — no network) copied to src/shotlist/assets/ with OFL.txt and embedded as base64 @font-face in the terminal card so rendered CLI shots are byte-identical across macOS/Linux. TDD; pytest+ruff+mypy strict green; stay strictly inside your file lane (note: src/shotlist/cli.py the Typer app is NOT yours; backends/cli.py IS).",
+      "packet": "packets/impl-determinism.md",
+      "deps": [],
+      "agent_type": "swarm-implementer",
+      "isolation": "worktree",
+      "model": "opus",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "summary": {"type": "string", "maxLength": 2000},
+          "branch": {"type": "string"},
+          "worktree_path": {"type": "string"},
+          "files_touched": {"type": "array", "items": {"type": "string"}},
+          "commits": {"type": "array", "items": {"type": "string"}},
+          "user_surface": {"type": "array", "items": {"type": "string"}}
+        },
+        "required": ["summary", "branch", "worktree_path", "files_touched", "commits", "user_surface"]
+      },
+      "max_retries": 1
+    },
+    {
+      "id": "impl-evidence",
+      "title": "Manifest environment/source/git_sha + output.title + evidence markdown",
+      "type": "implement",
+      "prompt": "Make shotlist run artifacts credible, self-documenting evidence for the repo /home/user/capture per your packet. You own src/shotlist/{report.py,output.py,engine.py}, additive-only title/evidence fields on OutputSpec in config.py, and tests/{test_report.py,test_output.py,test_engine.py}. Deliverables: CaptureResult.source (url/command, threaded from the engine, default '' for compatibility); manifest gains shots[].source plus top-level Contract-A environment block (exact keys: shotlist, python, platform, playwright, chromium — chromium from browser.version or None) via a PUBLIC report.collect_environment helper, and git_sha (short SHA, None on failure); build_manifest's existing call signature must keep working because sibling-owned cli.py calls it; gallery cards show source and honor output.title; output.evidence writes an idempotent captioned test-evidence markdown via the marker-splice machinery. TDD; pytest+ruff+mypy strict green; never edit cli.py/check.py.",
+      "packet": "packets/impl-evidence.md",
+      "deps": [],
+      "agent_type": "swarm-implementer",
+      "isolation": "worktree",
+      "model": "opus",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "summary": {"type": "string", "maxLength": 2000},
+          "branch": {"type": "string"},
+          "worktree_path": {"type": "string"},
+          "files_touched": {"type": "array", "items": {"type": "string"}},
+          "commits": {"type": "array", "items": {"type": "string"}},
+          "user_surface": {"type": "array", "items": {"type": "string"}}
+        },
+        "required": ["summary", "branch", "worktree_path", "files_touched", "commits", "user_surface"]
+      },
+      "max_retries": 1
+    },
+    {
+      "id": "impl-ci",
+      "title": "Action package/diff-dir inputs + step summary; verify-source job; macOS CI; coverage",
+      "type": "implement",
+      "prompt": "Fix the CI story for the repo /home/user/capture per your packet. You own action.yml, .github/workflows/{ci.yml,verify-action.yml}, and pytest-cov additions to pyproject.toml only. Deliverables: action gains `package` (default shotlist; enables `-e .`) and `diff-dir` inputs; on check it runs `shotlist check --diff <dir> --json`, captures the exit code, renders a Markdown table to $GITHUB_STEP_SUMMARY from the Contract-B JSON in the packet via an inline python3 heredoc that tolerates a missing/empty file, uploads diff dir + JSON with actions/upload-artifact@v4 if: always(), then exits with the captured code; verify-action keeps the released-tag job (renamed verify-release) and adds verify-source using `uses: ./` with package '-e .' so PR code is actually exercised (unique artifact names); ci.yml adds a macos-14 (py3.12) matrix leg with OS-conditional playwright install, and a pytest-cov run with --cov-fail-under (measure first; set gate 5 points under reality if 80 doesn't clear). Validate YAML parses and test your summary script on fixture JSON locally. Do not touch src/ or tests/.",
+      "packet": "packets/impl-ci.md",
+      "deps": [],
+      "agent_type": "swarm-implementer",
+      "isolation": "worktree",
+      "model": "opus",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "summary": {"type": "string", "maxLength": 2000},
+          "branch": {"type": "string"},
+          "worktree_path": {"type": "string"},
+          "files_touched": {"type": "array", "items": {"type": "string"}},
+          "commits": {"type": "array", "items": {"type": "string"}},
+          "user_surface": {"type": "array", "items": {"type": "string"}}
+        },
+        "required": ["summary", "branch", "worktree_path", "files_touched", "commits", "user_surface"]
+      },
+      "max_retries": 1
+    },
+    {
+      "id": "impl-docs",
+      "title": "CHANGELOG + README/pipeline.md/recipes.md for all new features",
+      "type": "implement",
+      "prompt": "Document the shotlist upgrade for the repo /home/user/capture per your packet. You own only CHANGELOG.md (new), README.md, docs/pipeline.md, docs/recipes.md. Read the four dep result JSONs (paths in the packet) for exact user_surface names and consult their worktree code before documenting anything — never invent syntax. Deliverables: Keep-a-Changelog CHANGELOG.md with an Unreleased (0.3.0) section covering all four lanes plus a brief 0.2.0 backfill from git log; docs/pipeline.md manifest example fixed (add sha256/deterministic and the new source/environment/git_sha keys) plus the stale '@v0.1.0' line, and new docs for tolerance, --json, --update --only, check-report.html, env warnings, and the action's new inputs/summary/artifacts; README commands-table rows for check --json and check --update --only, a short determinism blurb, output.title/evidence mentions, and a Develop note on coverage + macOS CI (leave the shotlist marker block untouched); one recipes.md entry combining mask+scrub+max_diff_pixel_ratio. Match the existing tight voice.",
+      "packet": "packets/impl-docs.md",
+      "deps": ["impl-check", "impl-determinism", "impl-evidence", "impl-ci"],
+      "agent_type": "swarm-implementer",
+      "isolation": "worktree",
+      "model": "sonnet",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "summary": {"type": "string", "maxLength": 2000},
+          "branch": {"type": "string"},
+          "worktree_path": {"type": "string"},
+          "files_touched": {"type": "array", "items": {"type": "string"}},
+          "commits": {"type": "array", "items": {"type": "string"}}
+        },
+        "required": ["summary", "branch", "worktree_path", "files_touched", "commits"]
+      },
+      "max_retries": 1
+    },
+    {
+      "id": "verify-code",
+      "title": "Adversarially verify the four implementation lanes and both contracts",
+      "type": "verify",
+      "prompt": "Adversarially verify four sibling implementation branches of the shotlist repo (/home/user/capture) before integration, per your packet. For each lane (worktree paths in the dep results): run pytest/ruff/mypy for real; grep every claimed user_surface item; enforce lane boundaries via git diff main --name-only. Critically, prove the two cross-lane contracts live: Contract B — build a tiny rendered-CLI fixture project in a tmp dir, run shotlist run then check --json in the impl-check worktree venv, validate the exact JSON keys and exit codes both clean and drifted; Contract A — validate manifest.json from the impl-evidence worktree has environment{shotlist,python,platform,playwright,chromium}, git_sha, and shots[].source; confirm action.yml's summary script (impl-ci) reads Contract-B keys verbatim and its YAML parses; confirm impl-determinism embeds JetBrains Mono with OFL.txt and that the same rendered shot captured twice is byte-identical. Report verdicts per task with file:line specifics. Do not fix anything.",
+      "packet": "packets/verify-code.md",
+      "deps": ["impl-check", "impl-determinism", "impl-evidence", "impl-ci"],
+      "agent_type": "swarm-verifier",
+      "isolation": null,
+      "model": "sonnet",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "summary": {"type": "string", "maxLength": 2000},
+          "verdicts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "task": {"type": "string"},
+                "verdict": {"type": "string", "enum": ["pass", "concerns"]},
+                "issues": {"type": "array", "items": {"type": "string"}}
+              },
+              "required": ["task", "verdict", "issues"]
+            }
+          }
+        },
+        "required": ["summary", "verdicts"]
+      },
+      "max_retries": 1
+    },
+    {
+      "id": "integrate",
+      "title": "Merge all lanes, reconcile seams, prove green, dogfood",
+      "type": "integrate",
+      "prompt": "Integrate five sibling branches of the shotlist repo (/home/user/capture) per your packet: merge swarm/2026-07-01-shotlist-roadmap/{impl-determinism,impl-evidence,impl-check,impl-ci,impl-docs} in that order onto a new swarm/2026-07-01-shotlist-roadmap/integration branch, resolving config.py conflicts by keeping both sides (all edits are additive to disjoint classes). Reconcile seams: unify impl-check's private environment helper onto report.collect_environment; verify check --json output matches action.yml's consumer key-for-key (fix the consumer if not); verify check --update --only preserves the new environment/git_sha manifest keys. Fix every verify-code issue or rebut it. Gates: pytest, ruff, mypy strict, and the ci.yml coverage invocation — all green, real numbers in your result. Dogfood: .venv/bin/shotlist run at the worktree root, then check must report no drift and check --json must be valid; commit regenerated screenshots/manifest. NEVER touch main — the user merges later.",
+      "packet": "packets/integrate.md",
+      "deps": ["impl-check", "impl-determinism", "impl-evidence", "impl-ci", "impl-docs", "verify-code"],
+      "agent_type": null,
+      "isolation": "worktree",
+      "model": "opus",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "summary": {"type": "string", "maxLength": 2000},
+          "branch": {"type": "string"},
+          "worktree_path": {"type": "string"},
+          "files_touched": {"type": "array", "items": {"type": "string"}},
+          "commits": {"type": "array", "items": {"type": "string"}},
+          "test_results": {"type": "string"},
+          "conflicts": {"type": "array", "items": {"type": "string"}},
+          "followups": {"type": "array", "items": {"type": "string"}}
+        },
+        "required": ["summary", "branch", "worktree_path", "files_touched", "commits", "test_results", "conflicts", "followups"]
+      },
+      "max_retries": 1
+    }
+  ]
+}

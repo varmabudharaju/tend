@@ -1,0 +1,233 @@
+=== files ===
+total 3432
+drwxr-xr-x@  30 user  staff      960 Mar 31 14:42 .
+drwxr-xr-x@ 172 user  staff     5504 Jun 28 15:07 ..
+drwxr-xr-x    2 user  staff       64 Feb 27 16:43 .benchmarks
+drwxr-xr-x    3 user  staff       96 Mar 31 14:22 .claude
+-rw-r--r--@   1 user  staff     8196 Mar 31 14:09 .DS_Store
+-rw-r--r--    1 user  staff       72 Mar 30 15:46 .env
+-rw-r--r--    1 user  staff     1440 Feb 27 16:26 .env.example
+drwxr-xr-x   13 user  staff      416 Mar 31 14:43 .git
+-rw-r--r--    1 user  staff      260 Mar  5 14:18 .gitignore
+drwxr-xr-x    5 user  staff      160 Feb 27 17:27 .mypy_cache
+-rw-r--r--    1 user  staff     1323 Mar 31 10:55 .pgsemantic.json
+-rw-r--r--    1 user  staff      431 Mar  1 20:37 .pgsemantic.json.bak
+drwxr-xr-x    6 user  staff      192 Feb 27 16:43 .pytest_cache
+drwxr-xr-x    5 user  staff      160 Feb 27 16:41 .ruff_cache
+-rw-r--r--    1 user  staff     5351 Mar  6 14:16 CLAUDE.md
+drwxr-xr-x    4 user  staff      128 Mar 31 14:42 dist
+-rw-r--r--    1 user  staff      411 Feb 27 21:59 docker-compose.yml
+drwxr-xr-x    5 user  staff      160 Mar 31 14:19 docs
+-rw-r--r--    1 user  staff     1080 Mar  2 09:24 LICENSE
+-rw-r--r--    1 user  staff     3182 Mar  9 13:09 load_clinical_trials.py
+-rw-r--r--    1 user  staff     1977 Mar  6 12:55 load_news.py
+-rw-r--r--    1 user  staff  1636169 Mar  6 12:52 news_5000.csv
+drwxr-xr-x   14 user  staff      448 Mar 31 14:42 pgsemantic
+drwxr-xr-x    8 user  staff      256 Mar 31 14:42 pgsemantic.egg-info
+-rw-r--r--@   1 user  staff    34550 Feb 27 16:07 plan.md
+-rw-r--r--    1 user  staff     1827 Mar 31 14:42 pyproject.toml
+-rw-r--r--    1 user  staff    12115 Mar 31 14:25 README.md
+-rw-r--r--    1 user  staff     1232 Mar  1 19:08 test_insert_trial.py
+-rw-r--r--    1 user  staff      754 Mar  1 18:17 test_insert.py
+drwxr-xr-x    7 user  staff      224 Feb 27 20:57 tests
+=== README (first 200 lines) ===
+# pgsemantic
+
+**Turn any PostgreSQL database into a semantic search engine. Set up in 60 seconds. No migrations, no new infrastructure.**
+
+[![PyPI](https://img.shields.io/pypi/v/pgsemantic)](https://pypi.org/project/pgsemantic/)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Tests](https://img.shields.io/badge/tests-144%20passing-brightgreen)]()
+
+pgsemantic connects to your existing PostgreSQL database, picks up your text columns, and makes them searchable by meaning. No data migration, no vector database, no pgvector expertise. It works on your live tables and keeps everything in sync automatically.
+
+<img src="docs/screenshots/v4/06-visualize.png" width="100%" alt="Embedding visualization showing 3000 news articles clustered by topic — politics, covid, entertainment, sports"/>
+
+*3,000 news articles visualized by semantic similarity. Each dot is a row in the database. Colors are auto-detected topic clusters. This is what your data looks like when you can search it by meaning.*
+
+---
+
+## What makes this different
+
+Most vector search tools ask you to set up a separate vector database, write ETL pipelines, and maintain sync logic. pgsemantic works directly on your existing PostgreSQL tables:
+
+- **No new database** — embeddings live alongside your data (inline column or shadow table)
+- **No ETL** — a database trigger keeps embeddings in sync as rows change
+- **No expertise needed** — point it at a table, pick a column, done
+- **Free by default** — runs a local embedding model on your machine (no API keys)
+
+---
+
+## See it in action
+
+### Connect to any PostgreSQL database
+
+<img src="docs/screenshots/v4/01-connection.png" width="100%" alt="Connection page showing connected state with pgvector 0.8.2"/>
+
+*Paste your connection string, test it, done. Works with localhost, Supabase, Neon, RDS — anything with pgvector.*
+
+### Browse and explore your tables
+
+<img src="docs/screenshots/v4/02-tables.png" width="100%" alt="Table browser showing clinical_trials, news_articles, and products with column info and row counts"/>
+
+*See every table, column types, and row counts. Click Inspect to score columns for semantic search suitability.*
+
+### Set up with chunking for long documents
+
+<img src="docs/screenshots/v4/03-apply-chunked.png" width="100%" alt="Apply page with column picker, model selection, and chunking enabled"/>
+
+*Pick columns, choose a model, enable chunking for long text. Chunking splits documents into overlapping paragraphs so search finds the best paragraph, not just the best document.*
+
+### Search by meaning, not keywords
+
+<img src="docs/screenshots/v4/05-search.png" width="100%" alt="Search results for 'economic recession' showing articles about inflation, unemployment, and consumer prices"/>
+
+*Query: "economic recession" — returns articles about inflation, unemployment, consumer prices. These results share the concept, not the exact words.*
+
+### Search across all your tables at once
+
+<img src="docs/screenshots/v4/10-cross-table-search.png" width="100%" alt="Cross-table search results showing clinical trials and news articles mixed together with table badges"/>
+
+*"health treatment side effects" across clinical_trials and news_articles. Results ranked by similarity regardless of source table. Purple badges show where each result came from.*
+
+### See how your data clusters
+
+<img src="docs/screenshots/v4/06-visualize.png" width="100%" alt="2D scatter plot of 3000 embeddings with colored clusters labeled by topic"/>
+
+*3,000 embeddings reduced to 2D with PCA. K-means clustering auto-labels each group with its top keywords. Click any point to see the full row.*
+
+<img src="docs/screenshots/v4/07-visualize-detail.png" width="100%" alt="Row detail drawer showing full article data from a clicked point in the scatter plot"/>
+
+### Run SQL queries directly
+
+<img src="docs/screenshots/v4/08-sql-query.png" width="100%" alt="SQL Query page showing category counts from news_articles table"/>
+
+*Built-in SQL query tool. Read-only, 10-second timeout, 100-row limit. Safe to explore.*
+
+### Monitor everything from one dashboard
+
+<img src="docs/screenshots/v4/04-dashboard.png" width="100%" alt="Dashboard showing 2 tables, 8003 embeddings, 100% coverage, 0 pending"/>
+
+*Coverage, pending queue, worker health — all in one view.*
+
+### 10 MCP tools for AI agents
+
+<img src="docs/screenshots/v4/09-mcp-tools.png" width="100%" alt="MCP integration page showing 10 available tools including semantic search, SQL execution, and schema context"/>
+
+*Connect Claude Desktop, Cursor, or any MCP-compatible AI agent. They can search semantically, run SQL queries, and explore your schema.*
+
+---
+
+## Quick start
+
+```bash
+pip install pgsemantic
+
+# Launch the web UI
+pgsemantic ui
+
+# Or use the CLI
+pgsemantic inspect   # Scan your DB, score columns
+pgsemantic apply --table articles --column body   # Set up semantic search
+pgsemantic index --table articles                  # Embed existing rows
+pgsemantic search "climate policy effects"         # Search by meaning
+```
+
+Open [http://localhost:8080](http://localhost:8080) and walk through setup visually:
+
+1. **Connection** — paste your PostgreSQL URL
+2. **Tables** — browse your database
+3. **Apply** — pick columns, choose a model, one click
+4. **Index** — embed all rows (progress bar, resumable)
+5. **Search** — natural language queries, instantly
+
+---
+
+## Features
+
+### Core
+
+| Feature | Description |
+|---------|-------------|
+| **Semantic search** | Search by meaning, not keywords. "budget travel" finds "affordable hostels" |
+| **Cross-table search** | Search all configured tables at once — results merged by similarity |
+| **Auto-chunking** | Split long documents into overlapping chunks for precise paragraph-level search |
+| **Hybrid search** | Combine semantic similarity with SQL WHERE filters in one query |
+| **Multi-column embedding** | Embed title + description + tags as one combined vector |
+| **Automatic sync** | Database triggers keep embeddings fresh on every INSERT/UPDATE/DELETE |
+
+### Operations
+
+| Feature | Description |
+|---------|-------------|
+| **Zero-downtime model migration** | Switch embedding models without breaking search — atomic swap |
+| **Pipelined indexing** | Embeds batch N+1 while writing batch N — ~2x throughput |
+| **Background worker** | Daemon process for continuous embedding sync with retry logic |
+| **Shadow table storage** | Store embeddings separately without modifying your source table |
+
+### Visualization & Analytics
+
+| Feature | Description |
+|---------|-------------|
+| **Embedding scatter plot** | 2D PCA visualization with auto-detected clusters and keyword labels |
+| **SQL query tool** | Run read-only queries from the UI (10s timeout, 100-row limit) |
+| **Status dashboard** | Coverage %, pending queue, failed jobs, worker health — all in one view |
+
+### AI Agent Integration (MCP)
+
+10 tools for Claude Desktop, Cursor, and any MCP-compatible agent:
+
+| Tool | What it does |
+|------|-------------|
+| `semantic_search` | Find rows by meaning |
+| `hybrid_search` | Semantic + SQL filters |
+| `search_all_tables` | Cross-table search |
+| `get_schema_context` | Table schemas for SQL generation |
+| `execute_safe_sql` | Run read-only SQL queries safely |
+| `get_embedding_status` | Check embedding coverage |
+| `list_tables` | Browse all tables |
+| `get_sample_rows` | Preview table data |
+| `inspect_columns` | Score columns for search suitability |
+| `list_configured_tables` | List configured tables |
+
+---
+
+## Embedding models
+
+| Model | Dimensions | Cost | Best for |
+|-------|-----------|------|---------|
+| **Local Fast** (all-MiniLM-L6-v2) | 384 | Free | Getting started, most use cases |
+| **Local Better** (all-mpnet-base-v2) | 768 | Free | Higher accuracy |
+| **OpenAI Small** (text-embedding-3-small) | 1536 | ~$0.02/1M tokens | Production, multilingual |
+| **OpenAI Large** (text-embedding-3-large) | 3072 | ~$0.13/1M tokens | Maximum accuracy |
+| **Ollama** (nomic-embed-text) | 768 | Free | Self-hosted, privacy-sensitive |
+
+Switch models anytime with zero-downtime migration:
+
+```bash
+pgsemantic migrate --table articles --model openai
+```
+
+---
+
+## Works with any PostgreSQL
+
+- Local PostgreSQL + pgvector
+- **Supabase** (enable pgvector in Dashboard > Database > Extensions)
+- **Neon**
+- **Amazon RDS** / Aurora PostgreSQL
+- **Google Cloud SQL** for PostgreSQL
+- Any self-hosted PostgreSQL with pgvector
+
+---
+
+## Architecture
+
+```
+Your App ──────────────────────────────────────────────────┐
+                                                           │
+CLI (Typer) ─┐                                             │
+Web UI (FastAPI) ─┤──> Embedding Providers ──> PostgreSQL + pgvector
+MCP Server (FastMCP) ─┘   (local/openai/ollama)    │
+                                                    ├── Source tables (your data)

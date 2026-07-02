@@ -1,0 +1,673 @@
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index d8716f4..d86e5b0 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -14,3 +14,5 @@ jobs:
+           python-version: "3.11"
+       - run: python -m pip install -e . pytest
+       - run: python -m pytest tests/ -q
++      - name: mechanical benchmark (invariant gate)
++        run: python -m bench mechanical --iters 3 --out /tmp/bench-ci
+diff --git a/README.md b/README.md
+index 636bb49..2091458 100644
+--- a/README.md
++++ b/README.md
+@@ -14,8 +14,9 @@ into a big task instead of slowly losing the plot.
+ 
+ </div>
+ 
+-```bash
+-pip install -e . && tend install-hook    # 30 seconds, fully reversible, no daemon
++```
++/plugin marketplace add userbudharaju/tend
++/plugin install tend@tend       # 30 seconds, fully reversible, no daemon
+ ```
+ 
+ <p align="center">
+@@ -56,24 +57,6 @@ On long tasks the desk fills up with old papers: a 5,000-line log it needed once
+ 
+ tend is the colleague who quietly keeps the desk tidy.
+ 
+-```mermaid
+-flowchart TB
+-    subgraph without ["Without tend"]
+-        direction TB
+-        a1["Desk fills with old papers"] --> a2["Important notes get buried"]
+-        a2 --> a3["Desk overflows"]
+-        a3 --> a4["Cleanup sweeps away<br/>decisions and lessons learned"]
+-        a4 --> a5["Assistant repeats old mistakes"]
+-    end
+-    subgraph withtend ["With tend"]
+-        direction TB
+-        b1["Big papers filed in drawers"] --> b2["Goal pinned on top,<br/>always visible"]
+-        b2 --> b3["Cleanup happens between tasks,<br/>never mid-thought"]
+-        b3 --> b4["Notebook survives everything"]
+-        b4 --> b5["Assistant stays sharp"]
+-    end
+-```
+-
+ ## What tend does — four habits
+ 
+ | Habit | In plain words | In Claude Code terms |
+@@ -89,24 +72,6 @@ And one bonus habit, added after watching real usage bills:
+ |---|---|---|
+ | **Right-sized helpers** | When the assistant hires a helper, a note suggests: this errand doesn't need the most expensive expert. | When a subagent is spawned without an explicit model, tend suggests the cheapest model tier that fits the job (see [swarm](https://github.com/userbudharaju/swarm) for the full tiering system). |
+ 
+-The first habit, in one picture:
+-
+-```mermaid
+-flowchart LR
+-    big["A tool returns 20,000 tokens<br/>of build logs"] --> tend{"tend"}
+-    tend -->|"stays in working memory"| ex["First lines + last lines<br/>+ a note naming the drawer"]
+-    tend -->|"goes to disk"| file["The full output, saved.<br/>Any slice readable later."]
+-```
+-
+-And the notebook habit — why nothing important ever dies:
+-
+-```mermaid
+-flowchart LR
+-    s1["Session 1 works,<br/>writing the notebook as it goes"] --> n["STATE.md<br/>Goal / Now / Decisions / Dead-ends"]
+-    n --> e{"Session ends:<br/>crash, /clear, or just Friday"}
+-    e --> s2["Session 2 auto-loads the notebook<br/>and picks up where 1 left off"]
+-```
+-
+ ## See it
+ 
+ tend speaks to the model's context, not your chat — the conversation stays clean, while the transcript view (Ctrl+O) shows every injection verbatim. What's below is the rest of its visible surface. A 15-second tour, all real tool output:
+@@ -147,7 +112,7 @@ The real test of *lossless handoff*: plant four project decisions, reset the con
+ python3 -m bench behavioral --workload handoff --repeats 5
+ ```
+ 
+-> **Honest boundary.** When there are *no* large outputs to offload and *no* reset, tend's per-turn anchor is a small net cost (it added ~14% in one stress test that triggered neither feature). tend earns its keep on **long, multi-session, decision-heavy work** — the deep tasks where losing the *reasoning* (why we chose X, which approaches are dead-ends) is expensive. On short tasks the code and `CLAUDE.md` already cover, it's roughly neutral.
++> **Honest boundary.** When there are *no* large outputs to offload and *no* reset, tend's anchors are a small net cost (~14% in one Haiku stress test, n=2, that triggered neither feature). Each anchor is ≤400 tokens, but anchors persist in the transcript, so a session carries a standing ~1–2K of extra context that's re-read every turn — that accumulation, plus the one-time restore, is the whole gap. tend earns its keep on **long, multi-session, decision-heavy work** — the deep tasks where losing the *reasoning* (why we chose X, which approaches are dead-ends) is expensive. On short tasks the code and `CLAUDE.md` already cover, it's roughly neutral.
+ 
+ ## How it fits into a session
+ 
+@@ -190,6 +155,12 @@ tend install-hook        # merges hooks + statusline into ~/.claude/settings.jso
+ 
+ The installer is **non-destructive and reversible**: existing hooks and statusline are preserved and backed up (`settings.json.bak-tend`), and `tend uninstall-hook` puts everything back.
+ 
++**Removing it:** pip installs — `tend uninstall-hook` restores your previous
++hooks and statusline exactly (they were backed up at install). Plugin installs —
++`/plugin uninstall tend@tend` removes the hooks; if you ran `tend wrap-statusline`,
++run `tend uninstall-hook` once to restore the original statusline (it only touches
++tend-marked entries).
++
+ **How you know it's working:** your statusline grows a quiet ` | tend: 3 filed, 29k stale` suffix (just `tend: on` when there's nothing to report), and each session opens with a one-line notice — `tend: restored session state from STATE.md`. Everything else stays out of the chat view — but nothing is hidden: open the transcript view (Ctrl+O) and you'll see every `[tend anchor]` and injection exactly as the model reads it. Out of your face, fully auditable.
+ 
+ ## Commands
+@@ -199,6 +170,7 @@ The installer is **non-destructive and reversible**: existing hooks and statusli
+ | `tend status` | Context %, totals, stale-result tokens, STATE.md freshness |
+ | `tend report` | Full ledger: tool results by size, offloads, subagents |
+ | `tend handoff` | Show what the next session will auto-load |
++| `tend clean` | Purge session state older than `retention_days` (`--days N`, `--dry-run`) |
+ | `tend on` / `tend off` | Global kill switch |
+ | `tend install-hook` / `tend uninstall-hook` | Reversible settings.json setup |
+ 
+@@ -211,7 +183,19 @@ The installer is **non-destructive and reversible**: existing hooks and statusli
+ 
+ ## Configuration
+ 
+-`~/.claude/tend/config.yaml`, overridable per project in `<project>/.claude/tend/config.yaml`. Keys and defaults are in `tend/config.py`. Invalid values fall back to defaults rather than disabling tend.
++`~/.claude/tend/config.yaml`, overridable per project in `<project>/.claude/tend/config.yaml`. Keys and defaults are in `tend/config.py`. Invalid values fall back to defaults rather than disabling tend. Notable: `retention_days` (default 30) age-caps stored session state.
++
++## Privacy & disk use
++
++- **Offloaded outputs are raw tool output** — anything a command printed
++  (including a secret it echoed) is saved as plaintext under
++  `~/.claude/tend/sessions/<id>/outputs/`. tend sweeps sessions older than
++  `retention_days` (default 30, `0` disables) once a day at session start;
++  `tend clean [--days N] [--dry-run]` purges on demand.
++- **STATE.md is plain text in your repo.** Commit it if you want shared,
++  reviewable handoffs across the team; add `.claude/tend/STATE.md` to
++  `.gitignore` if task reasoning shouldn't enter history. tend works either way.
++- Nothing ever leaves your machine: no network calls, no telemetry.
+ 
+ ## Limitations
+ 
+@@ -220,135 +204,13 @@ The installer is **non-destructive and reversible**: existing hooks and statusli
+ 
+ ## Under the hood
+ 
+-### System design — how tend plugs into Claude Code
+-
+-No daemon, no background process: Claude Code fires an event, a tiny tend process wakes, reads its state from disk, acts, and exits. Everything durable lives in plain files.
+-
+-```mermaid
+-flowchart TB
+-    subgraph cc ["Claude Code"]
+-        EV["8 hook events"]
+-        SL["statusline render"]
+-        TR["session transcript .jsonl"]
+-    end
+-    subgraph tendp ["tend - one short-lived process per event"]
+-        HK["hook.py dispatcher<br/>fail-open wrapper"]
+-        LG["ledger.py<br/>incremental token accounting"]
+-        HD["event handlers<br/>offload, readguard, agentguard,<br/>anchor, boundary, precompact, sessionstart"]
+-        SLW["statusline.py wrapper"]
+-    end
+-    subgraph disk ["state on disk - ~/.claude/tend/"]
+-        SUM["sessions/ID/summary.json<br/>ledger totals + cursor"]
+-        CTX["sessions/ID/ctx.json<br/>exact context metrics"]
+-        OUT["sessions/ID/outputs/NNNN.txt<br/>offloaded tool outputs"]
+-        FLG["sessions/ID/flags.json"]
+-    end
+-    ST["project/.claude/tend/STATE.md<br/>the notebook"]
+-    EV -->|"stdin JSON"| HK
+-    HK --> LG
+-    HK --> HD
+-    LG -->|"reads incrementally"| TR
+-    LG <--> SUM
+-    SL --> SLW
+-    SLW --> CTX
+-    HD <--> FLG
+-    HD --> OUT
+-    HD <--> ST
+-    HD -->|"stdout JSON: excerpt, anchor,<br/>restored state, or block"| EV
+-```
+-
+-### Component view — module layers
+-
+-```mermaid
+-flowchart TB
+-    subgraph entry ["Entry points"]
+-        cli["cli.py"]
+-        hookpy["hook.py"]
+-        slpy["statusline.py"]
+-        inst["install.py"]
+-    end
+-    subgraph handlers ["Event handlers"]
+-        off["offload"]
+-        rg["readguard"]
+-        ag["agentguard"]
+-        an["anchor"]
+-        bd["boundary"]
+-        pc["precompact"]
+-        ss["sessionstart"]
+-    end
+-    subgraph core ["Core services"]
+-        led["ledger"]
+-        stm["state"]
+-        adv["advisor"]
+-        cm["ctxmetrics"]
+-        cfg["config"]
+-        flg["flags"]
+-        tk["tokens"]
+-    end
+-    subgraph infra ["Infrastructure"]
+-        io["hookio - fail-open, log rotation"]
+-        pa["paths - atomic JSON I/O"]
+-    end
+-    hookpy --> handlers
+-    cli --> core
+-    cli --> inst
+-    slpy --> infra
+-    handlers --> core
+-    core --> infra
+-```
+-
+-### Flow chart — when does tend recommend compaction?
+-
+-The advisor runs on every prompt; this is its whole decision:
+-
+-```mermaid
+-flowchart TD
+-    p["context % from ctx.json"] --> u{"at or above<br/>urge threshold? (70%)"}
+-    u -->|yes| now["anchor says:<br/>run now: /compact + curated instructions"]
+-    u -->|no| a{"at or above<br/>advise threshold? (55%)"}
+-    a -->|no| quiet["say nothing"]
+-    a -->|yes| b{"is this a task boundary?<br/>(STATE.md was just updated)"}
+-    b -->|yes| good["good moment for /compact"]
+-    b -->|no| later["at the next task boundary,<br/>run /compact"]
+-```
+-
+-And the one time tend ever blocks anything:
+-
+-```mermaid
+-flowchart TD
+-    ac["auto-compact about to fire"] --> home{"working in the<br/>home directory?"}
+-    home -->|yes| pass["allow"]
+-    home -->|no| stale{"is STATE.md stale?<br/>(notebook behind the work)"}
+-    stale -->|no| pass
+-    stale -->|yes| once{"already blocked once<br/>this session?"}
+-    once -->|yes| pass
+-    once -->|no| block["block ONCE:<br/>update the notebook, then compact"]
+-```
+-
+-### Modules
+-
+-```
+-tend/
+-  hook.py          entry point: python3 -m tend.hook (all 8 events)
+-  hookio.py        stdin/stdout plumbing, fail-open wrapper, log rotation
+-  ledger.py        incremental transcript ledger: exact context totals,
+-                   tool-result sizes, staleness, crash-safe single-file cursor
+-  offload.py       pillar 1: oversized-output offloading
+-  readguard.py     pillar 1b: nudge unbounded Reads of large text files
+-  agentguard.py    pillar 1c: model-tier nudge for subagent spawns
+-  state.py         STATE.md template, parsing, atomic seeding
+-  sessionstart.py  pillar 4: state restore into fresh sessions
+-  anchor.py        pillar 3: per-prompt anchor (urgency-first truncation)
+-  boundary.py      Stop-event task-boundary + staleness detection
+-  precompact.py    pillar 4 safety net: snapshot + one-shot stale block
+-  advisor.py       when and how to recommend a curated /compact
+-  statusline.py    statusline wrapper: tees exact context metrics to disk
+-  config.py        defaults < global yaml < project yaml, validated
+-  install.py       reversible settings.json merge (backup, mode-preserving)
+-  cli.py           status / report / handoff / on / off / (un)install-hook
+-```
++No daemon, no background process: Claude Code fires an event, a tiny tend
++process wakes, reads its state from disk, acts, and exits. Everything durable
++lives in plain files. Full diagrams — system design, module layers, and the
++advisor's whole decision tree — are in [docs/architecture.md](docs/architecture.md).
+ 
+-172 tests (`python3 -m pytest`). Every bug fixed in v0.2 carries a regression test written from the bug's reproduction.
++180+ tests (`python3 -m pytest`). Every bug fixed in v0.2 carries a regression
++test written from the bug's reproduction.
+ 
+ ## Battle-tested by its sibling
+ 
+diff --git a/bench/__main__.py b/bench/__main__.py
+index 3e1fc34..a9cdfd7 100644
+--- a/bench/__main__.py
++++ b/bench/__main__.py
+@@ -13,6 +13,9 @@ def main(argv=None):
+     m.add_argument("--out", default=".benchmarks", help="output directory")
+     m.add_argument("--iters", type=int, default=40,
+                    help="subprocess latency iterations per hook")
++    m.add_argument("--live-corpus", action="store_true",
++                   help="benchmark your own ~/.claude/tend offloaded outputs "
++                        "instead of the frozen corpus")
+ 
+     b = sub.add_parser("behavioral", help="run the live tend ON/OFF A/B (uses API key)")
+     b.add_argument("--out", default=".benchmarks", help="output directory")
+@@ -20,9 +23,10 @@ def main(argv=None):
+     b.add_argument("--repeats", type=int, default=2, help="repeats per arm")
+     b.add_argument("--arms", default="on,off", help="comma list: on,off")
+     b.add_argument("--workload", default="recall",
+-                   choices=["recall", "highload", "handoff"],
++                   choices=["recall", "highload", "handoff", "discovery"],
+                    help="recall=light flood; highload=force toward compaction; "
+-                        "handoff=fresh-session STATE restore A/B")
++                        "handoff=fresh-session STATE restore A/B; "
++                        "discovery=fresh session, tools allowed, file unnamed")
+     b.add_argument("--flood-turns", type=int, default=3,
+                    help="number of forcing flood turns (highload)")
+     b.add_argument("--log-tokens", type=int, default=9000,
+@@ -37,9 +41,14 @@ def main(argv=None):
+     stamp = datetime.datetime.now().strftime("%Y-%m-%d-%H%M%S")
+ 
+     if args.cmd == "mechanical":
+-        _results, md = mechanical.run(args.out, stamp, iters=args.iters)
++        results, md = mechanical.run(args.out, stamp, iters=args.iters,
++                                     live_corpus=args.live_corpus)
+         print(md)
+         print(f"\n[bench] wrote {args.out}/mechanical-{stamp}.{{json,md}}")
++        failed = [c["invariant"] for c in results["invariants"] if not c["pass"]]
++        if failed:
++            print(f"[bench] INVARIANT FAILURES: {failed}", file=sys.stderr)
++            return 1
+         return 0
+     if args.cmd == "behavioral":
+         from . import behavioral
+diff --git a/bench/behavioral.py b/bench/behavioral.py
+index 61c606e..1f00008 100644
+--- a/bench/behavioral.py
++++ b/bench/behavioral.py
+@@ -15,6 +15,7 @@ usage), total cost USD, total output tokens, wall-clock seconds.
+ """
+ import json
+ import os
++import re
+ import shutil
+ import subprocess
+ import tempfile
+@@ -54,6 +55,14 @@ PROBE = (
+     "  (c) the retry budget number,\n"
+     "  (d) the flag we must never use.")
+ 
++DISCOVERY_PROBE = (
++    "You're picking this project back up after a break. From what you know or can "
++    "find in this project, answer concisely:\n"
++    "  (a) the project codename,\n"
++    "  (b) the database driver,\n"
++    "  (c) the retry budget number,\n"
++    "  (d) the flag we must never use.")
++
+ 
+ def workload(kind="recall", flood_turns=3):
+     """Ordered turns. Each: (label, prompt, allowed_tools, disallowed_tools)."""
+@@ -151,8 +160,9 @@ def peak_ctx_in(usage):
+ 
+ 
+ def score_recall(answer):
+-    low = (answer or "").lower()
+-    hits = {k: (v.lower() in low) for k, v in FACTS.items()}
++    text = answer or ""
++    hits = {k: bool(re.search(rf"(?<![\w-]){re.escape(v)}(?![\w-])", text, re.IGNORECASE))
++            for k, v in FACTS.items()}
+     return hits, sum(hits.values())
+ 
+ 
+@@ -268,6 +278,37 @@ def run_handoff_session(arm, run_dir, model, repeat, log=print):
+     }
+ 
+ 
++def run_discovery_session(arm, run_dir, model, repeat, log=print):
++    """The fair OFF arm: STATE.md is on disk in BOTH arms, tools are ALLOWED,
++    and the probe names no file. tend ON injects STATE.md at SessionStart;
++    tend OFF must spontaneously discover it. Measures whether tend's restore
++    is load-bearing or mere convenience."""
++    env, home = arm_env(run_dir, arm, f"r{repeat}")
++    sb = make_sandbox(home, n_logs=1, log_tokens=200)
++    st = Path(sb) / ".claude" / "tend" / "STATE.md"
++    st.parent.mkdir(parents=True, exist_ok=True)
++    st.write_text(HANDOFF_STATE, encoding="utf-8")
++    t0 = time.time()
++    d = run_turn(DISCOVERY_PROBE, sb, env, model, resume_sid=None,
++                 allowed="Read Grep Glob Bash", disallowed=None, timeout=300)
++    answer = d.get("result", "") if not d.get("_parse_error") else ""
++    hits, recall = score_recall(answer)
++    cost = d.get("total_cost_usd", 0.0) or 0.0
++    log(f"    [{arm} r{repeat} discovery] recall={recall}/4 cost=${cost:.3f}")
++    return {
++        "arm": arm, "repeat": repeat, "model": model, "kind": "discovery",
++        "recall": recall, "recall_hits": hits,
++        "peak_ctx_tokens": peak_ctx_in(d.get("usage", {})),
++        "total_cost_usd": round(cost, 4),
++        "total_output_tokens": d.get("usage", {}).get("output_tokens", 0),
++        "offload_files": 0, "snapshots": 0, "compacted": False,
++        "errored": bool(d.get("_parse_error")),
++        "seconds": round(time.time() - t0, 1),
++        "turns_ctx": [],
++        "probe_answer": answer[:400],
++    }
++
++
+ def run_pilot(out_dir, stamp, model="claude-haiku-4-5-20251001", repeats=2,
+               arms=("on", "off"), kind="recall", flood_turns=3, log_tokens=9000,
+               log=print):
+@@ -280,6 +321,8 @@ def run_pilot(out_dir, stamp, model="claude-haiku-4-5-20251001", repeats=2,
+             log(f"  -> session arm={arm} repeat={repeat}")
+             if kind == "handoff":
+                 s = run_handoff_session(arm, run_dir, model, repeat, log=log)
++            elif kind == "discovery":
++                s = run_discovery_session(arm, run_dir, model, repeat, log=log)
+             else:
+                 s = run_session(arm, run_dir, model, repeat, kind=kind,
+                                 flood_turns=flood_turns, log_tokens=log_tokens, log=log)
+@@ -331,6 +374,10 @@ def render_markdown(r, arms):
+         desc = ("Plant 4 project facts in STATE.md, then a **fresh session** probes "
+                 "recall with tools blocked — only tend can auto-restore STATE on a new "
+                 "context. Identical in both arms; only difference: tend on/off.")
++    elif kind == "discovery":
++        desc = ("STATE.md sits on disk in **both** arms, tools ALLOWED, and the probe "
++                "names no file. tend ON auto-injects it; tend OFF must spontaneously "
++                "discover it. Tests whether the restore is load-bearing.")
+     else:
+         desc = ("Identical scripted session in both arms (plant 4 facts → flood context "
+                 "with large Bash outputs → probe recall from memory). Only difference: "
+diff --git a/bench/mechanical.py b/bench/mechanical.py
+index e1e188d..6fd6e10 100644
+--- a/bench/mechanical.py
++++ b/bench/mechanical.py
+@@ -24,8 +24,19 @@ REPO = Path(__file__).resolve().parent.parent
+ # --------------------------------------------------------------------------- #
+ # corpora
+ # --------------------------------------------------------------------------- #
++CORPUS_DIR = REPO / "bench" / "corpus"
++
++
+ def load_real_corpus():
+-    """Real large tool outputs tend offloaded in production sessions."""
++    """Frozen, scrubbed real outputs committed in bench/corpus (reproducible)."""
++    items = []
++    for f in sorted(CORPUS_DIR.glob("*.txt")):
++        items.append((f"real:{f.name}", f.read_text(encoding="utf-8", errors="replace")))
++    return items
++
++
++def load_live_corpus():
++    """Opt-in: the runner's own offloaded outputs from ~/.claude/tend/sessions."""
+     root = Path.home() / ".claude" / "tend" / "sessions"
+     items = []
+     for f in sorted(root.glob("*/outputs/*.txt")):
+@@ -33,7 +44,7 @@ def load_real_corpus():
+             text = f.read_text(encoding="utf-8", errors="replace")
+         except Exception:
+             continue
+-        items.append((f"real:{f.parent.parent.name[:8]}/{f.name}", text))
++        items.append((f"live:{f.parent.parent.name[:8]}/{f.name}", text))
+     return items
+ 
+ 
+@@ -290,12 +301,12 @@ def measure_footprint(corpus, workdir):
+ # --------------------------------------------------------------------------- #
+ # run + report
+ # --------------------------------------------------------------------------- #
+-def run(out_dir, stamp, iters=40):
++def run(out_dir, stamp, iters=40, live_corpus=False):
+     tmp = tempfile.mkdtemp(prefix="tend-bench-")
+     workdir = Path(tmp)
+     os.environ["TEND_HOME"] = str(workdir / "tend_home")
+ 
+-    real = load_real_corpus()
++    real = load_live_corpus() if live_corpus else load_real_corpus()
+     synth = synthetic_corpus()
+     corpus = real + synth
+ 
+diff --git a/docs/benchmark-results.md b/docs/benchmark-results.md
+index 145c429..3eb77ea 100644
+--- a/docs/benchmark-results.md
++++ b/docs/benchmark-results.md
+@@ -74,11 +74,14 @@ Diagnosis from the raw token accounting:
+ 1. **Offloading barely fired** (1 of 3 flood turns). Haiku was *too clever* — it ran
+    `grep | sort | uniq` instead of dumping files, so large outputs rarely entered
+    context. tend had almost nothing to offload.
+-2. **tend's per-turn overhead showed up naked.** ON was already +1,137 tok at the
+-   *plant* turn, before any flood — that's the SessionStart restore + the anchor tend
+-   injects every prompt. With no offload savings to offset it, that ~1.5–2K/turn
+-   anchor cost is the entire gap (amplified by a cheap model where ~250 anchor tokens
+-   are a big fraction of a short turn).
++2. **tend's overhead showed up naked.** ON was already +1,137 tok at the
++   *plant* turn, before any flood — that's the SessionStart restore. Each anchor is
++   small (≤400 tok; measured max 263), but anchors persist in the transcript, so the
++   ON arm carries a **standing ~1–2K of extra context** (restore + every anchor so
++   far) that the model re-reads on every turn — the gap grew from ~1.1K to ~2.2K
++   across the five turns of run 1. With no offload savings to offset it, that
++   standing overhead is the entire cost gap (amplified by a cheap model where it's
++   a big fraction of a short turn).
+ 
+ So this measured **tend's cost without its benefit**. It does not contradict Phase 1
+ — it just failed to reproduce the large-output condition where offloading pays off.
+@@ -111,6 +114,12 @@ tend's marquee feature: when a context resets (`/clear`, a new session next morn
+ a crash), its `SessionStart` hook restores STATE.md into the fresh context. We measured
+ this two ways — an automated tally and a hands-on interactive run — and they agree.
+ 
++Two preconditions to read these numbers honestly: **(1)** STATE.md is held fixed on
++disk — this isolates the *restore* leg; whether the model *maintains* the file as it
++works is a separate, model-dependent step that tend nudges but this test assumes.
++**(2)** The tools-blocked OFF arm is a floor: it *cannot* score by construction. The
++fairer control — tools allowed, file unnamed — is the discovery run below.
++
+ ### Automated A/B (5 repeats/arm, Haiku)
+ 
+ A known-good STATE.md is held fixed on disk in **both** arms (the maintained-notebook
+@@ -171,6 +180,19 @@ neutral (small overhead) on short tasks the code + CLAUDE.md already cover.
+ 
+ ---
+ 
++## What we have NOT measured
++
++The pitch is "stays smart ten hours in" — an *outcome* claim. These benchmarks
++prove the mechanisms (offloading shrinks context; restore survives resets) but
++not the outcome: that an agent with tend completes long, decision-heavy tasks
++better than one without. That needs a task-level A/B — a multi-step job with a
++forced mid-task reset, scored on completion quality — which is expensive to run
++credibly (many repeats, blind scoring) and is the next benchmark we want to
++build. Until it exists, the outcome claim is an argument from mechanism, and
++you should read it that way.
++
++---
++
+ ## Artifacts & cost
+ 
+ - `bench/{mechanical,behavioral,interactive}.py` — the harnesses (reusable).
+diff --git a/tend/cli.py b/tend/cli.py
+index 13f8efa..2be7c86 100644
+--- a/tend/cli.py
++++ b/tend/cli.py
+@@ -1,33 +1,11 @@
+-"""tend CLI: status, report, handoff, on/off, install-hook, uninstall-hook, statusline-wrap."""
++"""tend CLI: status, report, handoff, clean, on/off, install-hook, uninstall-hook, statusline-wrap."""
+ import argparse
+-import os
+ import time
+ from pathlib import Path
+ 
+ from . import config, ctxmetrics, install, ledger, paths, state
+ 
+ 
+-def _session_mtime(d):
+-    """Newest mtime in d, tolerating files that vanish mid-scan (atomic-write tmps)."""
+-    times = []
+-    try:
+-        with os.scandir(d) as it:
+-            for entry in it:
+-                try:
+-                    if entry.is_file():
+-                        times.append(entry.stat().st_mtime)
+-                except OSError:
+-                    continue
+-    except OSError:
+-        return 0.0
+-    if times:
+-        return max(times)
+-    try:
+-        return d.stat().st_mtime
+-    except OSError:
+-        return 0.0
+-
+-
+ def latest_session():
+     root = paths.home() / "sessions"
+     if not root.exists():
+@@ -35,7 +13,7 @@ def latest_session():
+     dirs = [d for d in root.iterdir() if d.is_dir()]
+     if not dirs:
+         return None
+-    return max(dirs, key=_session_mtime).name
++    return max(dirs, key=paths.newest_mtime).name
+ 
+ 
+ def cmd_status(args) -> int:
+@@ -49,7 +27,7 @@ def cmd_status(args) -> int:
+     summary = ledger.load_summary(sid)
+     pct = ctxmetrics.used_pct(sid)
+     print(f"session  {sid}")
+-    newest = _session_mtime(paths.home() / "sessions" / sid)
++    newest = paths.newest_mtime(paths.home() / "sessions" / sid)
+     if newest:
+         print(f"last hook activity {(time.time() - newest) / 60:.1f}m ago")
+     pct_s = f"{pct:.0f}%" if pct is not None else "unknown"
+@@ -124,6 +102,17 @@ def cmd_handoff(args) -> int:
+     return 0
+ 
+ 
++def cmd_clean(args) -> int:
++    from . import retention
++
++    days = args.days if args.days is not None else config.load(args.cwd).retention_days
++    stats = retention.sweep(days, dry_run=args.dry_run)
++    verb = "would remove" if args.dry_run else "removed"
++    print(f"{verb} {stats['removed']} session(s) older than {days}d "
++          f"({stats['freed_bytes'] / 1e6:.1f} MB); kept {stats['kept']}")
++    return 0
++
++
+ def cmd_on(args) -> int:
+     (paths.home() / "disabled").unlink(missing_ok=True)
+     print("tend enabled")
+@@ -183,6 +172,7 @@ def main(argv=None) -> int:
+         ("status", cmd_status, ["session", "cwd"]),
+         ("report", cmd_report, ["session", "cwd"]),
+         ("handoff", cmd_handoff, ["cwd"]),
++        ("clean", cmd_clean, ["cwd", "clean"]),
+         ("on", cmd_on, []),
+         ("off", cmd_off, []),
+         ("install-hook", cmd_install, ["settings"]),
+@@ -197,6 +187,9 @@ def main(argv=None) -> int:
+             p.add_argument("--cwd", default=".")
+         if "settings" in opts:
+             p.add_argument("--settings", default=default_settings)
++        if "clean" in opts:
++            p.add_argument("--days", type=int, default=None)
++            p.add_argument("--dry-run", action="store_true")
+         p.set_defaults(fn=fn)
+ 
+     args = parser.parse_args(argv)
+diff --git a/tend/config.py b/tend/config.py
+index a920609..20bc9c7 100644
+--- a/tend/config.py
++++ b/tend/config.py
+@@ -13,6 +13,7 @@ DEFAULTS = {
+     "anchor_max_tokens": 400,
+     "state_stale_tokens": 3000,  # OUTPUT tokens since the last STATE.md mark (monotonic)
+     "state_fresh_hours": 48,
++    "retention_days": 30,  # sweep sessions/<id> older than this at SessionStart; 0 disables
+     "advise_pct": 55,
+     "urge_pct": 70,
+     "delegation_guard": True,
+@@ -29,6 +30,7 @@ class Config:
+     anchor_max_tokens: int
+     state_stale_tokens: int
+     state_fresh_hours: int
++    retention_days: int
+     advise_pct: float
+     urge_pct: float
+     delegation_guard: bool
+diff --git a/tend/paths.py b/tend/paths.py
+index ec87b80..89b0136 100644
+--- a/tend/paths.py
++++ b/tend/paths.py
+@@ -14,6 +14,27 @@ def session_dir(session_id: str) -> Path:
+     return d
+ 
+ 
++def newest_mtime(d) -> float:
++    """Newest file mtime in d, tolerating files that vanish mid-scan; 0.0 on error."""
++    times = []
++    try:
++        with os.scandir(d) as it:
++            for entry in it:
++                try:
++                    if entry.is_file():
++                        times.append(entry.stat().st_mtime)
++                except OSError:
++                    continue
++    except OSError:
++        return 0.0
++    if times:
++        return max(times)
++    try:
++        return Path(d).stat().st_mtime
++    except OSError:
++        return 0.0
++
++
+ def disabled() -> bool:
+     return (home() / "disabled").exists()
+ 
+diff --git a/tend/sessionstart.py b/tend/sessionstart.py
+index 7759869..a0c6439 100644
+--- a/tend/sessionstart.py
++++ b/tend/sessionstart.py
+@@ -1,7 +1,7 @@
+ """Pillar 4: lossless continuation - restore STATE.md into fresh sessions; seed convention."""
+ from pathlib import Path
+ 
+-from . import config, state
++from . import config, retention, state
+ 
+ CONVENTION = (
+     "[tend] This project uses .claude

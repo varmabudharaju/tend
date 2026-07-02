@@ -24,8 +24,19 @@ REPO = Path(__file__).resolve().parent.parent
 # --------------------------------------------------------------------------- #
 # corpora
 # --------------------------------------------------------------------------- #
+CORPUS_DIR = REPO / "bench" / "corpus"
+
+
 def load_real_corpus():
-    """Real large tool outputs tend offloaded in production sessions."""
+    """Frozen, scrubbed real outputs committed in bench/corpus (reproducible)."""
+    items = []
+    for f in sorted(CORPUS_DIR.glob("*.txt")):
+        items.append((f"real:{f.name}", f.read_text(encoding="utf-8", errors="replace")))
+    return items
+
+
+def load_live_corpus():
+    """Opt-in: the runner's own offloaded outputs from ~/.claude/tend/sessions."""
     root = Path.home() / ".claude" / "tend" / "sessions"
     items = []
     for f in sorted(root.glob("*/outputs/*.txt")):
@@ -33,7 +44,7 @@ def load_real_corpus():
             text = f.read_text(encoding="utf-8", errors="replace")
         except Exception:
             continue
-        items.append((f"real:{f.parent.parent.name[:8]}/{f.name}", text))
+        items.append((f"live:{f.parent.parent.name[:8]}/{f.name}", text))
     return items
 
 
@@ -290,12 +301,12 @@ def measure_footprint(corpus, workdir):
 # --------------------------------------------------------------------------- #
 # run + report
 # --------------------------------------------------------------------------- #
-def run(out_dir, stamp, iters=40):
+def run(out_dir, stamp, iters=40, live_corpus=False):
     tmp = tempfile.mkdtemp(prefix="tend-bench-")
     workdir = Path(tmp)
     os.environ["TEND_HOME"] = str(workdir / "tend_home")
 
-    real = load_real_corpus()
+    real = load_live_corpus() if live_corpus else load_real_corpus()
     synth = synthetic_corpus()
     corpus = real + synth
 

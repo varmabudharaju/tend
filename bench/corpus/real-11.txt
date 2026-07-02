@@ -1,0 +1,401 @@
+* Built-in subagents
+* Quickstart: create your first subagent
+* Configure subagents
+  * Use the /agents command
+  * Choose the subagent scope
+  * Write subagent files
+    * Supported frontmatter fields
+  * Choose a model
+  * Control subagent capabilities
+    * Available tools
+    * Restrict which subagents can be spawned
+    * Scope MCP servers to a subagent
+    * Permission modes
+    * Preload skills into subagents
+    * Enable persistent memory
+      * Persistent memory tips
+    * Conditional rules with hooks
+    * Disable specific subagents
+  * Define hooks for subagents
+    * Hooks in subagent frontmatter
+    * Project-level hooks for subagent events
+* Work with subagents
+  * Understand automatic delegation
+  * Invoke subagents explicitly
+  * Run subagents in foreground or background
+  * Common patterns
+    * Isolate high-volume operations
+    * Run parallel research
+    * Chain subagents
+  * Choose between subagents and main conversation
+  * Manage subagent context
+    * What loads at startup
+    * Resume subagents
+    * Auto-compaction
+* Fork the current conversation
+  * Observe and steer running forks
+  * How forks differ from named subagents
+  * Limitations
+* Example subagents
+  * Code reviewer
+  * Debugger
+  * Data scientist
+  * Database query validator
+* Next steps
+
+### [agent-view](https://code.claude.com/docs/en/agent-view.md)
+
+* Quick start
+* Monitor sessions with agent view
+  * Read session state
+  * Row summaries
+  * Pull request status
+  * Peek and reply
+  * Attach to a session
+  * Organize the list
+  * Filter sessions
+  * Keyboard shortcuts
+* Dispatch new agents
+  * From agent view
+    * Dispatch to a specific directory
+  * From inside a session
+  * From your shell
+    * Run a shell command
+  * How file edits are isolated
+  * Set the model
+  * Permission mode, model, and effort
+  * Settings, plugins, and MCP servers
+* Manage sessions from the shell
+* How background sessions are hosted
+  * The supervisor process
+  * Where state is stored
+  * Turn off agent view
+* Troubleshooting
+  * `claude agents` lists subagents instead of opening agent view
+  * Agent view opens with no sessions
+  * Cannot open agents because work is running in the background
+  * Prompt rejected as too short
+  * Sessions show as failed after shutdown
+  * Agent view says the background service did not respond
+  * Background sessions cannot read Desktop, Documents, or Downloads on macOS
+  * A session is slow to respond after attaching
+  * `.claude/worktrees/` is filling up
+* Limitations
+* Related resources
+
+### [agent-teams](https://code.claude.com/docs/en/agent-teams.md)
+
+* When to use agent teams
+  * Compare with subagents
+* Enable agent teams
+* Start your first agent team
+* Control your agent team
+  * Choose a display mode
+  * Specify teammates and models
+  * Require plan approval for teammates
+  * Talk to teammates directly
+  * Assign and claim tasks
+  * Shut down teammates
+  * Clean up the team
+  * Enforce quality gates with hooks
+* How agent teams work
+  * How Claude starts agent teams
+  * Architecture
+  * Use subagent definitions for teammates
+  * Permissions
+  * Context and communication
+  * Token usage
+* Use case examples
+  * Run a parallel code review
+  * Investigate with competing hypotheses
+* Best practices
+  * Give teammates enough context
+  * Choose an appropriate team size
+  * Size tasks appropriately
+  * Wait for teammates to finish
+  * Start with research and review
+  * Avoid file conflicts
+  * Monitor and steer
+* Troubleshooting
+  * Teammates not appearing
+  * Too many permission prompts
+  * Teammates stopping on errors
+  * Lead shuts down before work is done
+  * Orphaned tmux sessions
+* Limitations
+* Next steps
+
+### [workflows](https://code.claude.com/docs/en/workflows.md)
+
+* When to use a workflow
+* Run a bundled workflow
+  * Bundled workflows
+  * Watch the run
+* Have Claude write a workflow
+  * Ask for a workflow in your prompt
+  * Let Claude decide with ultracode
+  * Approve the plan before it runs
+  * Save the workflow for reuse
+  * Pass input to a saved workflow
+* How a workflow runs
+  * Behavior and limits
+* Manage runs
+  * Resume after a pause
+  * Cost
+  * Turn workflows off
+* Related resources
+
+### [worktrees](https://code.claude.com/docs/en/worktrees.md)
+
+* Start Claude in a worktree
+  * Choose the base branch
+* Copy gitignored files into worktrees
+* Isolate subagents with worktrees
+* Clean up worktrees
+* Manage worktrees manually
+* Non-git version control
+* See also
+
+## MCP
+
+### [mcp-quickstart](https://code.claude.com/docs/en/mcp-quickstart.md)
+
+* Before you begin
+* Add and verify a server
+* Where servers are saved
+  * Find your configuration on disk
+* Change server scope
+  * Use a server in all your projects
+  * Share a server with your team
+* Additional MCP server examples
+  * Add a local server
+  * Connect a server that requires sign-in
+* Edit .mcp.json directly
+* Connect from other surfaces
+* Troubleshooting
+* Next steps
+
+### [mcp](https://code.claude.com/docs/en/mcp.md)
+
+* What you can do with MCP
+* Find and build MCP servers
+* Installing MCP servers
+  * Option 1: Add a remote HTTP server
+  * Option 2: Add a remote SSE server
+  * Option 3: Add a local stdio server
+  * Option 4: Add a remote WebSocket server
+  * Managing your servers
+  * Dynamic tool updates
+  * Automatic reconnection
+  * Push messages with channels
+  * Plugin-provided MCP servers
+* MCP installation scopes
+  * Local scope
+  * Project scope
+  * User scope
+  * Scope hierarchy and precedence
+  * Environment variable expansion in `.mcp.json`
+* Practical examples
+  * Example: Monitor errors with Sentry
+  * Example: Connect to GitHub for code reviews
+  * Example: Query your PostgreSQL database
+* Authenticate with remote MCP servers
+  * Use a fixed OAuth callback port
+  * Use pre-configured OAuth credentials
+  * Override OAuth metadata discovery
+  * Restrict OAuth scopes
+  * Use dynamic headers for custom authentication
+* Add MCP servers from JSON configuration
+* Import MCP servers from Claude Desktop
+* Use MCP servers from Claude.ai
+* Use Claude Code as an MCP server
+* MCP output limits and warnings
+  * Raise the limit for a specific tool
+* Respond to MCP elicitation requests
+* Use MCP resources
+  * Reference MCP resources
+* Scale with MCP Tool Search
+  * How it works
+  * For MCP server authors
+  * Configure tool search
+  * Exempt a server from deferral
+* Use MCP prompts as commands
+  * Execute MCP prompts
+* Managed MCP configuration
+
+## Skills
+
+### [skills](https://code.claude.com/docs/en/skills.md)
+
+* Bundled skills
+  * Run and verify your app
+* Getting started
+  * Create your first skill
+  * Where skills live
+    * Live change detection
+    * Automatic discovery from parent and nested directories
+    * Skills from additional directories
+* Configure skills
+  * Types of skill content
+  * Frontmatter reference
+    * How a skill gets its command name
+    * Available string substitutions
+  * Add supporting files
+  * Control who invokes a skill
+  * Skill content lifecycle
+  * Pre-approve tools for a skill
+  * Pass arguments to skills
+* Advanced patterns
+  * Inject dynamic context
+  * Run skills in a subagent
+    * Example: Research skill using Explore agent
+  * Restrict Claude's skill access
+  * Override skill visibility from settings
+* Share skills
+  * Generate visual output
+* Troubleshooting
+  * Skill not triggering
+  * Skill triggers too often
+  * Skill descriptions are cut short
+* Related resources
+
+## Plugins
+
+### [discover-plugins](https://code.claude.com/docs/en/discover-plugins.md)
+
+* How marketplaces work
+* Official Anthropic marketplace
+  * Code intelligence
+    * What Claude gains from code intelligence plugins
+  * External integrations
+  * Automatic security review
+  * Development workflows
+  * Output styles
+* Community marketplace
+* Try it: add the demo marketplace
+* Add marketplaces
+  * Add from GitHub
+  * Add from other Git hosts
+  * Add from local paths
+  * Add from remote URLs
+* Install plugins
+* Manage installed plugins
+  * Apply plugin changes without restarting
+* Manage marketplaces
+  * Use the interactive interface
+  * Use CLI commands
+  * Configure auto-updates
+* Configure team marketplaces
+* Security
+* Troubleshooting
+  * /plugin command not recognized
+  * Common issues
+  * Code intelligence issues
+* Next steps
+
+### [plugins](https://code.claude.com/docs/en/plugins.md)
+
+* When to use plugins vs standalone configuration
+* Quickstart
+  * Prerequisites
+  * Create your first plugin
+* Develop a plugin in your skills directory
+* Plugin structure overview
+* Develop more complex plugins
+  * Add Skills to your plugin
+  * Add LSP servers to your plugin
+  * Add background monitors to your plugin
+  * Ship default settings with your plugin
+  * Organize complex plugins
+  * Test your plugins locally
+  * Debug plugin issues
+  * Share your plugins
+  * Submit your plugin to the community marketplace
+* Convert existing configurations to plugins
+  * Migration steps
+  * What changes when migrating
+* Next steps
+  * For plugin users
+  * For plugin developers
+
+## Automation
+
+### [hooks-guide](https://code.claude.com/docs/en/hooks-guide.md)
+
+* Set up your first hook
+* What you can automate
+  * Get notified when Claude needs input
+  * Auto-format code after edits
+  * Block edits to protected files
+  * Re-inject context after compaction
+  * Audit configuration changes
+  * Reload environment when directory or files change
+  * Auto-approve specific permission prompts
+* How hooks work
+  * Combine results from multiple hooks
+  * Read input and return output
+    * Hook input
+    * Hook output
+    * Structured JSON output
+  * Filter hooks with matchers
+    * Filter by tool name and arguments with the `if` field
+  * Configure hook location
+* Prompt-based hooks
+* Agent-based hooks
+* HTTP hooks
+* Limitations and troubleshooting
+  * Limitations
+  * Hooks and permission modes
+  * Hook not firing
+  * Hook error in output
+  * `/hooks` shows no hooks configured
+  * Stop hook hits the block cap
+  * JSON validation failed
+  * Debug techniques
+* Learn more
+
+### [channels](https://code.claude.com/docs/en/channels.md)
+
+* Supported channels
+* Quickstart
+* Security
+* Enterprise controls
+  * Enable channels for your organization
+  * Restrict which channel plugins can run
+* Research preview
+* How channels compare
+* Next steps
+
+### [scheduled-tasks](https://code.claude.com/docs/en/scheduled-tasks.md)
+
+* Compare scheduling options
+* Run a prompt repeatedly with /loop
+  * Run on a fixed interval
+  * Let Claude choose the interval
+  * Run the built-in maintenance prompt
+  * Customize the default prompt with loop.md
+  * Stop a loop
+* Set a one-time reminder
+* Manage scheduled tasks
+* How scheduled tasks run
+  * Jitter
+  * Seven-day expiry
+* Cron expression reference
+* Disable scheduled tasks
+* Limitations
+
+### [goal](https://code.claude.com/docs/en/goal.md)
+
+* Compare ways to keep a session running
+* Use `/goal`
+  * Set a goal
+  * Write an effective condition
+  * Check status
+  * Clear a goal
+  * Resume with an active goal
+  * Run non-interactively
+* How evaluation works
+* Requirements
+* See also
+
+### [headless](https://code.claude.com/docs/en/headless.md)

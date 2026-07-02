@@ -1,0 +1,456 @@
+########## backends/native_terminal.py ##########
+"""Capture a *real* macOS Terminal window — an authentic screenshot.
+
+Unlike the rendered CLI backend (which recreates output as styled HTML), this
+drives the actual Terminal.app via AppleScript: open a window, size it, run the
+command after a ``clear``, wait for it to finish, then ``screencapture`` the live
+window and close it — all atomically so nothing can slide in front mid-capture.
+
+Requires macOS and Screen-Recording permission for the controlling terminal
+(System Settings → Privacy & Security → Screen Recording).
+"""
+
+import contextlib
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+# AppleScript args: cwd, command, cols, rows, out_path
+_APPLESCRIPT = r'''on run argv
+    set theCwd to item 1 of argv
+    set theCmd to item 2 of argv
+    set theCols to (item 3 of argv) as integer
+    set theRows to (item 4 of argv) as integer
+    set outPath to item 5 of argv
+    tell application "Terminal"
+        activate
+        set t to do script ""
+        delay 0.4
+        set w to front window
+        set number of columns of w to theCols
+        set number of rows of w to theRows
+        delay 0.2
+        do script ("cd " & quoted form of theCwd & " && clear && " & theCmd) in t
+        delay 0.4
+        set tries to 0
+        repeat while (busy of t) and (tries < 600)
+            delay 0.2
+            set tries to tries + 1
+        end repeat
+        delay 0.5
+        -- Capture by WINDOW ID, not screen region: a region grab photographs whatever
+        -- pixels are stacked on top (e.g. the user's own frontmost terminal), leaking
+        -- unrelated window content into the shot. -l targets this window regardless of
+        -- stacking and doesn't require it to be frontmost.
+        set wid to id of w
+        do shell script "screencapture -x -o -l " & wid & " " & quoted form of outPath
+        close w saving no
+    end tell
+end run
+'''
+
+
+class NativeCaptureError(RuntimeError):
+    """Raised when a real Terminal capture cannot be performed."""
+
+
+def capture_terminal(
+    command: str,
+    cwd: str,
+    cols: int,
+    rows: int,
+    timeout: float = 120.0,
+) -> bytes:
+    """Run ``command`` in a real Terminal window and return PNG bytes of it."""
+    if sys.platform != "darwin":
+        raise NativeCaptureError(
+            "native terminal capture requires macOS; set 'style: rendered' on this platform"
+        )
+    with tempfile.TemporaryDirectory() as tmp:
+        script_path = Path(tmp) / "capture.applescript"
+        out_path = Path(tmp) / "shot.png"
+        script_path.write_text(_APPLESCRIPT)
+        try:
+            subprocess.run(
+                [
+                    "osascript",
+                    str(script_path),
+                    cwd,
+                    command,
+                    str(cols),
+                    str(rows),
+                    str(out_path),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+            )
+        except subprocess.CalledProcessError as exc:
+            raise NativeCaptureError(
+                "Terminal capture failed. Grant Screen Recording permission to your "
+                "terminal in System Settings → Privacy & Security → Screen Recording, "
+                f"then retry.\n{exc.stderr.strip()}"
+            ) from exc
+        except subprocess.TimeoutExpired as exc:
+            raise NativeCaptureError(
+                f"Terminal capture timed out after {timeout:.0f}s running: {command}"
+            ) from exc
+        if not out_path.exists():
+            raise NativeCaptureError("Terminal capture produced no image")
+        return out_path.read_bytes()
+
+
+# --- Persistent sessions: one window, many commands, a screenshot after each ---
+
+# args: cwd, cols, rows  -> prints the Terminal window id
+_CREATE_SCRIPT = r'''on run argv
+    set theCwd to item 1 of argv
+    set theCols to (item 2 of argv) as integer
+    set theRows to (item 3 of argv) as integer
+    tell application "Terminal"
+        activate
+        set t to do script ""
+        delay 0.4
+        set w to front window
+        set number of columns of w to theCols
+        set number of rows of w to theRows
+        delay 0.2
+        do script ("cd " & quoted form of theCwd & " && clear") in t
+        delay 0.3
+        return (id of w) as text
+    end tell
+end run
+'''
+
+# args: window_id, command, clear("1"/"0"), wait_ms, out_path
+_STEP_SCRIPT = r'''on run argv
+    set wid to (item 1 of argv) as integer
+    set theCmd to item 2 of argv
+    set doClear to (item 3 of argv) is "1"
+    set waitMs to (item 4 of argv) as integer
+    set outPath to item 5 of argv
+    tell application "Terminal"
+        set w to window id wid
+        set t to selected tab of w
+        if doClear then
+            do script "clear" in t
+            delay 0.3
+        end if
+        do script theCmd in t
+        delay 0.3
+        set tries to 0
+        repeat while (busy of t) and (tries < 1500)
+            delay 0.2
+            set tries to tries + 1
+        end repeat
+        if waitMs > 0 then
+            delay (waitMs / 1000)
+        end if
+        delay 0.3
+        -- Capture by WINDOW ID (see the single-shot script): region grabs leak whatever
+        -- window is stacked on top; -l hits this window even when it isn't frontmost.
+        do shell script "screencapture -x -o -l " & wid & " " & quoted form of outPath
+    end tell
+end run
+'''
+
+# args: window_id
+_CLOSE_SCRIPT = r'''on run argv
+    set wid to (item 1 of argv) as integer
+    tell application "Terminal" to close (window id wid) saving no
+end run
+'''
+
+
+def _run_osascript(script_body: str, args: list[str], timeout: float) -> str:
+    with tempfile.TemporaryDirectory() as tmp:
+        path = Path(tmp) / "script.applescript"
+        path.write_text(script_body)
+        try:
+            proc = subprocess.run(
+                ["osascript", str(path), *args],
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+            )
+        except subprocess.CalledProcessError as exc:
+            raise NativeCaptureError(
+                "Terminal automation failed. Grant Screen Recording permission to your "
+                "terminal in System Settings → Privacy & Security → Screen Recording.\n"
+                f"{exc.stderr.strip()}"
+            ) from exc
+        except subprocess.TimeoutExpired as exc:
+            raise NativeCaptureError(f"Terminal automation timed out after {timeout:.0f}s") from exc
+    return proc.stdout.strip()
+
+
+def _create_session(cwd: str, cols: int, rows: int) -> str:
+    return _run_osascript(_CREATE_SCRIPT, [cwd, str(cols), str(rows)], timeout=60.0)
+
+
+def _run_step(wid: str, command: str, clear: bool, wait_ms: int, out_path: str) -> None:
+    _run_osascript(
+        _STEP_SCRIPT,
+        [wid, command, "1" if clear else "0", str(wait_ms), out_path],
+        timeout=600.0,
+    )
+
+
+def _close_session(wid: str) -> None:
+    _run_osascript(_CLOSE_SCRIPT, [wid], timeout=30.0)
+
+
+def capture_terminal_session(
+    steps: list[tuple[str, bool, int]],
+    cwd: str,
+    cols: int,
+    rows: int,
+) -> list[bytes]:
+    """Run ``steps`` in one persistent Terminal window, capturing after each.
+
+    Each step is ``(command, clear_first, wait_ms)``. The shell state persists
+    across steps; the window is captured after every step and closed at the end
+    (even on error). Returns one PNG per step, in order.
+    """
+    if sys.platform != "darwin":
+        raise NativeCaptureError(
+            "native terminal capture requires macOS; set 'style: rendered' on this platform"
+        )
+    images: list[bytes] = []
+    with tempfile.TemporaryDirectory() as tmp:
+        wid = _create_session(cwd, cols, rows)
+        try:
+            for index, (command, clear, wait_ms) in enumerate(steps):
+                out_path = Path(tmp) / f"{index:03d}.png"
+                _run_step(wid, command, clear, wait_ms, str(out_path))
+                if not out_path.exists():
+                    raise NativeCaptureError(f"no image produced for step {index + 1}")
+                images.append(out_path.read_bytes())
+        finally:
+            with contextlib.suppress(NativeCaptureError):
+                _close_session(wid)
+    return images
+
+########## backends/cli.py (rendered) ##########
+"""Capture CLI output as a styled terminal-window screenshot.
+
+The command runs under a pseudo-terminal so tools emit their normal colors, the
+output is converted to HTML, rendered as a terminal card (:mod:`capture.render`),
+and screenshotted with Playwright.
+"""
+
+import contextlib
+import fcntl
+import os
+import pty
+import select
+import signal
+import struct
+import subprocess
+import termios
+import time
+
+from playwright.sync_api import Page
+
+from capture.config import CliShot
+from capture.render import ansi_to_html, terminal_html
+
+
+def _set_winsize(fd: int, cols: int, rows: int = 50) -> None:
+    winsize = struct.pack("HHHH", rows, cols, 0, 0)
+    fcntl.ioctl(fd, termios.TIOCSWINSZ, winsize)
+
+
+def run_command(
+    command: str,
+    cwd: str | None,
+    cols: int,
+    timeout: float = 60.0,
+) -> str:
+    """Run ``command`` under a PTY and return its raw (ANSI) output.
+
+    A PTY makes tools emit colors as if attached to a real terminal. The command
+    is killed if it does not finish within ``timeout`` so capture never hangs.
+    """
+    master, slave = pty.openpty()
+    _set_winsize(slave, cols)
+    env = {
+        **os.environ,
+        "TERM": "xterm-256color",
+        "COLUMNS": str(cols),
+        "FORCE_COLOR": "1",
+        "CLICOLOR_FORCE": "1",
+    }
+    proc = subprocess.Popen(
+        command,
+        shell=True,
+        cwd=cwd,
+        stdin=slave,
+        stdout=slave,
+        stderr=slave,
+        env=env,
+        start_new_session=True,
+        close_fds=True,
+    )
+    os.close(slave)
+
+    chunks: list[bytes] = []
+    deadline = time.monotonic() + timeout
+    try:
+        while time.monotonic() < deadline:
+            ready, _, _ = select.select([master], [], [], 0.2)
+            if not ready:
+                continue
+            try:
+                data = os.read(master, 4096)
+            except OSError:
+                break  # slave closed — child finished
+            if not data:
+                break
+            chunks.append(data)
+    finally:
+        if proc.poll() is None:
+            with contextlib.suppress(ProcessLookupError):
+                os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+        proc.wait()
+        os.close(master)
+
+    return b"".join(chunks).decode(errors="replace")
+
+
+def capture_cli(page: Page, shot: CliShot, cwd: str | None = None) -> bytes:
+    """Run the shot's command and return a PNG of its rendered terminal output.
+
+    ``cwd`` overrides ``shot.cwd`` when given (the engine passes the working
+    directory resolved relative to the repo root).
+    """
+    working_dir = cwd if cwd is not None else shot.cwd
+    raw = run_command(shot.command, working_dir, shot.cols)
+    page.set_content(terminal_html(ansi_to_html(raw), shot.cols))
+    return page.locator(".frame").screenshot()
+
+########## cli.py (Typer surface) ##########
+"""Typer command-line interface for ``capture``.
+
+Three commands cover the whole workflow: ``init`` writes a starter shot list,
+``validate`` checks a shot list loads cleanly, and ``run`` performs the capture.
+Errors from config loading and app readiness are turned into a single-line
+message plus a non-zero exit, so the tool fails loudly but never with a
+traceback.
+"""
+
+from pathlib import Path
+
+import typer
+
+from capture import config as config_module
+from capture import engine
+from capture.lifecycle import ReadinessError
+
+app = typer.Typer(
+    add_completion=False,
+    help="Reproducible screenshot capture for docs.",
+)
+
+_STARTER_YAML = """\
+# .capture.yaml — declarative shot list for `capture`.
+# Describe how to start your app and what to capture, then run `capture run`.
+
+output:
+  dir: docs/screenshots   # where PNGs land
+  # version: v1           # optional subfolder, e.g. docs/screenshots/v1/
+  # readme: README.md     # optional: splice <img> snippets into this file
+
+# `app` is optional — omit it for static sites or pure CLI shots.
+app:
+  command: "npm run dev"
+  cwd: .
+  ready:
+    url: http://localhost:5173   # poll until it responds (or use: port / log_line)
+    timeout: 30
+
+shots:
+  - name: home
+    kind: web
+    url: http://localhost:5173/
+    viewport: { width: 1280, height: 800 }
+    full_page: true
+    alt: "Home page"
+    # steps:                      # optional interactions before the screenshot
+    #   - { click: "text=Sign in" }
+    #   - { fill: ["#email", "redacted@example.com"] }
+    #   - { wait_for: "#chart" }
+
+  - name: cli-help
+    kind: cli
+    command: "mytool --help"
+    # style: native    # macOS default: a REAL Terminal.app screenshot.
+    #                  # use 'rendered' for a synthetic terminal card (any OS, no permission).
+    # cols: 90         # terminal width; rows controls window height
+    # rows: 20
+    alt: "Top-level CLI help output"
+
+  # A session captures a stateful, multi-command flow in ONE persistent Terminal
+  # window (macOS): the shell state carries across steps, one screenshot per step.
+  # - name: demo-flow
+  #   kind: session
+  #   clear_between: true
+  #   steps:
+  #     - { name: step-one, command: "mytool init", alt: "first command" }
+  #     - { name: step-two, command: "mytool run",  alt: "second, same shell" }
+"""
+
+
+@app.command()
+def init(
+    path: str = ".capture.yaml",
+    force: bool = False,
+) -> None:
+    """Write a starter .capture.yaml shot list."""
+    target = Path(path)
+    if target.exists() and not force:
+        typer.echo(f"refusing to overwrite existing {target} (use --force)")
+        raise typer.Exit(1)
+    target.write_text(_STARTER_YAML)
+    typer.echo(f"wrote {target}")
+
+
+@app.command()
+def validate(
+    config: str = typer.Option(".capture.yaml", "--config", "-c"),  # noqa: B008
+) -> None:
+    """Check that a shot list loads and is valid."""
+    try:
+        cfg = config_module.load(config)
+    except config_module.ConfigError as exc:
+        typer.echo(str(exc))
+        raise typer.Exit(1) from exc
+    typer.echo(f"valid ({len(cfg.shots)} shots)")
+
+
+@app.command()
+def run(
+    config: str = typer.Option(".capture.yaml", "--config", "-c"),  # noqa: B008
+    only: list[str] = typer.Option(default_factory=list, show_default=False),  # noqa: B008
+    version: str | None = typer.Option(None),
+) -> None:
+    """Capture all configured shots (filter with --only)."""
+    try:
+        cfg = config_module.load(config)
+        if version is not None:
+            cfg.output.version = version
+        repo_root = Path(config).resolve().parent
+        results = engine.run(cfg, repo_root, only or None)
+    except (config_module.ConfigError, ReadinessError) as exc:
+        typer.echo(str(exc))
+        raise typer.Exit(1) from exc
+
+    for result in results:
+        typer.echo(f"{result.name} -> {result.src}")
+    typer.echo(f"captured {len(results)} shot(s)")
+--- stderr ---
+
+Shell cwd was reset to /home/user/mongosemantic
