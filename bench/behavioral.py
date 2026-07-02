@@ -15,6 +15,7 @@ usage), total cost USD, total output tokens, wall-clock seconds.
 """
 import json
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -49,6 +50,14 @@ PLANT = (
 PROBE = (
     "Without using any tools and without reading any files — from memory only — "
     "answer concisely:\n"
+    "  (a) the project codename,\n"
+    "  (b) the database driver,\n"
+    "  (c) the retry budget number,\n"
+    "  (d) the flag we must never use.")
+
+DISCOVERY_PROBE = (
+    "You're picking this project back up after a break. From what you know or can "
+    "find in this project, answer concisely:\n"
     "  (a) the project codename,\n"
     "  (b) the database driver,\n"
     "  (c) the retry budget number,\n"
@@ -151,8 +160,9 @@ def peak_ctx_in(usage):
 
 
 def score_recall(answer):
-    low = (answer or "").lower()
-    hits = {k: (v.lower() in low) for k, v in FACTS.items()}
+    text = answer or ""
+    hits = {k: bool(re.search(rf"(?<![\w-]){re.escape(v)}(?![\w-])", text, re.IGNORECASE))
+            for k, v in FACTS.items()}
     return hits, sum(hits.values())
 
 
@@ -268,6 +278,37 @@ def run_handoff_session(arm, run_dir, model, repeat, log=print):
     }
 
 
+def run_discovery_session(arm, run_dir, model, repeat, log=print):
+    """The fair OFF arm: STATE.md is on disk in BOTH arms, tools are ALLOWED,
+    and the probe names no file. tend ON injects STATE.md at SessionStart;
+    tend OFF must spontaneously discover it. Measures whether tend's restore
+    is load-bearing or mere convenience."""
+    env, home = arm_env(run_dir, arm, f"r{repeat}")
+    sb = make_sandbox(home, n_logs=1, log_tokens=200)
+    st = Path(sb) / ".claude" / "tend" / "STATE.md"
+    st.parent.mkdir(parents=True, exist_ok=True)
+    st.write_text(HANDOFF_STATE, encoding="utf-8")
+    t0 = time.time()
+    d = run_turn(DISCOVERY_PROBE, sb, env, model, resume_sid=None,
+                 allowed="Read Grep Glob Bash", disallowed=None, timeout=300)
+    answer = d.get("result", "") if not d.get("_parse_error") else ""
+    hits, recall = score_recall(answer)
+    cost = d.get("total_cost_usd", 0.0) or 0.0
+    log(f"    [{arm} r{repeat} discovery] recall={recall}/4 cost=${cost:.3f}")
+    return {
+        "arm": arm, "repeat": repeat, "model": model, "kind": "discovery",
+        "recall": recall, "recall_hits": hits,
+        "peak_ctx_tokens": peak_ctx_in(d.get("usage", {})),
+        "total_cost_usd": round(cost, 4),
+        "total_output_tokens": d.get("usage", {}).get("output_tokens", 0),
+        "offload_files": 0, "snapshots": 0, "compacted": False,
+        "errored": bool(d.get("_parse_error")),
+        "seconds": round(time.time() - t0, 1),
+        "turns_ctx": [],
+        "probe_answer": answer[:400],
+    }
+
+
 def run_pilot(out_dir, stamp, model="claude-haiku-4-5-20251001", repeats=2,
               arms=("on", "off"), kind="recall", flood_turns=3, log_tokens=9000,
               log=print):
@@ -280,6 +321,8 @@ def run_pilot(out_dir, stamp, model="claude-haiku-4-5-20251001", repeats=2,
             log(f"  -> session arm={arm} repeat={repeat}")
             if kind == "handoff":
                 s = run_handoff_session(arm, run_dir, model, repeat, log=log)
+            elif kind == "discovery":
+                s = run_discovery_session(arm, run_dir, model, repeat, log=log)
             else:
                 s = run_session(arm, run_dir, model, repeat, kind=kind,
                                 flood_turns=flood_turns, log_tokens=log_tokens, log=log)
@@ -331,6 +374,10 @@ def render_markdown(r, arms):
         desc = ("Plant 4 project facts in STATE.md, then a **fresh session** probes "
                 "recall with tools blocked — only tend can auto-restore STATE on a new "
                 "context. Identical in both arms; only difference: tend on/off.")
+    elif kind == "discovery":
+        desc = ("STATE.md sits on disk in **both** arms, tools ALLOWED, and the probe "
+                "names no file. tend ON auto-injects it; tend OFF must spontaneously "
+                "discover it. Tests whether the restore is load-bearing.")
     else:
         desc = ("Identical scripted session in both arms (plant 4 facts → flood context "
                 "with large Bash outputs → probe recall from memory). Only difference: "
