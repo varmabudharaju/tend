@@ -1,9 +1,11 @@
-"""tend CLI: status, report, handoff, clean, on/off, install-hook, uninstall-hook, statusline-wrap."""
+"""tend CLI: status, report, find, handoff, clean, on/off, install-hook, uninstall-hook, statusline-wrap."""
 import argparse
+import os
+import re
 import time
 from pathlib import Path
 
-from . import config, ctxmetrics, install, ledger, paths, state
+from . import config, ctxmetrics, install, ledger, offload, paths, state
 
 
 def latest_session():
@@ -14,6 +16,20 @@ def latest_session():
     if not dirs:
         return None
     return max(dirs, key=paths.newest_mtime).name
+
+
+def _sessions_with_outputs():
+    """Session ids whose outputs dir has a *.txt, newest outputs mtime first."""
+    root = paths.home() / "sessions"
+    if not root.exists():
+        return []
+    found = []
+    for d in root.iterdir():
+        out = d / "outputs"
+        if d.is_dir() and out.is_dir() and any(out.glob("*.txt")):
+            found.append((paths.newest_mtime(out), d.name))
+    found.sort(reverse=True)
+    return [name for _, name in found]
 
 
 def cmd_status(args) -> int:
@@ -84,6 +100,66 @@ def cmd_report(args) -> int:
         print(f"\n## compaction snapshots ({len(snaps)})")
         for p in snaps:
             print(f"  {p.name}")
+    return 0
+
+
+def _find_header(sid) -> str:
+    entries = offload.read_index(sid)
+    if entries:
+        last = entries[-1]
+        bits = [b for b in (last.get("tool"), last.get("hint")) if b]
+        detail = " - " + " | ".join(bits) if bits else ""
+        return f"# {sid} ({len(entries)} filed){detail}"
+    return f"# {sid}"
+
+
+def cmd_find(args) -> int:
+    root = paths.home() / "sessions"
+    if args.session:
+        if not (root / args.session).is_dir():
+            print(f"no such session: {args.session}")
+            return 1
+        sessions = [args.session]
+    elif args.all:
+        sessions = _sessions_with_outputs()
+    else:
+        sessions = _sessions_with_outputs()[:1]
+    if not sessions:
+        print("no filed outputs to search yet")
+        return 0
+    try:
+        rx = re.compile(args.pattern, 0 if args.case_sensitive else re.IGNORECASE)
+    except re.error as e:
+        print(f"bad pattern: {e}")
+        return 1
+
+    total, truncated = 0, False
+    for sid in sessions:
+        header_shown = False
+        for txt in sorted((root / sid / "outputs").glob("*.txt")):
+            try:
+                lines = txt.read_text(encoding="utf-8", errors="replace").splitlines()
+            except OSError:
+                continue
+            for i, line in enumerate(lines, 1):
+                if not rx.search(line):
+                    continue
+                if total >= args.max:
+                    truncated = True
+                    break
+                if not header_shown:
+                    print(_find_header(sid))
+                    header_shown = True
+                print(f"{os.path.abspath(str(txt))}:{i}: {line[:200]}")
+                total += 1
+            if truncated:
+                break
+        if truncated:
+            break
+    if truncated:
+        print(f"... clipped, {args.max}+ matches")
+    elif total == 0:
+        print(f"no matches for {args.pattern!r}")
     return 0
 
 
@@ -171,6 +247,7 @@ def main(argv=None) -> int:
     for name, fn, opts in [
         ("status", cmd_status, ["session", "cwd"]),
         ("report", cmd_report, ["session", "cwd"]),
+        ("find", cmd_find, ["find"]),
         ("handoff", cmd_handoff, ["cwd"]),
         ("clean", cmd_clean, ["cwd", "clean"]),
         ("on", cmd_on, []),
@@ -190,6 +267,12 @@ def main(argv=None) -> int:
         if "clean" in opts:
             p.add_argument("--days", type=int, default=None)
             p.add_argument("--dry-run", action="store_true")
+        if "find" in opts:
+            p.add_argument("pattern")
+            p.add_argument("--session", default=None)
+            p.add_argument("--all", action="store_true")
+            p.add_argument("-s", "--case-sensitive", action="store_true")
+            p.add_argument("--max", type=int, default=50)
         p.set_defaults(fn=fn)
 
     args = parser.parse_args(argv)

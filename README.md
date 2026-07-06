@@ -173,6 +173,7 @@ tend-marked entries).
 |---|---|
 | `tend status` | Context %, totals, stale-result tokens, STATE.md freshness |
 | `tend report` | Full ledger: tool results by size, offloads, subagents |
+| `tend find <regex>` | Grep across filed outputs (`--session`, `--all`, `-s`, `--max N`) |
 | `tend handoff` | Show what the next session will auto-load |
 | `tend clean` | Purge session state older than `retention_days` (`--days N`, `--dry-run`) |
 | `tend on` / `tend off` | Global kill switch |
