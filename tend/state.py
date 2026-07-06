@@ -26,6 +26,48 @@ def path_for(cwd) -> Path:
     return Path(cwd) / ".claude" / "tend" / "STATE.md"
 
 
+def resolve(cwd, sid=None) -> Path:
+    """STATE.md path, robust to mid-session cwd drift (U2). See resolve_root."""
+    return path_for(resolve_root(cwd, sid))
+
+
+def resolve_root(cwd, sid=None) -> Path:
+    """Project root for STATE.md, resolved in priority order and always fail-open:
+    1. the session's pinned project root (if it still exists),
+    2. the nearest ancestor of cwd holding .claude/tend/STATE.md, not walking past a
+       .git boundary nor above $HOME,
+    3. the event cwd itself (current behaviour)."""
+    try:
+        if sid:
+            from . import flags
+            pinned = flags.load(sid).get("project_root")
+            if pinned and Path(pinned).is_dir():
+                return Path(pinned)
+        found = _ancestor_with_state(cwd)
+        if found is not None:
+            return found
+    except Exception:
+        pass
+    return Path(cwd)
+
+
+def _ancestor_with_state(cwd):
+    try:
+        cur = Path(cwd).resolve()
+        home = Path.home().resolve()
+    except OSError:
+        return None
+    while True:
+        if (cur / ".claude" / "tend" / "STATE.md").is_file():
+            return cur
+        if cur == home or (cur / ".git").exists():
+            return None  # project/home boundary: never adopt state from across it
+        parent = cur.parent
+        if parent == cur:
+            return None  # filesystem root
+        cur = parent
+
+
 def seed(path) -> None:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)

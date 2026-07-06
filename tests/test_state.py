@@ -8,6 +8,56 @@ def test_path_for(tmp_path):
     assert state.path_for(str(tmp_path)) == tmp_path / ".claude" / "tend" / "STATE.md"
 
 
+def _seed_state(root):
+    p = state.path_for(str(root))
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text("## Goal\nx\n", encoding="utf-8")
+    return p
+
+
+def test_resolve_falls_back_to_cwd_without_pin_or_state(tmp_path):
+    assert state.resolve(str(tmp_path), None) == state.path_for(str(tmp_path))
+
+
+def test_resolve_ancestor_walk_finds_state(tmp_path):
+    """U2 walk: cwd = proj/sub/dir resolves to proj's STATE.md."""
+    proj = tmp_path / "proj"
+    _seed_state(proj)
+    sub = proj / "sub" / "dir"
+    sub.mkdir(parents=True)
+    assert state.resolve(str(sub), None) == state.path_for(str(proj))
+
+
+def test_resolve_walk_stops_at_git_boundary(tmp_path):
+    """A STATE.md above a .git root must NOT be adopted across the project boundary."""
+    outer = tmp_path / "outer"
+    _seed_state(outer)
+    proj = outer / "proj"
+    (proj / ".git").mkdir(parents=True)
+    sub = proj / "sub"
+    sub.mkdir()
+    # walk from sub stops at proj's .git -> outer's STATE.md is unreachable -> fall back to cwd
+    assert state.resolve(str(sub), None) == state.path_for(str(sub))
+
+
+def test_resolve_finds_state_at_git_root(tmp_path):
+    """STATE.md living at the git root itself is found (checked before the boundary stop)."""
+    proj = tmp_path / "proj"
+    (proj / ".git").mkdir(parents=True)
+    _seed_state(proj)
+    sub = proj / "sub"
+    sub.mkdir()
+    assert state.resolve(str(sub), None) == state.path_for(str(proj))
+
+
+def test_resolve_root_returns_directory(tmp_path):
+    proj = tmp_path / "proj"
+    _seed_state(proj)
+    sub = proj / "sub"
+    sub.mkdir()
+    assert state.resolve_root(str(sub), None) == proj
+
+
 def test_seed_creates_template_once(tmp_path):
     p = state.path_for(str(tmp_path))
     state.seed(p)
