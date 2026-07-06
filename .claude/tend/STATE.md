@@ -22,10 +22,20 @@ NAMING DECIDED: "context gardening" is the category term (README tagline+intro,
 pyproject description, repo description + context-gardening topic).
 Worktrees removed; merged local branches deleted; REMOTE feature branches NOT
 deleted (permission scope) - owner can prune on GitHub.
-Open follow-ups: run the outcome benchmark live (python3 -m bench behavioral
---workload outcome --repeats 5 --model ... [--judge ... --seed 0], ~$10-20);
-re-measure short-task overhead with adaptive anchors (expect +14% -> ~0);
-plugin marketplace submission still awaiting owner login.
+MEASUREMENT RUNS (2026-07-06 afternoon): overhead rerun DONE - adaptive anchors
+cut recall-workload overhead +14%->+6% cost, +4%->+1% peak ctx (Haiku n=3,
+behavioral-2026-07-06-113304, per-run costs overlap - report as ranges).
+Outcome smoke DONE (behavioral-2026-07-06-113231): ON 3/4 vs OFF 0/4.
+First full outcome run POISONED by usage-limit window (113517 - do NOT cite).
+Clean full run (behavioral-2026-07-06-160640, 5/arm + Sonnet judge): NULL -
+ON median 2/4 vs OFF 3/4, judge tied 2-2, ON +7% cost. Diagnosis: constraints
+get written into the artifact on disk during phase A, artifact survives the
+reset in BOTH arms - maps the documented boundary (code on disk survives; tend
+protects reasoning not-yet-in-code). Reported as-is: README results table +
+honest boundary, benchmark-results.md Phase 3 section + Phase 2 v0.4-rerun
+subsection + TL;DR rows + artifacts/spend (~$7.3 total). Follow-up design idea
+recorded: constraints that must stay OUT of the artifact until the end.
+Plugin marketplace submission still awaiting owner login.
 PREVIOUSLY - REVIEW IMPROVEMENTS: Tasks 1-5 COMMITTED on benchmarks (3bce794 corpus+CI gate,
 7555f9b scoring+discovery, bfec926 retention), 190 tests green. Frozen-corpus
 mechanical headline = 86.6% (was 88.8% on private corpus); footprint replay 84%
