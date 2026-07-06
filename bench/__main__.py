@@ -23,14 +23,20 @@ def main(argv=None):
     b.add_argument("--repeats", type=int, default=2, help="repeats per arm")
     b.add_argument("--arms", default="on,off", help="comma list: on,off")
     b.add_argument("--workload", default="recall",
-                   choices=["recall", "highload", "handoff", "discovery"],
+                   choices=["recall", "highload", "handoff", "discovery", "outcome"],
                    help="recall=light flood; highload=force toward compaction; "
                         "handoff=fresh-session STATE restore A/B; "
-                        "discovery=fresh session, tools allowed, file unnamed")
+                        "discovery=fresh session, tools allowed, file unnamed; "
+                        "outcome=multi-step task with a forced mid-task reset, "
+                        "scored on the finished artifact")
     b.add_argument("--flood-turns", type=int, default=3,
                    help="number of forcing flood turns (highload)")
     b.add_argument("--log-tokens", type=int, default=9000,
                    help="approx tokens per flood log file")
+    b.add_argument("--judge", default=None,
+                   help="optional blind judge model id (outcome workload)")
+    b.add_argument("--seed", type=int, default=0,
+                   help="seed for the judge's label shuffling (outcome workload)")
 
     it = sub.add_parser("interactive",
                         help="human-in-the-loop A/B for tend's /clear handoff")
@@ -55,7 +61,8 @@ def main(argv=None):
         _results, md = behavioral.run_pilot(
             args.out, stamp, model=args.model, repeats=args.repeats,
             arms=tuple(a.strip() for a in args.arms.split(",") if a.strip()),
-            kind=args.workload, flood_turns=args.flood_turns, log_tokens=args.log_tokens)
+            kind=args.workload, flood_turns=args.flood_turns, log_tokens=args.log_tokens,
+            judge=args.judge, seed=args.seed)
         print("\n" + md)
         print(f"[bench] wrote {args.out}/behavioral-{stamp}.{{json,md}}")
         return 0
