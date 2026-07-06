@@ -11,10 +11,17 @@ explicit preference). Naming: pick a simple ONE-WORD term for the practice
 (candidates: gardening / upkeep / grooming; "context gardening" leading).
 
 ## Now
-Five implementation agents running in parallel worktrees (scratchpad/wt-*).
-Review improvements DONE: all 8 tasks committed AND pushed (b746b04 head);
-PR #1 updated. Next: verify each worktree (full pytest + diff review), push
-branches, open PRs with base=benchmarks.
+v0.4 FEATURE WAVE COMPLETE: all five branches verified (full pytest per
+worktree), pushed, PRs open with base=benchmarks - #2 compaction-insurance
+(197 tests), #3 adaptive-anchors (201), #4 offload-index+tend find (211),
+#5 U2 cwd-drift fix (202), #6 outcome benchmark harness (209, no live runs,
+no numbers claimed). All commits plain-message, owner-authored, zero AI
+attribution (owner's explicit preference - applies to future commits/PRs too).
+Merge order note: #5/#3/#2 all touch sessionstart.py+precompact.py - whichever
+merges second/third needs a small rebase; offer to handle after each merge.
+Naming: recommended one-word term = "gardening" (context gardening; tend = the
+gardener). Alternatives offered: upkeep, grooming, housekeeping. Awaiting pick;
+README repositioning only after owner chooses.
 PREVIOUSLY - REVIEW IMPROVEMENTS: Tasks 1-5 COMMITTED on benchmarks (3bce794 corpus+CI gate,
 7555f9b scoring+discovery, bfec926 retention), 190 tests green. Frozen-corpus
 mechanical headline = 86.6% (was 88.8% on private corpus); footprint replay 84%
