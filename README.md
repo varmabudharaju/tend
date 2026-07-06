@@ -2,15 +2,17 @@
 
 # tend
 
-**Keep Claude Code sharp in long sessions.**
+**Context gardening for Claude Code — long sessions stay sharp.**
 
 [![tests](https://github.com/varmabudharaju/tend/actions/workflows/ci.yml/badge.svg)](https://github.com/varmabudharaju/tend/actions/workflows/ci.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](pyproject.toml)
 
-tend is a small, invisible helper that rides along with [Claude Code](https://claude.com/claude-code)
-and keeps its limited *working memory* clean — so the assistant stays smart ten hours
-into a big task instead of slowly losing the plot.
+tend is a **context gardener**: a small, invisible helper that rides along with
+[Claude Code](https://claude.com/claude-code) and keeps its limited *working memory*
+weeded, filed, and alive — so the assistant stays smart ten hours into a big task
+instead of slowly losing the plot. Context *engineering* designs what goes into the
+window; context *gardening* keeps it healthy over a long season. tend does the gardening.
 
 </div>
 
