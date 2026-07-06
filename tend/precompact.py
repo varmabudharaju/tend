@@ -49,7 +49,7 @@ def _snapshot(sid, cwd) -> None:
         "ts": time.time(),
     }
     try:  # STATE.md capture is best-effort: a bad read must not lose the snapshot
-        sp = state.path_for(cwd)
+        sp = state.resolve(cwd, sid)  # pin-aware: snapshot the project's state, not a drifted cwd's
         snap["cwd"] = str(cwd)
         snap["state_path"] = str(sp)
         snap["state_sections"] = state.read_sections(sp)
