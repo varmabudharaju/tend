@@ -1,0 +1,200 @@
+### Owner fields
+
+| Field   | Type   | Required | Description                      |
+| :------ | :----- | :------- | :------------------------------- |
+| `name`  | string | Yes      | Name of the maintainer or team   |
+| `email` | string | No       | Contact email for the maintainer |
+
+### Optional fields
+
+| Field                                 | Type   | Description                                                                                                                                                                                                                                                        |
+| :------------------------------------ | :----- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `$schema`                             | string | JSON Schema URL for editor autocomplete and validation. Claude Code ignores this field at load time.                                                                                                                                                               |
+| `description`                         | string | Brief marketplace description                                                                                                                                                                                                                                      |
+| `version`                             | string | Marketplace manifest version                                                                                                                                                                                                                                       |
+| `metadata.pluginRoot`                 | string | Base directory prepended to relative plugin source paths (for example, `"./plugins"` lets you write `"source": "formatter"` instead of `"source": "./plugins/formatter"`)                                                                                          |
+| `allowCrossMarketplaceDependenciesOn` | array  | Other marketplaces that plugins in this marketplace may depend on. Dependencies from a marketplace not listed here are blocked at install. See [Depend on a plugin from another marketplace](/en/plugin-dependencies#depend-on-a-plugin-from-another-marketplace). |
+
+`description` and `version` are also accepted under `metadata` for backward compatibility.
+
+## Plugin entries
+
+Each plugin entry in the `plugins` array describes a plugin and where to find it. You can include any field from the [plugin manifest schema](/en/plugins-reference#plugin-manifest-schema) (like `description`, `version`, `author`, `commands`, `hooks`, etc.), plus these marketplace-specific fields: `source`, `category`, `tags`, and `strict`.
+
+### Required fields
+
+| Field    | Type           | Description                                                                                                                                            |
+| :------- | :------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`   | string         | Plugin identifier (kebab-case, no spaces). This is public-facing: users see it when installing (for example, `/plugin install my-plugin@marketplace`). |
+| `source` | string\|object | Where to fetch the plugin from (see [Plugin sources](#plugin-sources) below)                                                                           |
+
+### Optional plugin fields
+
+**Standard metadata fields:**
+
+| Field            | Type    | Description                                                                                                                                                                                                                                                                                                                                    |
+| :--------------- | :------ | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `displayName`    | string  | {/* min-version: 2.1.143 */}Human-readable name shown in UI surfaces. Falls back to `name` when omitted. May contain spaces and any casing. Not used for namespacing or lookup. Requires Claude Code v2.1.143 or later.                                                                                                                        |
+| `description`    | string  | Brief plugin description                                                                                                                                                                                                                                                                                                                       |
+| `version`        | string  | Plugin version. If set (here or in `plugin.json`), the plugin is pinned to this string and users only receive updates when it changes. Omit to fall back to the git commit SHA. See [Version resolution](#version-resolution-and-release-channels).                                                                                            |
+| `author`         | object  | Plugin author information (`name` required, `email` optional)                                                                                                                                                                                                                                                                                  |
+| `homepage`       | string  | Plugin homepage or documentation URL                                                                                                                                                                                                                                                                                                           |
+| `repository`     | string  | Source code repository URL                                                                                                                                                                                                                                                                                                                     |
+| `license`        | string  | SPDX license identifier (for example, MIT, Apache-2.0)                                                                                                                                                                                                                                                                                         |
+| `keywords`       | array   | Tags for plugin discovery and categorization                                                                                                                                                                                                                                                                                                   |
+| `category`       | string  | Plugin category for organization                                                                                                                                                                                                                                                                                                               |
+| `tags`           | array   | Tags for searchability                                                                                                                                                                                                                                                                                                                         |
+| `strict`         | boolean | Controls whether `plugin.json` is the authority for component definitions (default: true). See [Strict mode](#strict-mode) below.                                                                                                                                                                                                              |
+| `defaultEnabled` | boolean | {/* min-version: 2.1.154 */}Whether the plugin is enabled after install (default: true). Set to `false` to install the plugin disabled until the user opts in. Takes precedence over the same field in the plugin's `plugin.json`. See [Default enablement](/en/plugins-reference#default-enablement). Requires Claude Code v2.1.154 or later. |
+
+**Component configuration fields:**
+
+| Field        | Type           | Description                                                    |
+| :----------- | :------------- | :------------------------------------------------------------- |
+| `skills`     | string\|array  | Custom paths to skill directories containing `<name>/SKILL.md` |
+| `commands`   | string\|array  | Custom paths to flat `.md` skill files or directories          |
+| `agents`     | string\|array  | Custom paths to agent files                                    |
+| `hooks`      | string\|object | Custom hooks configuration or path to hooks file               |
+| `mcpServers` | string\|object | MCP server configurations or path to MCP config                |
+| `lspServers` | string\|object | LSP server configurations or path to LSP config                |
+
+## Plugin sources
+
+Plugin sources tell Claude Code where to fetch each individual plugin listed in your marketplace. These are set in the `source` field of each plugin entry in `marketplace.json`.
+
+Once a plugin is cloned or copied into the local machine, it is copied into the local versioned plugin cache at `~/.claude/plugins/cache`.
+
+| Source        | Type                            | Fields                             | Notes                                                                                                                                             |
+| ------------- | ------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Relative path | `string` (e.g. `"./my-plugin"`) | none                               | Local directory within the marketplace repo. Must start with `./`. Resolved relative to the marketplace root, not the `.claude-plugin/` directory |
+| `github`      | object                          | `repo`, `ref?`, `sha?`             |                                                                                                                                                   |
+| `url`         | object                          | `url`, `ref?`, `sha?`              | Git URL source                                                                                                                                    |
+| `git-subdir`  | object                          | `url`, `path`, `ref?`, `sha?`      | Subdirectory within a git repo. Clones sparsely to minimize bandwidth for monorepos                                                               |
+| `npm`         | object                          | `package`, `version?`, `registry?` | Installed via `npm install`                                                                                                                       |
+
+<Note>
+  **Marketplace sources vs plugin sources**: These are different concepts that control different things.
+
+  * **Marketplace source** — where to fetch the `marketplace.json` catalog itself. Set when users run `/plugin marketplace add` or in `extraKnownMarketplaces` settings. Supports `ref` (branch/tag) but not `sha`.
+  * **Plugin source** — where to fetch an individual plugin listed in the marketplace. Set in the `source` field of each plugin entry inside `marketplace.json`. Supports both `ref` (branch/tag) and `sha` (exact commit).
+
+  For example, a marketplace hosted at `acme-corp/plugin-catalog` (marketplace source) can list a plugin fetched from `acme-corp/code-formatter` (plugin source). The marketplace source and plugin source point to different repositories and are pinned independently.
+</Note>
+
+The git-based source types below are `github`, `url`, and `git-subdir`. When both `ref` and `sha` are set on any of them, the `sha` is the effective pin. Claude Code fetches and checks out the pinned commit directly, so installation succeeds even if the branch or tag named by `ref` has since been deleted upstream, as long as the commit is still reachable from the repository.
+
+### Relative paths
+
+For plugins in the same repository, use a path starting with `./`:
+
+```json theme={null}
+{
+  "name": "my-plugin",
+  "source": "./plugins/my-plugin"
+}
+```
+
+Paths resolve relative to the marketplace root, which is the directory containing `.claude-plugin/`. In the example above, `./plugins/my-plugin` points to `<repo>/plugins/my-plugin`, even though `marketplace.json` lives at `<repo>/.claude-plugin/marketplace.json`. Do not use `../` to reference paths outside the marketplace root.
+
+<Note>
+  Relative paths only work when users add your marketplace via Git (GitHub, GitLab, or git URL). If users add your marketplace via a direct URL to the `marketplace.json` file, relative paths will not resolve correctly. For URL-based distribution, use GitHub, npm, or git URL sources instead. See [Troubleshooting](#plugins-with-relative-paths-fail-in-url-based-marketplaces) for details.
+</Note>
+
+### GitHub repositories
+
+```json theme={null}
+{
+  "name": "github-plugin",
+  "source": {
+    "source": "github",
+    "repo": "owner/plugin-repo"
+  }
+}
+```
+
+You can pin to a specific branch, tag, or commit:
+
+```json theme={null}
+{
+  "name": "github-plugin",
+  "source": {
+    "source": "github",
+    "repo": "owner/plugin-repo",
+    "ref": "v2.0.0",
+    "sha": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0"
+  }
+}
+```
+
+| Field  | Type   | Description                                                           |
+| :----- | :----- | :-------------------------------------------------------------------- |
+| `repo` | string | Required. GitHub repository in `owner/repo` format                    |
+| `ref`  | string | Optional. Git branch or tag (defaults to repository default branch)   |
+| `sha`  | string | Optional. Full 40-character git commit SHA to pin to an exact version |
+
+### Git repositories
+
+```json theme={null}
+{
+  "name": "git-plugin",
+  "source": {
+    "source": "url",
+    "url": "https://gitlab.com/team/plugin.git"
+  }
+}
+```
+
+You can pin to a specific branch, tag, or commit:
+
+```json theme={null}
+{
+  "name": "git-plugin",
+  "source": {
+    "source": "url",
+    "url": "https://gitlab.com/team/plugin.git",
+    "ref": "main",
+    "sha": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0"
+  }
+}
+```
+
+| Field | Type   | Description                                                                                                                                              |
+| :---- | :----- | :------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `url` | string | Required. Full git repository URL (`https://` or `git@`). The `.git` suffix is optional, so Azure DevOps and AWS CodeCommit URLs without the suffix work |
+| `ref` | string | Optional. Git branch or tag (defaults to repository default branch)                                                                                      |
+| `sha` | string | Optional. Full 40-character git commit SHA to pin to an exact version                                                                                    |
+
+### Git subdirectories
+
+Use `git-subdir` to point to a plugin that lives inside a subdirectory of a git repository. Claude Code uses a sparse, partial clone to fetch only the subdirectory, minimizing bandwidth for large monorepos.
+
+```json theme={null}
+{
+  "name": "my-plugin",
+  "source": {
+    "source": "git-subdir",
+    "url": "https://github.com/acme-corp/monorepo.git",
+    "path": "tools/claude-plugin"
+  }
+}
+```
+
+You can pin to a specific branch, tag, or commit:
+
+```json theme={null}
+{
+  "name": "my-plugin",
+  "source": {
+    "source": "git-subdir",
+    "url": "https://github.com/acme-corp/monorepo.git",
+    "path": "tools/claude-plugin",
+    "ref": "v2.0.0",
+    "sha": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0"
+  }
+}
+```
+
+The `url` field also accepts a GitHub shorthand (`owner/repo`) or SSH URLs (`redacted@example.com:owner/repo.git`).
+
+| Field  | Type   | Description                                                                                              |
+| :----- | :----- | :------------------------------------------------------------------------------------------------------- |

@@ -3,3 +3,6 @@ __pycache__/
 .pytest_cache/
 build/
 dist/
+.benchmarks/interactive/
+docs/screenshots/**/index.html
+docs/screenshots/**/manifest.json

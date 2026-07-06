@@ -1,31 +1,9 @@
-"""tend CLI: status, report, handoff, on/off, install-hook, uninstall-hook, statusline-wrap."""
+"""tend CLI: status, report, handoff, clean, on/off, install-hook, uninstall-hook, statusline-wrap."""
 import argparse
-import os
 import time
 from pathlib import Path
 
 from . import config, ctxmetrics, install, ledger, paths, state
-
-
-def _session_mtime(d):
-    """Newest mtime in d, tolerating files that vanish mid-scan (atomic-write tmps)."""
-    times = []
-    try:
-        with os.scandir(d) as it:
-            for entry in it:
-                try:
-                    if entry.is_file():
-                        times.append(entry.stat().st_mtime)
-                except OSError:
-                    continue
-    except OSError:
-        return 0.0
-    if times:
-        return max(times)
-    try:
-        return d.stat().st_mtime
-    except OSError:
-        return 0.0
 
 
 def latest_session():
@@ -35,7 +13,7 @@ def latest_session():
     dirs = [d for d in root.iterdir() if d.is_dir()]
     if not dirs:
         return None
-    return max(dirs, key=_session_mtime).name
+    return max(dirs, key=paths.newest_mtime).name
 
 
 def cmd_status(args) -> int:
@@ -49,7 +27,7 @@ def cmd_status(args) -> int:
     summary = ledger.load_summary(sid)
     pct = ctxmetrics.used_pct(sid)
     print(f"session  {sid}")
-    newest = _session_mtime(paths.home() / "sessions" / sid)
+    newest = paths.newest_mtime(paths.home() / "sessions" / sid)
     if newest:
         print(f"last hook activity {(time.time() - newest) / 60:.1f}m ago")
     pct_s = f"{pct:.0f}%" if pct is not None else "unknown"
@@ -124,6 +102,17 @@ def cmd_handoff(args) -> int:
     return 0
 
 
+def cmd_clean(args) -> int:
+    from . import retention
+
+    days = args.days if args.days is not None else config.load(args.cwd).retention_days
+    stats = retention.sweep(days, dry_run=args.dry_run)
+    verb = "would remove" if args.dry_run else "removed"
+    print(f"{verb} {stats['removed']} session(s) older than {days}d "
+          f"({stats['freed_bytes'] / 1e6:.1f} MB); kept {stats['kept']}")
+    return 0
+
+
 def cmd_on(args) -> int:
     (paths.home() / "disabled").unlink(missing_ok=True)
     print("tend enabled")
@@ -183,6 +172,7 @@ def main(argv=None) -> int:
         ("status", cmd_status, ["session", "cwd"]),
         ("report", cmd_report, ["session", "cwd"]),
         ("handoff", cmd_handoff, ["cwd"]),
+        ("clean", cmd_clean, ["cwd", "clean"]),
         ("on", cmd_on, []),
         ("off", cmd_off, []),
         ("install-hook", cmd_install, ["settings"]),
@@ -197,6 +187,9 @@ def main(argv=None) -> int:
             p.add_argument("--cwd", default=".")
         if "settings" in opts:
             p.add_argument("--settings", default=default_settings)
+        if "clean" in opts:
+            p.add_argument("--days", type=int, default=None)
+            p.add_argument("--dry-run", action="store_true")
         p.set_defaults(fn=fn)
 
     args = parser.parse_args(argv)

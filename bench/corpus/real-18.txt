@@ -1,0 +1,343 @@
+=== backends dir ===
+__init__.py
+__pycache__
+cli.py
+native_terminal.py
+web.py
+
+########## engine.py ##########
+"""Orchestrate a capture run: boot the app, capture each shot, write outputs.
+
+This module glues the pieces together. It optionally starts the app via
+:class:`~capture.lifecycle.AppProcess`, then walks the selected shots routing
+each to the right backend:
+
+- web pages and *rendered* CLI shots go through one Chromium;
+- *native* CLI shots screenshot a real Terminal window;
+- *session* shots run several commands in one persistent Terminal window,
+  capturing after each — so one session yields several numbered images.
+
+Chromium is only launched when a shot actually needs it. A ``try``/``finally``
+guarantees the browser is closed and the app is stopped even when capture fails.
+"""
+
+import sys
+from pathlib import Path
+
+from playwright.sync_api import Browser, Page, sync_playwright
+
+from capture.backends.cli import capture_cli
+from capture.backends.native_terminal import capture_terminal, capture_terminal_session
+from capture.backends.web import capture_web
+from capture.config import CliShot, Config, SessionShot, WebShot
+from capture.lifecycle import AppProcess
+from capture.output import CaptureResult, Writer
+
+Shot = WebShot | CliShot | SessionShot
+
+# One produced image: (name, alt, kind, png_bytes).
+Capture = tuple[str, str, str, bytes]
+
+
+def _select_shots(config: Config, only: list[str] | None) -> list[Shot]:
+    """Return the shots to capture, honoring an ``only`` name filter.
+
+    Raises :class:`ValueError` listing any requested names that do not match a
+    shot in the config.
+    """
+    if only is None:
+        return list(config.shots)
+    known = {shot.name for shot in config.shots}
+    unknown = [name for name in only if name not in known]
+    if unknown:
+        raise ValueError(f"unknown shot names: {unknown}")
+    wanted = set(only)
+    return [shot for shot in config.shots if shot.name in wanted]
+
+
+def _effective_style(shot: CliShot) -> str:
+    """Resolve a CLI shot's capture style, defaulting to native on macOS."""
+    if shot.style is not None:
+        return shot.style
+    return "native" if sys.platform == "darwin" else "rendered"
+
+
+def _resolve_cwd(cwd: str | None, repo_root: Path) -> str:
+    return str((repo_root / cwd).resolve()) if cwd is not None else str(repo_root)
+
+
+def _shot_needs_page(shot: Shot) -> bool:
+    """True if the shot must render through Chromium (web or rendered CLI)."""
+    if isinstance(shot, WebShot):
+        return True
+    if isinstance(shot, CliShot):
+        return _effective_style(shot) == "rendered"
+    return False
+
+
+def _capture_shot(shot: Shot, repo_root: Path, page: Page | None) -> list[Capture]:
+    """Capture one shot, returning one or more images (sessions yield many)."""
+    if isinstance(shot, WebShot):
+        assert page is not None  # guaranteed by _shot_needs_page
+        return [(shot.name, shot.alt, "web", capture_web(page, shot))]
+
+    if isinstance(shot, SessionShot):
+        cwd = _resolve_cwd(shot.cwd, repo_root)
+        steps = [
+            (
+                step.command,
+                step.clear if step.clear is not None else shot.clear_between,
+                step.wait_ms,
+            )
+            for step in shot.steps
+        ]
+        images = capture_terminal_session(steps, cwd, shot.cols, shot.rows)
+        return [
+            (step.name, step.alt, "session", data)
+            for step, data in zip(shot.steps, images, strict=True)
+        ]
+
+    cwd = _resolve_cwd(shot.cwd, repo_root)
+    if _effective_style(shot) == "native":
+        data = capture_terminal(shot.command, cwd, shot.cols, shot.rows)
+        return [(shot.name, shot.alt, "cli", data)]
+    assert page is not None  # rendered CLI needs the browser
+    return [(shot.name, shot.alt, "cli", capture_cli(page, shot, cwd))]
+
+
+def _capture_all(
+    selected: list[Shot],
+    repo_root: Path,
+    writer: Writer,
+    browser: Browser | None,
+) -> list[CaptureResult]:
+    results: list[CaptureResult] = []
+    index = 0
+    for shot in selected:
+        page = browser.new_page() if (browser is not None and _shot_needs_page(shot)) else None
+        try:
+            captures = _capture_shot(shot, repo_root, page)
+        finally:
+            if page is not None:
+                page.close()
+        for name, alt, kind, data in captures:
+            index += 1
+            results.append(writer.write(index, name, data, alt, kind))
+    return results
+
+
+def run(
+    config: Config,
+    repo_root: Path,
+    only: list[str] | None = None,
+) -> list[CaptureResult]:
+    """Capture the configured shots and return their on-disk results.
+
+    Boots ``config.app`` when present (waiting on ``ready`` if given), captures
+    each selected shot to ``NN-name.png`` via :class:`~capture.output.Writer`
+    (a session expands to one image per step), and optionally splices the images
+    into the README. The browser (when used) and the app are always torn down.
+    """
+    selected = _select_shots(config, only)
+    writer = Writer(config.output, repo_root)
+    results: list[CaptureResult] = []
+
+    app: AppProcess | None = None
+    if config.app is not None:
+        app = AppProcess(
+            config.app.command,
+            cwd=str((repo_root / config.app.cwd).resolve()),
+            env=config.app.env,
+        )
+        app.start()
+    try:
+        if app is not None and config.app is not None and config.app.ready is not None:
+            app.wait_ready(config.app.ready)
+
+        if any(_shot_needs_page(shot) for shot in selected):
+            with sync_playwright() as playwright:
+                browser = playwright.chromium.launch()
+                try:
+                    results = _capture_all(selected, repo_root, writer, browser)
+                finally:
+                    browser.close()
+        else:
+            results = _capture_all(selected, repo_root, writer, None)
+    finally:
+        if app is not None:
+            app.stop()
+
+    if config.output.readme is not None:
+        writer.update_readme(results, repo_root / config.output.readme)
+
+    return results
+
+########## lifecycle.py ##########
+"""Start an app, wait until it is genuinely ready, and tear it down cleanly.
+
+The two failure modes this module exists to prevent:
+
+1. Screenshotting a half-booted app — solved by :meth:`AppProcess.wait_ready`,
+   which polls an HTTP endpoint, TCP port, or log line until the app responds.
+2. Leaking the dev server after capture — solved by launching the app in its own
+   process group and killing the whole group on exit (even on crash / Ctrl-C).
+"""
+
+import contextlib
+import os
+import signal
+import socket
+import subprocess
+import threading
+import time
+import urllib.error
+import urllib.request
+from types import TracebackType
+from typing import Self
+
+from capture.config import ReadySpec
+
+
+class ReadinessError(RuntimeError):
+    """Raised when the app fails to become ready before its timeout."""
+
+
+def _http_ok(url: str, timeout: float = 1.0) -> bool:
+    try:
+        with urllib.request.urlopen(url, timeout=timeout) as resp:  # noqa: S310 (local dev urls)
+            return int(resp.status) < 500
+    except urllib.error.HTTPError as exc:
+        # Server responded (e.g. 404) — it is up.
+        return int(exc.code) < 500
+    except (urllib.error.URLError, OSError):
+        return False
+
+
+def _port_open(port: int, host: str = "127.0.0.1", timeout: float = 1.0) -> bool:
+    try:
+        with socket.create_connection((host, port), timeout=timeout):
+            return True
+    except OSError:
+        return False
+
+
+class AppProcess:
+    """A child app process launched in its own process group.
+
+    Usage::
+
+        with AppProcess("npm run dev") as app:
+            app.wait_ready(ready_spec)
+            ...  # capture
+        # app (and any children it spawned) are guaranteed dead here
+    """
+
+    def __init__(
+        self,
+        command: str,
+        cwd: str = ".",
+        env: dict[str, str] | None = None,
+    ) -> None:
+        self.command = command
+        self.cwd = cwd
+        self.env = env or {}
+        self._proc: subprocess.Popen[bytes] | None = None
+        self._lines: list[str] = []
+        self._reader: threading.Thread | None = None
+
+    def start(self) -> Self:
+        full_env = {**os.environ, **self.env}
+        self._proc = subprocess.Popen(
+            self.command,
+            shell=True,
+            cwd=self.cwd,
+            env=full_env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            start_new_session=True,  # detach into its own process group
+        )
+        self._reader = threading.Thread(target=self._drain, daemon=True)
+        self._reader.start()
+        return self
+
+    def _drain(self) -> None:
+        proc = self._proc
+        if proc is None or proc.stdout is None:
+            return
+        for raw in proc.stdout:
+            self._lines.append(raw.decode(errors="replace"))
+
+    @property
+    def output(self) -> str:
+        """Everything the app has printed to stdout/stderr so far."""
+        return "".join(self._lines)
+
+    @property
+    def returncode(self) -> int | None:
+        return None if self._proc is None else self._proc.poll()
+
+    def wait_ready(self, ready: ReadySpec) -> None:
+        """Block until the readiness probe passes or the timeout elapses."""
+        if self._proc is None:
+            raise ReadinessError("app was not started before wait_ready()")
+        deadline = time.monotonic() + ready.timeout
+        while time.monotonic() < deadline:
+            code = self._proc.poll()
+            if code is not None:
+                raise ReadinessError(
+                    f"app exited early with code {code} before becoming ready.\n"
+                    f"--- app output ---\n{self.output}"
+                )
+            if self._is_ready(ready):
+                return
+            time.sleep(0.1)
+        raise ReadinessError(
+            f"app not ready after {ready.timeout}s.\n--- app output ---\n{self.output}"
+        )
+
+    def _is_ready(self, ready: ReadySpec) -> bool:
+        if ready.url is not None:
+            return _http_ok(ready.url)
+        if ready.port is not None:
+            return _port_open(ready.port)
+        if ready.log_line is not None:
+            return ready.log_line in self.output
+        return True
+
+    def stop(self, grace: float = 5.0) -> None:
+        """Terminate the app's whole process group; safe to call repeatedly."""
+        proc = self._proc
+        if proc is not None and proc.poll() is None:
+            self._signal_group(proc, signal.SIGTERM)
+            try:
+                proc.wait(timeout=grace)
+            except subprocess.TimeoutExpired:
+                self._signal_group(proc, signal.SIGKILL)
+                with contextlib.suppress(subprocess.TimeoutExpired):
+                    proc.wait(timeout=grace)
+        if self._reader is not None:
+            self._reader.join(timeout=1.0)
+            self._reader = None
+
+    @staticmethod
+    def _signal_group(proc: subprocess.Popen[bytes], sig: int) -> None:
+        try:
+            os.killpg(os.getpgid(proc.pid), sig)
+        except (ProcessLookupError, PermissionError):
+            # Already gone, or group disappeared between poll and signal.
+            with contextlib.suppress(ProcessLookupError):
+                proc.send_signal(sig)
+
+    def __enter__(self) -> Self:
+        return self.start()
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        tb: TracebackType | None,
+    ) -> None:
+        self.stop()
+--- stderr ---
+
+Shell cwd was reset to /home/user/mongosemantic

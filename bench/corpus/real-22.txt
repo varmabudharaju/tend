@@ -1,0 +1,106 @@
+=== impl-check ===
+{
+  "summary": "Upgraded `shotlist check` from brittle sha256 equality to a tolerance-based, CI-friendly pipeline. All within my file lane; ruff clean, mypy --strict success (27 files), pytest 124 passed / 1 skipped (~23 new/changed tests). No packet deviations; no sibling files touched.\n\nconfig.py (additive only): new CheckSpec(_Strict) with max_diff_pixel_ratio: float (default 0.0, ge=0, le=1) + check field on Config.\n\ncheck.py (pure): compare_manifests gains max_diff_pixel_ratio + optional load_pair callback. sha-equal is the unchanged fast path. On mismatch with a positive budget it calls diff.diff_images: size mismatch -> changed \"size 1280x800 -> 1280x912\"; ratio<=budget -> unchanged \"within tolerance (0.02% <= 0.10%)\"; else changed \"0.32% pixels differ\". ShotDiff gains changed_pixel_ratio (None unless a diff ran). New pure compare_environments returns (key,old,new), skipping None/missing.\n\ndiff.py: DiffResult gains base_size/current_size + changed_ratio; DIFF_GALLERY_NAME->CHECK_REPORT_NAME=\"check-report.html\"; render_diff_gallery->render_check_report(rows) listing EVERY shot with status badge, reason, inline 3-up for changed (dark CSS reused).\n\ncli.py: --json emits EXACTLY Contract B on stdout (drifted, environment_mismatch, shots[name,status,reason,changed_pixel_ratio,diff_file]); human->stderr; exit 1 on drift. --only (repeatable) with --update re-blesses only named deterministic shots (clear error on native/session/not-in-baseline), writes each PNG over base_by_name[name]['file'] preserving NN- numbering, rewrites only those sha256/bytes + generated_at, copies through unknown top-level keys (environment) \u2014 docstring notes the stale-env trade-off. --diff writes 3-up PNGs + check-report.html. Env mismatch via local _current_environment/_chromium_version (importlib.metadata+platform+sys; chromium via sync_playwright ONLY when baseline has non-null chromium, None on failure); no report.py import; baseline read via json.loads/.get.",
+  "branch": "swarm/2026-07-01-shotlist-roadmap/impl-check",
+  "worktree_path": "/home/user/capture/.claude/worktrees/wf_7cf492c2-1f0-1",
+  "files_touched": [
+    "src/shotlist/check.py",
+    "src/shotlist/diff.py",
+    "src/shotlist/cli.py",
+    "src/shotlist/config.py",
+    "tests/test_check.py",
+    "tests/test_diff.py",
+    "tests/test_cli_app.py"
+  ],
+  "commits": [
+    "43edfa8b256d92a631fa09a272372542980209e0 Add tolerance, JSON, selective update, and check-report to check"
+  ],
+  "user_surface": [
+    "check.max_diff_pixel_ratio (config, float 0..1, default 0.0)",
+    "shotlist check --json",
+    "shotlist check --update --only NAME (repeatable)",
+    "shotlist check --diff DIR writes check-report.html (renamed from diff.html)",
+    "environment-mismatch warning line: environment: <key> <old> -> <new> (drift may be environmental)"
+  ]
+}
+=== impl-determinism ===
+{
+  "summary": "Made shotlist captures deterministic across macOS/Linux CI.\n\nconfig.py (additive only): WebShot.mask: list[str] (default []); new ScrubRule(_Strict){pattern:str, replace:str=\"\"} whose model_validator re.compile()s pattern (clear ValueError on bad regex); CliShot.scrub: list[ScrubRule] (default []).\n\nbackends/web.py capture_web: builds mask=[page.locator(s) for s in shot.mask] and passes animations='disabled' on BOTH screenshot paths (page.screenshot and locator.screenshot); mask kwarg passed only when non-empty.\n\nbackends/cli.py capture_cli: applies re.sub(rule.pattern, rule.replace, raw) per scrub rule to raw ANSI BEFORE ansi_to_html.\n\nrender.py: lazy @lru_cache(maxsize=1) _font_faces() base64-encodes JetBrainsMono-Regular.woff2 (weight 400) and Bold.woff2 (700), read via importlib.resources.files('shotlist')/'assets'; raises clear RuntimeError if a face is missing (at render time, not import). terminal_html emits the two @font-face rules and pre stack is 'JetBrains Mono','SF Mono',Menlo,Consolas,monospace; signature unchanged.\n\nFonts ARE embedded (base64 in the card) -> byte-identical CLI shots regardless of host fonts. Font files copied to src/shotlist/assets/; SIL OFL-1.1 license ships at src/shotlist/assets/OFL.txt and is credited in render.py's docstring. hatchling ships these non-.py files via packages=['src/shotlist'] (pyproject untouched, out of scope); runtime read confirmed by a passing test.\n\nTests: tests/test_web.py (mask parse/default; mask+animations reach full-page screenshot via spy; animations set with mask kwarg omitted when empty; masked element PNG). tests/test_cli_backend.py (scrub parse/defaults; invalid regex rejected at parse; scrub applied to raw before render via ansi_to_html spy; ordered sub; terminal_html embeds JetBrains Mono @font-face 400/700).\n\nGate (offline): pytest -q -> 109 passed, 1 skipped; ruff check src tests -> clean; mypy src tests strict -> no issues, 27 files. 4 commits; worktree clean; stayed in-lane.",
+  "branch": "swarm/2026-07-01-shotlist-roadmap/impl-determinism",
+  "worktree_path": "/home/user/capture/.claude/worktrees/wf_7cf492c2-1f0-2",
+  "files_touched": [
+    "/home/user/capture/.claude/worktrees/wf_7cf492c2-1f0-2/src/shotlist/assets/JetBrainsMono-Regular.woff2",
+    "/home/user/capture/.claude/worktrees/wf_7cf492c2-1f0-2/src/shotlist/assets/JetBrainsMono-Bold.woff2",
+    "/home/user/capture/.claude/worktrees/wf_7cf492c2-1f0-2/src/shotlist/assets/OFL.txt",
+    "/home/user/capture/.claude/worktrees/wf_7cf492c2-1f0-2/src/shotlist/config.py",
+    "/home/user/capture/.claude/worktrees/wf_7cf492c2-1f0-2/src/shotlist/backends/web.py",
+    "/home/user/capture/.claude/worktrees/wf_7cf492c2-1f0-2/src/shotlist/backends/cli.py",
+    "/home/user/capture/.claude/worktrees/wf_7cf492c2-1f0-2/src/shotlist/render.py",
+    "/home/user/capture/.claude/worktrees/wf_7cf492c2-1f0-2/tests/test_web.py",
+    "/home/user/capture/.claude/worktrees/wf_7cf492c2-1f0-2/tests/test_cli_backend.py"
+  ],
+  "commits": [
+    "10bf844 Add JetBrains Mono font assets (OFL-1.1) for deterministic CLI cards",
+    "6adfda3 Add WebShot.mask and CliShot scrub/ScrubRule config fields",
+    "a01fabf Mask and freeze web shots, scrub CLI output, embed font in terminal card",
+    "b8eb760 Test web masks, animation freeze, CLI scrub, and embedded font"
+  ],
+  "user_surface": [
+    "web shot: mask: [css-selector, ...] \u2014 matched regions overlaid with a solid box before capture (default none)",
+    "web shots now capture with animations='disabled' automatically (no config needed)",
+    "cli shot: scrub: [{pattern, replace}] \u2014 regex subs applied to raw output before render; invalid regex rejected at config load; replace defaults to ''",
+    "rendered CLI cards embed JetBrains Mono (SIL OFL-1.1, license at src/shotlist/assets/OFL.txt) for byte-identical output on macOS and Linux"
+  ]
+}
+=== impl-evidence ===
+{
+  "summary": "Made shotlist run artifacts self-documenting evidence. Green: pytest -q (127 passed, 1 pre-existing skip), ruff, mypy strict (27 files).\n\nSource: CaptureResult (output.py) gains source: str = \"\"; Writer.write(..., source=\"\") carries it. engine Capture tuple now (name,alt,kind,bytes,source): web=shot.url, cli=shot.command, session step=step.command. Defaults kept so sibling code works.\n\nManifest (report.py): ShotEntry gains source: NotRequired[str]; Manifest gains environment: NotRequired[dict[str,str|None]] and git_sha: NotRequired[str|None] (all NotRequired so sibling frozen fixtures type-check); build_manifest always writes them. Contract A exact keys: environment={shotlist, python, platform, playwright, chromium} \u2014 packages via importlib.metadata.version (fallback \"unknown\"), python=platform.python_version(), platform=sys.platform, chromium=browser.version or None. git_sha=git rev-parse --short HEAD in repo_root, None on any failure (never crashes offline/no-repo). Public helper report.collect_environment(chromium=None) -> dict[str,str|None]. build_manifest(results, generated_at=, config=) signature unchanged; added optional chromium/repo_root kwargs. schema_version stays \"1\".\n\nGallery: source shown as HTML-escaped <code> (omitted if empty); title/<h1> honor output.title (default \"shotlist\"), threaded from engine.\n\nEvidence: output.evidence -> Writer.write_evidence, idempotent captioned doc via a shared _splice helper generalized from update_readme (kept byte-identical). Per shot: ### name-title-cased, <img>, alt caption, source inline code; heading + timestamp created when absent, re-runs splice between shotlist:start/end markers. Heading is title-aware (\"# <title> \u2014 test evidence\"), not literal \"# Test evidence\". Evidence+report gated on output.report so frozen check.py's report=False probe never rewrites the committed doc.\n\nconfig.py additive only: added title, evidence to OutputSpec. Did not touch cli.py/check.py.",
+  "branch": "swarm/2026-07-01-shotlist-roadmap/impl-evidence",
+  "worktree_path": "/home/user/capture/.claude/worktrees/wf_7cf492c2-1f0-3",
+  "files_touched": [
+    "/home/user/capture/.claude/worktrees/wf_7cf492c2-1f0-3/src/shotlist/config.py",
+    "/home/user/capture/.claude/worktrees/wf_7cf492c2-1f0-3/src/shotlist/engine.py",
+    "/home/user/capture/.claude/worktrees/wf_7cf492c2-1f0-3/src/shotlist/output.py",
+    "/home/user/capture/.claude/worktrees/wf_7cf492c2-1f0-3/src/shotlist/report.py",
+    "/home/user/capture/.claude/worktrees/wf_7cf492c2-1f0-3/tests/test_engine.py",
+    "/home/user/capture/.claude/worktrees/wf_7cf492c2-1f0-3/tests/test_output.py",
+    "/home/user/capture/.claude/worktrees/wf_7cf492c2-1f0-3/tests/test_report.py"
+  ],
+  "commits": [
+    "5f9d592 Stamp run artifacts with source, environment, and evidence"
+  ],
+  "user_surface": [
+    "output.title",
+    "output.evidence",
+    "manifest: shots[].source",
+    "manifest: environment{shotlist,python,platform,playwright,chromium}",
+    "manifest: git_sha",
+    "report.collect_environment()"
+  ]
+}
+=== impl-ci ===
+{
+  "summary": "Fixed the shotlist CI story across 4 scoped files; validated locally (worktree .venv, py3.11).\n\naction.yml: added inputs `package` (default 'shotlist'; install now `pip install ${{ inputs.package }}`) and `diff-dir` (default 'shotlist-diffs'). Per-command steps via `if: inputs.command=='run'|'check'`. On check: runs `shotlist check --config <cfg> --diff <dir> --json > shotlist-check.json` under set +e, captures $?, renders a Markdown summary (result line + optional environment_mismatch bullets + shot|status|detail table + artifact pointer) to $GITHUB_STEP_SUMMARY via an inline python3 heredoc tolerating missing/empty/malformed JSON, then `exit $code`. New upload-artifact@v4 step (if: always() && command==check) uploads <diff-dir>+shotlist-check.json as `shotlist-check-${{ github.job }}`, if-no-files-found: ignore. E2E-tested with a stub shotlist: drift->exit1+summary; clean->exit0.\n\nverify-action.yml: renamed released job to `verify-release` (still @v0.2.0). Added `verify-source` (py3.12): `uses: ./` with `package: -e .` for run then check vs .github/ci-demo/.shotlist.yaml, exercising PR action+source. Unique artifact names per job.\n\nci.yml: matrix os x python (ubuntu-latest {3.11,3.12} + include macos-14 {3.12}); runs-on ${{ matrix.os }}. Playwright split by runner.os (Linux --with-deps, macOS plain). Test: `pytest -q --cov=shotlist --cov-report=term-missing --cov-fail-under=80`.\n\npyproject.toml: added pytest-cov>=5.0 to dev extra + [tool.coverage.run] source=['shotlist'] branch=true.\n\nCoverage measured = 91.59% (suite green); 80 gate clears, kept 80. YAML+TOML parse; summary script verified on 5 fixtures. .venv gitignored, .coverage removed; only 4 scoped files committed, no src/tests touched.",
+  "branch": "swarm/2026-07-01-shotlist-roadmap/impl-ci",
+  "worktree_path": "/home/user/capture/.claude/worktrees/wf_7cf492c2-1f0-4",
+  "files_touched": [
+    "action.yml",
+    ".github/workflows/verify-action.yml",
+    ".github/workflows/ci.yml",
+    "pyproject.toml"
+  ],
+  "commits": [
+    "7bf9f2b feat(action): add package and diff-dir inputs; summarize + upload check drift",
+    "7300efb ci(verify-action): add verify-source job exercising PR action + source",
+    "577b36f ci: add macos-14 matrix leg and pytest coverage gate",
+    "cb04853 build: add pytest-cov dev dependency and coverage config"
+  ],
+  "user_surface": [
+    "action input: package (default shotlist; pass '-e .' for PR source)",
+    "action input: diff-dir (default shotlist-diffs)",
+    "action writes a Markdown step summary and uploads diffs+JSON artifact on check, exiting with the check's code",
+    "verify-action: verify-release job (renamed, pinned @v0.2.0) + new verify-source job (uses: ./ with package '-e .')",
+    "ci: macos-14 (py3.12) matrix leg with OS-conditional playwright install",
+    "ci: pytest --cov-fail-under=80 (measured coverage 91.59%)"
+  ]
+}

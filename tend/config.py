@@ -13,6 +13,7 @@ DEFAULTS = {
     "anchor_max_tokens": 400,
     "state_stale_tokens": 3000,  # OUTPUT tokens since the last STATE.md mark (monotonic)
     "state_fresh_hours": 48,
+    "retention_days": 30,  # sweep sessions/<id> older than this at SessionStart; 0 disables
     "advise_pct": 55,
     "urge_pct": 70,
     "delegation_guard": True,
@@ -29,6 +30,7 @@ class Config:
     anchor_max_tokens: int
     state_stale_tokens: int
     state_fresh_hours: int
+    retention_days: int
     advise_pct: float
     urge_pct: float
     delegation_guard: bool

@@ -1,18 +1,27 @@
+<div align="center">
+
 # tend
+
+**Keep Claude Code sharp in long sessions.**
 
 [![tests](https://github.com/varmabudharaju/tend/actions/workflows/ci.yml/badge.svg)](https://github.com/varmabudharaju/tend/actions/workflows/ci.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](pyproject.toml)
 
-**Keep Claude Code sharp in long sessions.**
+tend is a small, invisible helper that rides along with [Claude Code](https://claude.com/claude-code)
+and keeps its limited *working memory* clean — so the assistant stays smart ten hours
+into a big task instead of slowly losing the plot.
 
-tend is a small, invisible helper that rides along with [Claude Code](https://claude.com/claude-code) and keeps its limited "working memory" clean — so the assistant stays smart ten hours into a big task instead of slowly losing the plot.
+</div>
 
-```bash
-pip install -e . && tend install-hook    # 30 seconds, fully reversible, no daemon
+```
+/plugin marketplace add varmabudharaju/tend
+/plugin install tend@tend       # 30 seconds, fully reversible, no daemon
 ```
 
-![what happens to a long session, with and without tend](docs/screenshots/the-problem.gif)
+<p align="center">
+  <img src="docs/screenshots/the-problem.gif" alt="what happens to a long session, with and without tend" width="100%"/>
+</p>
 
 ```mermaid
 flowchart LR
@@ -22,6 +31,21 @@ flowchart LR
     T --> A["Pins the goal + health<br/>to every prompt"]
     T --> C["Times memory cleanup<br/>so nothing is lost"]
 ```
+
+## Results at a glance
+
+We didn't just claim tend works — we [benchmarked it](docs/benchmark-results.md).
+
+| What we measured | Result |
+|---|---|
+| In-context size of the outputs tend offloads | **86.6% smaller** — on a [frozen corpus](bench/corpus/) of real recorded outputs, reproducible by anyone |
+| Recall across a context reset, given a maintained STATE.md | **4/4 with tend → 0/4 without** — every run (memory-only probe) |
+| And when the model is *allowed* to go look for the file? | it finds it — at **2.1× the cost** and +2K context per probe; tend's restore is deterministic and ~free |
+| tend's own per-event overhead | **~10 ms** (the handler itself is <0.3 ms) |
+| Correctness invariants | **6 / 6** held — re-checked in CI on every push |
+| Install footprint | daemon-less, fully reversible, fails open |
+
+Details and the honest caveats are in [**Does it actually work?**](#does-it-actually-work) below.
 
 ## The problem, in plain words
 
@@ -33,24 +57,6 @@ On long tasks the desk fills up with old papers: a 5,000-line log it needed once
 2. **Eventually the desk overflows.** The assistant has to sweep papers into a box ("compaction") — and without supervision it sometimes sweeps away the notes that mattered.
 
 tend is the colleague who quietly keeps the desk tidy.
-
-```mermaid
-flowchart TB
-    subgraph without ["Without tend"]
-        direction TB
-        a1["Desk fills with old papers"] --> a2["Important notes get buried"]
-        a2 --> a3["Desk overflows"]
-        a3 --> a4["Cleanup sweeps away<br/>decisions and lessons learned"]
-        a4 --> a5["Assistant repeats old mistakes"]
-    end
-    subgraph withtend ["With tend"]
-        direction TB
-        b1["Big papers filed in drawers"] --> b2["Goal pinned on top,<br/>always visible"]
-        b2 --> b3["Cleanup happens between tasks,<br/>never mid-thought"]
-        b3 --> b4["Notebook survives everything"]
-        b4 --> b5["Assistant stays sharp"]
-    end
-```
 
 ## What tend does — four habits
 
@@ -67,33 +73,50 @@ And one bonus habit, added after watching real usage bills:
 |---|---|---|
 | **Right-sized helpers** | When the assistant hires a helper, a note suggests: this errand doesn't need the most expensive expert. | When a subagent is spawned without an explicit model, tend suggests the cheapest model tier that fits the job (see [swarm](https://github.com/varmabudharaju/swarm) for the full tiering system). |
 
-The first habit, in one picture:
-
-```mermaid
-flowchart LR
-    big["A tool returns 20,000 tokens<br/>of build logs"] --> tend{"tend"}
-    tend -->|"stays in working memory"| ex["First lines + last lines<br/>+ a note naming the drawer"]
-    tend -->|"goes to disk"| file["The full output, saved.<br/>Any slice readable later."]
-```
-
-And the notebook habit — why nothing important ever dies:
-
-```mermaid
-flowchart LR
-    s1["Session 1 works,<br/>writing the notebook as it goes"] --> n["STATE.md<br/>Goal / Now / Decisions / Dead-ends"]
-    n --> e{"Session ends:<br/>crash, /clear, or just Friday"}
-    e --> s2["Session 2 auto-loads the notebook<br/>and picks up where 1 left off"]
-```
-
 ## See it
 
 tend speaks to the model's context, not your chat — the conversation stays clean, while the transcript view (Ctrl+O) shows every injection verbatim. What's below is the rest of its visible surface. A 15-second tour, all real tool output:
 
-![tend in action: status dashboard, automatic offloading, lossless handoff](docs/screenshots/demo.gif)
+<p align="center">
+  <img src="docs/screenshots/demo.gif" alt="tend in action: status dashboard, automatic offloading, lossless handoff" width="100%"/>
+</p>
 
 | `tend status` | `tend report` | `tend handoff` |
 |---|---|---|
 | ![tend status](docs/screenshots/01-tend-status.png) | ![tend report](docs/screenshots/02-tend-report.png) | ![tend handoff](docs/screenshots/03-tend-handoff.png) |
+
+## Does it actually work?
+
+Short answer: **yes for context management, at near-zero cost** — and we measured it instead of asserting it. The harness lives in [`bench/`](bench); the full methodology and honest caveats are in [`docs/benchmark-results.md`](docs/benchmark-results.md).
+
+### 1. It shrinks the desk — ~87% less, only where it should
+
+<p align="center">
+  <img src="docs/screenshots/submission/01-bench-savings.png" alt="Mechanical benchmark: 86.6% context reduction with the savings curve by output size" width="78%"/>
+</p>
+
+Replaying 29 tool outputs (22 **real** ones tend offloaded in production — frozen, scrubbed, and [committed in this repo](bench/corpus/) so the run reproduces for you, not just for us — plus a synthetic size ladder), big outputs collapse to a fixed ~1,250-token excerpt — full text saved to disk, retrievable on demand — while small ones are left untouched. The bigger the output, the bigger the win (54–95% per output, **86.6%** overall), and tend **never inflates** context: 6/6 invariants held, and CI re-checks them on every push. All deterministic and free to reproduce:
+
+```bash
+python3 -m bench mechanical
+```
+
+### 2. It survives a reset — 4/4 vs 0/4
+
+<p align="center">
+  <img src="docs/screenshots/submission/02-bench-handoff.png" alt="Handoff A/B: 4/4 recall with tend versus 0/4 without, consistent across all 5 runs per arm" width="92%"/>
+</p>
+
+The real test of *lossless handoff*: plant four project decisions, reset the context, then ask for them back **from memory only** (no file access). With tend, a fresh session auto-restores `STATE.md` and recalls **all four — every single run**. Without tend, the model answers *"this appears to be the start of a new session"* and recalls **nothing**.
+
+Two honest preconditions: this isolates the *restore* leg (STATE.md was maintained — tend nudges the model to keep it current, but that step is model-dependent), and the memory-only probe makes the OFF arm a floor. In the fairer control — tools **allowed**, file unnamed — vanilla Claude *did* find STATE.md in our minimal sandbox, at **2.1× the probe cost and +2K context**; tend's value there is determinism and economy, plus the resets where nothing hints the model should go looking (a crash, a silent auto-compaction). Full numbers in the [benchmark writeup](docs/benchmark-results.md).
+
+```bash
+python3 -m bench behavioral --workload handoff --repeats 5
+python3 -m bench behavioral --workload discovery --repeats 5   # the fair control
+```
+
+> **Honest boundary.** When there's little to offload and no reset, tend's anchors are a small net cost: **+14%** in a Haiku stress test and **+1–31%** on Sonnet (n=2 each — ranges, not points). Each anchor is ≤400 tokens, but anchors persist in the transcript, so a session carries a standing ~1–2K of extra context that's re-read every turn. The flip side, measured in the same Sonnet run: once offloading actually fired, tend's peak context finished **below** the no-tend arm — each offload claws back more than the anchors cost. tend earns its keep on **long, multi-session, decision-heavy work**; on short tasks the code and `CLAUDE.md` already cover, it's roughly neutral.
 
 ## How it fits into a session
 
@@ -136,6 +159,12 @@ tend install-hook        # merges hooks + statusline into ~/.claude/settings.jso
 
 The installer is **non-destructive and reversible**: existing hooks and statusline are preserved and backed up (`settings.json.bak-tend`), and `tend uninstall-hook` puts everything back.
 
+**Removing it:** pip installs — `tend uninstall-hook` restores your previous
+hooks and statusline exactly (they were backed up at install). Plugin installs —
+`/plugin uninstall tend@tend` removes the hooks; if you ran `tend wrap-statusline`,
+run `tend uninstall-hook` once to restore the original statusline (it only touches
+tend-marked entries).
+
 **How you know it's working:** your statusline grows a quiet ` | tend: 3 filed, 29k stale` suffix (just `tend: on` when there's nothing to report), and each session opens with a one-line notice — `tend: restored session state from STATE.md`. Everything else stays out of the chat view — but nothing is hidden: open the transcript view (Ctrl+O) and you'll see every `[tend anchor]` and injection exactly as the model reads it. Out of your face, fully auditable.
 
 ## Commands
@@ -145,6 +174,7 @@ The installer is **non-destructive and reversible**: existing hooks and statusli
 | `tend status` | Context %, totals, stale-result tokens, STATE.md freshness |
 | `tend report` | Full ledger: tool results by size, offloads, subagents |
 | `tend handoff` | Show what the next session will auto-load |
+| `tend clean` | Purge session state older than `retention_days` (`--days N`, `--dry-run`) |
 | `tend on` / `tend off` | Global kill switch |
 | `tend install-hook` / `tend uninstall-hook` | Reversible settings.json setup |
 
@@ -157,7 +187,19 @@ The installer is **non-destructive and reversible**: existing hooks and statusli
 
 ## Configuration
 
-`~/.claude/tend/config.yaml`, overridable per project in `<project>/.claude/tend/config.yaml`. Keys and defaults are in `tend/config.py`. Invalid values fall back to defaults rather than disabling tend.
+`~/.claude/tend/config.yaml`, overridable per project in `<project>/.claude/tend/config.yaml`. Keys and defaults are in `tend/config.py`. Invalid values fall back to defaults rather than disabling tend. Notable: `retention_days` (default 30) age-caps stored session state.
+
+## Privacy & disk use
+
+- **Offloaded outputs are raw tool output** — anything a command printed
+  (including a secret it echoed) is saved as plaintext under
+  `~/.claude/tend/sessions/<id>/outputs/`. tend sweeps sessions older than
+  `retention_days` (default 30, `0` disables) once a day at session start;
+  `tend clean [--days N] [--dry-run]` purges on demand.
+- **STATE.md is plain text in your repo.** Commit it if you want shared,
+  reviewable handoffs across the team; add `.claude/tend/STATE.md` to
+  `.gitignore` if task reasoning shouldn't enter history. tend works either way.
+- Nothing ever leaves your machine: no network calls, no telemetry.
 
 ## Limitations
 
@@ -166,135 +208,13 @@ The installer is **non-destructive and reversible**: existing hooks and statusli
 
 ## Under the hood
 
-### System design — how tend plugs into Claude Code
+No daemon, no background process: Claude Code fires an event, a tiny tend
+process wakes, reads its state from disk, acts, and exits. Everything durable
+lives in plain files. Full diagrams — system design, module layers, and the
+advisor's whole decision tree — are in [docs/architecture.md](docs/architecture.md).
 
-No daemon, no background process: Claude Code fires an event, a tiny tend process wakes, reads its state from disk, acts, and exits. Everything durable lives in plain files.
-
-```mermaid
-flowchart TB
-    subgraph cc ["Claude Code"]
-        EV["8 hook events"]
-        SL["statusline render"]
-        TR["session transcript .jsonl"]
-    end
-    subgraph tendp ["tend - one short-lived process per event"]
-        HK["hook.py dispatcher<br/>fail-open wrapper"]
-        LG["ledger.py<br/>incremental token accounting"]
-        HD["event handlers<br/>offload, readguard, agentguard,<br/>anchor, boundary, precompact, sessionstart"]
-        SLW["statusline.py wrapper"]
-    end
-    subgraph disk ["state on disk - ~/.claude/tend/"]
-        SUM["sessions/ID/summary.json<br/>ledger totals + cursor"]
-        CTX["sessions/ID/ctx.json<br/>exact context metrics"]
-        OUT["sessions/ID/outputs/NNNN.txt<br/>offloaded tool outputs"]
-        FLG["sessions/ID/flags.json"]
-    end
-    ST["project/.claude/tend/STATE.md<br/>the notebook"]
-    EV -->|"stdin JSON"| HK
-    HK --> LG
-    HK --> HD
-    LG -->|"reads incrementally"| TR
-    LG <--> SUM
-    SL --> SLW
-    SLW --> CTX
-    HD <--> FLG
-    HD --> OUT
-    HD <--> ST
-    HD -->|"stdout JSON: excerpt, anchor,<br/>restored state, or block"| EV
-```
-
-### Component view — module layers
-
-```mermaid
-flowchart TB
-    subgraph entry ["Entry points"]
-        cli["cli.py"]
-        hookpy["hook.py"]
-        slpy["statusline.py"]
-        inst["install.py"]
-    end
-    subgraph handlers ["Event handlers"]
-        off["offload"]
-        rg["readguard"]
-        ag["agentguard"]
-        an["anchor"]
-        bd["boundary"]
-        pc["precompact"]
-        ss["sessionstart"]
-    end
-    subgraph core ["Core services"]
-        led["ledger"]
-        stm["state"]
-        adv["advisor"]
-        cm["ctxmetrics"]
-        cfg["config"]
-        flg["flags"]
-        tk["tokens"]
-    end
-    subgraph infra ["Infrastructure"]
-        io["hookio - fail-open, log rotation"]
-        pa["paths - atomic JSON I/O"]
-    end
-    hookpy --> handlers
-    cli --> core
-    cli --> inst
-    slpy --> infra
-    handlers --> core
-    core --> infra
-```
-
-### Flow chart — when does tend recommend compaction?
-
-The advisor runs on every prompt; this is its whole decision:
-
-```mermaid
-flowchart TD
-    p["context % from ctx.json"] --> u{"at or above<br/>urge threshold? (70%)"}
-    u -->|yes| now["anchor says:<br/>run now: /compact + curated instructions"]
-    u -->|no| a{"at or above<br/>advise threshold? (55%)"}
-    a -->|no| quiet["say nothing"]
-    a -->|yes| b{"is this a task boundary?<br/>(STATE.md was just updated)"}
-    b -->|yes| good["good moment for /compact"]
-    b -->|no| later["at the next task boundary,<br/>run /compact"]
-```
-
-And the one time tend ever blocks anything:
-
-```mermaid
-flowchart TD
-    ac["auto-compact about to fire"] --> home{"working in the<br/>home directory?"}
-    home -->|yes| pass["allow"]
-    home -->|no| stale{"is STATE.md stale?<br/>(notebook behind the work)"}
-    stale -->|no| pass
-    stale -->|yes| once{"already blocked once<br/>this session?"}
-    once -->|yes| pass
-    once -->|no| block["block ONCE:<br/>update the notebook, then compact"]
-```
-
-### Modules
-
-```
-tend/
-  hook.py          entry point: python3 -m tend.hook (all 8 events)
-  hookio.py        stdin/stdout plumbing, fail-open wrapper, log rotation
-  ledger.py        incremental transcript ledger: exact context totals,
-                   tool-result sizes, staleness, crash-safe single-file cursor
-  offload.py       pillar 1: oversized-output offloading
-  readguard.py     pillar 1b: nudge unbounded Reads of large text files
-  agentguard.py    pillar 1c: model-tier nudge for subagent spawns
-  state.py         STATE.md template, parsing, atomic seeding
-  sessionstart.py  pillar 4: state restore into fresh sessions
-  anchor.py        pillar 3: per-prompt anchor (urgency-first truncation)
-  boundary.py      Stop-event task-boundary + staleness detection
-  precompact.py    pillar 4 safety net: snapshot + one-shot stale block
-  advisor.py       when and how to recommend a curated /compact
-  statusline.py    statusline wrapper: tees exact context metrics to disk
-  config.py        defaults < global yaml < project yaml, validated
-  install.py       reversible settings.json merge (backup, mode-preserving)
-  cli.py           status / report / handoff / on / off / (un)install-hook
-```
-
-164 tests (`python3 -m pytest`). Every bug fixed in v0.2 carries a regression test written from the bug's reproduction.
+190 tests (`python3 -m pytest`). Every bug fixed in v0.2 carries a regression
+test written from the bug's reproduction.
 
 ## Battle-tested by its sibling
 

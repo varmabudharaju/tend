@@ -95,6 +95,14 @@ def test_comments_and_blank_lines_ignored(tend_home):
     assert config.load().advise_pct == 60
 
 
+def test_retention_days_default_and_override(tmp_path, tend_home):
+    assert config.load().retention_days == 30
+    p = tmp_path / ".claude" / "tend"
+    p.mkdir(parents=True)
+    (p / "config.yaml").write_text("retention_days: 7\n")
+    assert config.load(str(tmp_path)).retention_days == 7
+
+
 def test_no_yaml_dependency():
     """Plugin constraint: tend must be stdlib-only."""
     import sys

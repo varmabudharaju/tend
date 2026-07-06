@@ -1,0 +1,199 @@
+{
+  "stamp": "2026-06-18-084350",
+  "model": "claude-haiku-4-5-20251001",
+  "repeats": 2,
+  "sessions": [
+    {
+      "arm": "on",
+      "repeat": 1,
+      "model": "claude-haiku-4-5-20251001",
+      "recall": 4,
+      "recall_hits": {
+        "codename": true,
+        "db_driver": true,
+        "retry_budget": true,
+        "dead_end_flag": true
+      },
+      "peak_ctx_tokens": 34383,
+      "total_cost_usd": 0.1258,
+      "total_output_tokens": 3588,
+      "offload_files": 1,
+      "seconds": 92.4,
+      "turns_ctx": [
+        {
+          "turn": "plant",
+          "ctx": 30588
+        },
+        {
+          "turn": "flood-1",
+          "ctx": 33080
+        },
+        {
+          "turn": "flood-2",
+          "ctx": 33530
+        },
+        {
+          "turn": "flood-3",
+          "ctx": 33953
+        },
+        {
+          "turn": "distractor",
+          "ctx": 34383
+        },
+        {
+          "turn": "probe",
+          "ctx": 27115
+        }
+      ],
+      "probe_answer": "(a) Saffron-Quill\n(b) pgx-v5.2\n(c) 137\n(d) turbo-merge"
+    },
+    {
+      "arm": "off",
+      "repeat": 1,
+      "model": "claude-haiku-4-5-20251001",
+      "recall": 4,
+      "recall_hits": {
+        "codename": true,
+        "db_driver": true,
+        "retry_budget": true,
+        "dead_end_flag": true
+      },
+      "peak_ctx_tokens": 32277,
+      "total_cost_usd": 0.0981,
+      "total_output_tokens": 1948,
+      "offload_files": 0,
+      "seconds": 56.6,
+      "turns_ctx": [
+        {
+          "turn": "plant",
+          "ctx": 29451
+        },
+        {
+          "turn": "flood-1",
+          "ctx": 31121
+        },
+        {
+          "turn": "flood-2",
+          "ctx": 31528
+        },
+        {
+          "turn": "flood-3",
+          "ctx": 31792
+        },
+        {
+          "turn": "distractor",
+          "ctx": 32277
+        },
+        {
+          "turn": "probe",
+          "ctx": 24956
+        }
+      ],
+      "probe_answer": "(a) Saffron-Quill\n(b) pgx-v5.2\n(c) 137\n(d) turbo-merge"
+    },
+    {
+      "arm": "on",
+      "repeat": 2,
+      "model": "claude-haiku-4-5-20251001",
+      "recall": 4,
+      "recall_hits": {
+        "codename": true,
+        "db_driver": true,
+        "retry_budget": true,
+        "dead_end_flag": true
+      },
+      "peak_ctx_tokens": 33724,
+      "total_cost_usd": 0.1162,
+      "total_output_tokens": 2966,
+      "offload_files": 1,
+      "seconds": 57.1,
+      "turns_ctx": [
+        {
+          "turn": "plant",
+          "ctx": 30538
+        },
+        {
+          "turn": "flood-1",
+          "ctx": 32299
+        },
+        {
+          "turn": "flood-2",
+          "ctx": 32732
+        },
+        {
+          "turn": "flood-3",
+          "ctx": 33313
+        },
+        {
+          "turn": "distractor",
+          "ctx": 33724
+        },
+        {
+          "turn": "probe",
+          "ctx": 26442
+        }
+      ],
+      "probe_answer": "(a) Saffron-Quill\n(b) pgx-v5.2\n(c) 137\n(d) turbo-merge flag (corrupts WAL)"
+    },
+    {
+      "arm": "off",
+      "repeat": 2,
+      "model": "claude-haiku-4-5-20251001",
+      "recall": 4,
+      "recall_hits": {
+        "codename": true,
+        "db_driver": true,
+        "retry_budget": true,
+        "dead_end_flag": true
+      },
+      "peak_ctx_tokens": 32899,
+      "total_cost_usd": 0.1135,
+      "total_output_tokens": 2585,
+      "offload_files": 0,
+      "seconds": 46.3,
+      "turns_ctx": [
+        {
+          "turn": "plant",
+          "ctx": 29389
+        },
+        {
+          "turn": "flood-1",
+          "ctx": 31455
+        },
+        {
+          "turn": "flood-2",
+          "ctx": 31870
+        },
+        {
+          "turn": "flood-3",
+          "ctx": 32257
+        },
+        {
+          "turn": "distractor",
+          "ctx": 32899
+        },
+        {
+          "turn": "probe",
+          "ctx": 25577
+        }
+      ],
+      "probe_answer": "(a) Saffron-Quill\n(b) pgx-v5.2\n(c) 137\n(d) turbo-merge"
+    }
+  ],
+  "summary": {
+    "on": {
+      "n": 2,
+      "median_recall": 4.0,
+      "median_peak_ctx": 34053.5,
+      "median_cost_usd": 0.121,
+      "total_cost_usd": 0.242
+    },
+    "off": {
+      "n": 2,
+      "median_recall": 4.0,
+      "median_peak_ctx": 32588.0,
+      "median_cost_usd": 0.1058,
+      "total_cost_usd": 0.2116
+    }
+  }
+}

@@ -1,0 +1,556 @@
+{
+  "stamp": "2026-07-01-210532",
+  "host": {
+    "platform": "darwin",
+    "python": "3.11.1",
+    "uname": "Darwin sairams-MacBook-Air.local 25.3.0 Darwin Kernel Version 25.3.0: Wed Jan 28 20:53:31 PST 2026; root:xnu-12377.81.4~5/RELEASE_ARM64_T8122 arm64"
+  },
+  "config": {
+    "anchor_max_tokens": 400
+  },
+  "offload": {
+    "rows": [
+      {
+        "name": "real:real-01.txt",
+        "full_tokens": 5217,
+        "kept_tokens": 1257,
+        "saved_tokens": 3960,
+        "reduction_pct": 75.9,
+        "offloaded": true
+      },
+      {
+        "name": "real:real-02.txt",
+        "full_tokens": 23488,
+        "kept_tokens": 1257,
+        "saved_tokens": 22231,
+        "reduction_pct": 94.6,
+        "offloaded": true
+      },
+      {
+        "name": "real:real-03.txt",
+        "full_tokens": 23488,
+        "kept_tokens": 1257,
+        "saved_tokens": 22231,
+        "reduction_pct": 94.6,
+        "offloaded": true
+      },
+      {
+        "name": "real:real-04.txt",
+        "full_tokens": 6468,
+        "kept_tokens": 1257,
+        "saved_tokens": 5211,
+        "reduction_pct": 80.6,
+        "offloaded": true
+      },
+      {
+        "name": "real:real-05.txt",
+        "full_tokens": 15596,
+        "kept_tokens": 1257,
+        "saved_tokens": 14339,
+        "reduction_pct": 91.9,
+        "offloaded": true
+      },
+      {
+        "name": "real:real-06.txt",
+        "full_tokens": 20059,
+        "kept_tokens": 1257,
+        "saved_tokens": 18802,
+        "reduction_pct": 93.7,
+        "offloaded": true
+      },
+      {
+        "name": "real:real-07.txt",
+        "full_tokens": 6163,
+        "kept_tokens": 1257,
+        "saved_tokens": 4906,
+        "reduction_pct": 79.6,
+        "offloaded": true
+      },
+      {
+        "name": "real:real-08.txt",
+        "full_tokens": 15596,
+        "kept_tokens": 1257,
+        "saved_tokens": 14339,
+        "reduction_pct": 91.9,
+        "offloaded": true
+      },
+      {
+        "name": "real:real-09.txt",
+        "full_tokens": 4283,
+        "kept_tokens": 1257,
+        "saved_tokens": 3026,
+        "reduction_pct": 70.7,
+        "offloaded": true
+      },
+      {
+        "name": "real:real-10.txt",
+        "full_tokens": 4402,
+        "kept_tokens": 1257,
+        "saved_tokens": 3145,
+        "reduction_pct": 71.4,
+        "offloaded": true
+      },
+      {
+        "name": "real:real-11.txt",
+        "full_tokens": 2777,
+        "kept_tokens": 1257,
+        "saved_tokens": 1520,
+        "reduction_pct": 54.7,
+        "offloaded": true
+      },
+      {
+        "name": "real:real-12.txt",
+        "full_tokens": 7480,
+        "kept_tokens": 1257,
+        "saved_tokens": 6223,
+        "reduction_pct": 83.2,
+        "offloaded": true
+      },
+      {
+        "name": "real:real-13.txt",
+        "full_tokens": 2707,
+        "kept_tokens": 1257,
+        "saved_tokens": 1450,
+        "reduction_pct": 53.6,
+        "offloaded": true
+      },
+      {
+        "name": "real:real-14.txt",
+        "full_tokens": 2725,
+        "kept_tokens": 1257,
+        "saved_tokens": 1468,
+        "reduction_pct": 53.9,
+        "offloaded": true
+      },
+      {
+        "name": "real:real-15.txt",
+        "full_tokens": 2867,
+        "kept_tokens": 1257,
+        "saved_tokens": 1610,
+        "reduction_pct": 56.2,
+        "offloaded": true
+      },
+      {
+        "name": "real:real-16.txt",
+        "full_tokens": 7669,
+        "kept_tokens": 1257,
+        "saved_tokens": 6412,
+        "reduction_pct": 83.6,
+        "offloaded": true
+      },
+      {
+        "name": "real:real-17.txt",
+        "full_tokens": 6435,
+        "kept_tokens": 1257,
+        "saved_tokens": 5178,
+        "reduction_pct": 80.5,
+        "offloaded": true
+      },
+      {
+        "name": "real:real-18.txt",
+        "full_tokens": 2915,
+        "kept_tokens": 1257,
+        "saved_tokens": 1658,
+        "reduction_pct": 56.9,
+        "offloaded": true
+      },
+      {
+        "name": "real:real-19.txt",
+        "full_tokens": 3794,
+        "kept_tokens": 1257,
+        "saved_tokens": 2537,
+        "reduction_pct": 66.9,
+        "offloaded": true
+      },
+      {
+        "name": "real:real-20.txt",
+        "full_tokens": 3592,
+        "kept_tokens": 1257,
+        "saved_tokens": 2335,
+        "reduction_pct": 65.0,
+        "offloaded": true
+      },
+      {
+        "name": "real:real-21.txt",
+        "full_tokens": 3290,
+        "kept_tokens": 1257,
+        "saved_tokens": 2033,
+        "reduction_pct": 61.8,
+        "offloaded": true
+      },
+      {
+        "name": "real:real-22.txt",
+        "full_tokens": 3205,
+        "kept_tokens": 1257,
+        "saved_tokens": 1948,
+        "reduction_pct": 60.8,
+        "offloaded": true
+      },
+      {
+        "name": "synthetic:500tok",
+        "full_tokens": 500,
+        "kept_tokens": 500,
+        "saved_tokens": 0,
+        "reduction_pct": 0.0,
+        "offloaded": false
+      },
+      {
+        "name": "synthetic:1500tok",
+        "full_tokens": 1500,
+        "kept_tokens": 1500,
+        "saved_tokens": 0,
+        "reduction_pct": 0.0,
+        "offloaded": false
+      },
+      {
+        "name": "synthetic:2500tok",
+        "full_tokens": 2500,
+        "kept_tokens": 1257,
+        "saved_tokens": 1243,
+        "reduction_pct": 49.7,
+        "offloaded": true
+      },
+      {
+        "name": "synthetic:5000tok",
+        "full_tokens": 5000,
+        "kept_tokens": 1257,
+        "saved_tokens": 3743,
+        "reduction_pct": 74.9,
+        "offloaded": true
+      },
+      {
+        "name": "synthetic:10000tok",
+        "full_tokens": 10000,
+        "kept_tokens": 1257,
+        "saved_tokens": 8743,
+        "reduction_pct": 87.4,
+        "offloaded": true
+      },
+      {
+        "name": "synthetic:25000tok",
+        "full_tokens": 25000,
+        "kept_tokens": 1257,
+        "saved_tokens": 23743,
+        "reduction_pct": 95.0,
+        "offloaded": true
+      },
+      {
+        "name": "synthetic:50000tok",
+        "full_tokens": 50000,
+        "kept_tokens": 1257,
+        "saved_tokens": 48743,
+        "reduction_pct": 97.5,
+        "offloaded": true
+      }
+    ],
+    "n_outputs": 29,
+    "n_offloaded": 27,
+    "total_full_tokens": 268716,
+    "total_kept_tokens": 35939,
+    "total_saved_tokens": 232777,
+    "overall_reduction_pct": 86.6
+  },
+  "invariants": [
+    {
+      "invariant": "large Bash output is offloaded",
+      "expected": "offload",
+      "result": "offloaded",
+      "pass": true
+    },
+    {
+      "invariant": "non-offload tool (Read) left alone",
+      "expected": "leave alone",
+      "result": "left alone",
+      "pass": true
+    },
+    {
+      "invariant": "tiny output left alone",
+      "expected": "leave alone",
+      "result": "left alone",
+      "pass": true
+    },
+    {
+      "invariant": "MCP structured (non-str) output skipped",
+      "expected": "leave alone",
+      "result": "left alone",
+      "pass": true
+    },
+    {
+      "invariant": "Bash {stdout,stderr} dict payload offloaded",
+      "expected": "offload",
+      "result": "offloaded",
+      "pass": true
+    },
+    {
+      "invariant": "tend never inflates context (kept <= full, all outputs)",
+      "expected": "kept <= full",
+      "result": "held",
+      "pass": true
+    }
+  ],
+  "anchor": {
+    "rows": [
+      {
+        "state_text_chars": 108,
+        "anchor_chars": 623,
+        "anchor_tokens": 155,
+        "within_budget": true
+      },
+      {
+        "state_text_chars": 260,
+        "anchor_chars": 839,
+        "anchor_tokens": 209,
+        "within_budget": true
+      },
+      {
+        "state_text_chars": 856,
+        "anchor_chars": 1054,
+        "anchor_tokens": 263,
+        "within_budget": true
+      },
+      {
+        "state_text_chars": 4040,
+        "anchor_chars": 1054,
+        "anchor_tokens": 263,
+        "within_budget": true
+      },
+      {
+        "state_text_chars": 40052,
+        "anchor_chars": 1054,
+        "anchor_tokens": 263,
+        "within_budget": true
+      }
+    ],
+    "budget_tokens": 400,
+    "max_observed_tokens": 263
+  },
+  "latency_subprocess_ms": {
+    "_baseline(python -c pass)": {
+      "n": 40,
+      "mean_ms": 18.13,
+      "p50_ms": 18.01,
+      "p95_ms": 18.75,
+      "p99_ms": 19.02
+    },
+    "PostToolUse(offload)": {
+      "n": 40,
+      "mean_ms": 28.9,
+      "p50_ms": 28.81,
+      "p95_ms": 29.67,
+      "p99_ms": 31.15
+    },
+    "PreToolUse(guards)": {
+      "n": 40,
+      "mean_ms": 28.47,
+      "p50_ms": 28.11,
+      "p95_ms": 30.82,
+      "p99_ms": 38.65
+    },
+    "UserPromptSubmit(anchor)": {
+      "n": 40,
+      "mean_ms": 28.32,
+      "p50_ms": 28.25,
+      "p95_ms": 29.11,
+      "p99_ms": 29.22
+    },
+    "Stop(boundary)": {
+      "n": 40,
+      "mean_ms": 28.97,
+      "p50_ms": 28.86,
+      "p95_ms": 29.82,
+      "p99_ms": 30.07
+    },
+    "SessionStart": {
+      "n": 40,
+      "mean_ms": 28.76,
+      "p50_ms": 28.36,
+      "p95_ms": 31.24,
+      "p99_ms": 36.34
+    },
+    "PreCompact": {
+      "n": 40,
+      "mean_ms": 28.96,
+      "p50_ms": 28.86,
+      "p95_ms": 29.84,
+      "p99_ms": 30.67
+    }
+  },
+  "latency_inprocess_ms": {
+    "PostToolUse(offload)": {
+      "n": 300,
+      "mean_ms": 0.33,
+      "p50_ms": 0.3,
+      "p95_ms": 0.59,
+      "p99_ms": 0.94
+    },
+    "PreToolUse(guards)": {
+      "n": 300,
+      "mean_ms": 0.02,
+      "p50_ms": 0.02,
+      "p95_ms": 0.02,
+      "p99_ms": 0.02
+    },
+    "UserPromptSubmit(anchor)": {
+      "n": 300,
+      "mean_ms": 0.17,
+      "p50_ms": 0.17,
+      "p95_ms": 0.18,
+      "p99_ms": 0.19
+    },
+    "Stop(boundary)": {
+      "n": 300,
+      "mean_ms": 0.31,
+      "p50_ms": 0.29,
+      "p95_ms": 0.37,
+      "p99_ms": 0.48
+    },
+    "SessionStart": {
+      "n": 300,
+      "mean_ms": 0.0,
+      "p50_ms": 0.0,
+      "p95_ms": 0.0,
+      "p99_ms": 0.0
+    },
+    "PreCompact": {
+      "n": 300,
+      "mean_ms": 0.24,
+      "p50_ms": 0.22,
+      "p95_ms": 0.32,
+      "p99_ms": 0.4
+    }
+  },
+  "footprint": [
+    {
+      "step": 1,
+      "name": "real:real-01.txt",
+      "cum_without_tend": 5217,
+      "cum_with_tend": 1257
+    },
+    {
+      "step": 2,
+      "name": "real:real-02.txt",
+      "cum_without_tend": 28705,
+      "cum_with_tend": 2514
+    },
+    {
+      "step": 3,
+      "name": "real:real-03.txt",
+      "cum_without_tend": 52193,
+      "cum_with_tend": 3771
+    },
+    {
+      "step": 4,
+      "name": "real:real-04.txt",
+      "cum_without_tend": 58661,
+      "cum_with_tend": 5028
+    },
+    {
+      "step": 5,
+      "name": "real:real-05.txt",
+      "cum_without_tend": 74257,
+      "cum_with_tend": 6285
+    },
+    {
+      "step": 6,
+      "name": "real:real-06.txt",
+      "cum_without_tend": 94316,
+      "cum_with_tend": 7542
+    },
+    {
+      "step": 7,
+      "name": "real:real-07.txt",
+      "cum_without_tend": 100479,
+      "cum_with_tend": 8799
+    },
+    {
+      "step": 8,
+      "name": "real:real-08.txt",
+      "cum_without_tend": 116075,
+      "cum_with_tend": 10056
+    },
+    {
+      "step": 9,
+      "name": "real:real-09.txt",
+      "cum_without_tend": 120358,
+      "cum_with_tend": 11313
+    },
+    {
+      "step": 10,
+      "name": "real:real-10.txt",
+      "cum_without_tend": 124760,
+      "cum_with_tend": 12570
+    },
+    {
+      "step": 11,
+      "name": "real:real-11.txt",
+      "cum_without_tend": 127537,
+      "cum_with_tend": 13827
+    },
+    {
+      "step": 12,
+      "name": "real:real-12.txt",
+      "cum_without_tend": 135017,
+      "cum_with_tend": 15084
+    },
+    {
+      "step": 13,
+      "name": "real:real-13.txt",
+      "cum_without_tend": 137724,
+      "cum_with_tend": 16341
+    },
+    {
+      "step": 14,
+      "name": "real:real-14.txt",
+      "cum_without_tend": 140449,
+      "cum_with_tend": 17598
+    },
+    {
+      "step": 15,
+      "name": "real:real-15.txt",
+      "cum_without_tend": 143316,
+      "cum_with_tend": 18855
+    },
+    {
+      "step": 16,
+      "name": "real:real-16.txt",
+      "cum_without_tend": 150985,
+      "cum_with_tend": 20112
+    },
+    {
+      "step": 17,
+      "name": "real:real-17.txt",
+      "cum_without_tend": 157420,
+      "cum_with_tend": 21369
+    },
+    {
+      "step": 18,
+      "name": "real:real-18.txt",
+      "cum_without_tend": 160335,
+      "cum_with_tend": 22626
+    },
+    {
+      "step": 19,
+      "name": "real:real-19.txt",
+      "cum_without_tend": 164129,
+      "cum_with_tend": 23883
+    },
+    {
+      "step": 20,
+      "name": "real:real-20.txt",
+      "cum_without_tend": 167721,
+      "cum_with_tend": 25140
+    },
+    {
+      "step": 21,
+      "name": "real:real-21.txt",
+      "cum_without_tend": 171011,
+      "cum_with_tend": 26397
+    },
+    {
+      "step": 22,
+      "name": "real:real-22.txt",
+      "cum_without_tend": 174216,
+      "cum_with_tend": 27654
+    }
+  ]
+}

@@ -14,3 +14,5 @@ jobs:
           python-version: "3.11"
       - run: python -m pip install -e . pytest
       - run: python -m pytest tests/ -q
+      - name: mechanical benchmark (invariant gate)
+        run: python -m bench mechanical --iters 3 --out /tmp/bench-ci

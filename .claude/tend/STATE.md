@@ -1,12 +1,39 @@
 # Session state
 
 ## Goal
-tend v0.2: fix the 31 confirmed findings from the swarm review
-(docs/swarm-review-2026-06-10.md), then professional README + push to GitHub
-(varmabudharaju/tend, public — match agent-pd/capture repo style).
+v0.4 feature wave: five parallel branches off benchmarks - fix/u2-cwd-drift
+(project-root pinning + ancestor-walk), feat/adaptive-anchors (fingerprint
+suppression, anchor_refresh_turns), feat/compaction-insurance (re-anchor
+STATE.md on SessionStart source=compact), feat/offload-index (index.jsonl +
+tend find), bench/outcome-workload (task-level A/B, no live runs). Each lands
+as its own PR (base benchmarks); plain commits, no AI attribution (owner's
+explicit preference). Naming: pick a simple ONE-WORD term for the practice
+(candidates: gardening / upkeep / grooming; "context gardening" leading).
 
 ## Now
-PLUGIN SHIPPED (0.3.0, merge c5f4b44 on master, CI green): tend is a valid
+v0.4 FEATURE WAVE COMPLETE: all five branches verified (full pytest per
+worktree), pushed, PRs open with base=benchmarks - #2 compaction-insurance
+(197 tests), #3 adaptive-anchors (201), #4 offload-index+tend find (211),
+#5 U2 cwd-drift fix (202), #6 outcome benchmark harness (209, no live runs,
+no numbers claimed). All commits plain-message, owner-authored, zero AI
+attribution (owner's explicit preference - applies to future commits/PRs too).
+Merge order note: #5/#3/#2 all touch sessionstart.py+precompact.py - whichever
+merges second/third needs a small rebase; offer to handle after each merge.
+Naming: recommended one-word term = "gardening" (context gardening; tend = the
+gardener). Alternatives offered: upkeep, grooming, housekeeping. Awaiting pick;
+README repositioning only after owner chooses.
+PREVIOUSLY - REVIEW IMPROVEMENTS: Tasks 1-5 COMMITTED on benchmarks (3bce794 corpus+CI gate,
+7555f9b scoring+discovery, bfec926 retention), 190 tests green. Frozen-corpus
+mechanical headline = 86.6% (was 88.8% on private corpus); footprint replay 84%
+lighter; new full run recorded (.benchmarks/mechanical-2026-07-01-210532).
+Task 6 was: discovery A/B (Haiku x5/arm) running in background; next
+Sonnet handoff x3 + recall x2 (claude-sonnet-5). Then Task 7/8: fill measured
+numbers into README results table + benchmark-results.md (discovery + Sonnet
+sections), refresh screenshots via capture, commit.
+Anchor reconciliation VERIFIED from pilot turns_ctx: ON arm carries a standing
+~1-2K extra context (restore + accumulated anchors), NOT 1.5-2K/turn; both docs
+now say so.
+Previously: PLUGIN SHIPPED (0.3.0, merge c5f4b44 on master, CI green): tend is a valid
 Claude Code plugin - .claude-plugin/{plugin,marketplace}.json, hooks/hooks.json
 (8 events via PYTHONPATH=$CLAUDE_PLUGIN_ROOT), bin/tend, pyyaml dropped,
 wrap-statusline CLI. Self-serve install LIVE: /plugin marketplace add
@@ -39,6 +66,12 @@ component layers, advisor/block flowcharts, scheduler loop, run state
 machine). v0.2 goal COMPLETE.
 
 ## Decisions
+- Frozen corpus: dropped real-14 (settings/permissions dump - over-shares
+  projects/endpoints even scrubbed) and the smoke-live x-block (synthetic);
+  22 organic outputs committed, scrub gate in tests/test_bench_corpus.py.
+- Cite 86.6% (frozen, reproducible) everywhere, never the old 88.8%.
+- test_home_directory_never_seeded made hermetic (monkeypatch Path.home) -
+  it was asserting against the host's real ~/.claude/tend/STATE.md.
 - state_stale_tokens now counts OUTPUT tokens (monotonic metric); default
   lowered 25000 -> 3000 to match the ~10x slower growth.
 - M8 fix = skip offload for mcp__* tools with non-string responses + README
