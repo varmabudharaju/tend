@@ -1,0 +1,320 @@
+{
+  "stamp": "2026-07-06-160640",
+  "model": "claude-haiku-4-5-20251001",
+  "repeats": 5,
+  "kind": "outcome",
+  "workload": "outcome",
+  "seed": 0,
+  "judge": "claude-sonnet-5",
+  "arms": [
+    "on",
+    "off"
+  ],
+  "sessions": [
+    {
+      "arm": "on",
+      "repeat": 1,
+      "model": "claude-haiku-4-5-20251001",
+      "kind": "outcome",
+      "workload": "outcome",
+      "constraint_score": 1,
+      "constraint_hits": {
+        "config_key": false,
+        "error_prefix": false,
+        "exit_code": false,
+        "func_sig": true
+      },
+      "artifact": "#!/usr/bin/env python3\nimport sys\nimport json\n\n\ndef validate_config(path):\n    \"\"\"Validate JSON config file at the given path.\"\"\"\n    try:\n        with open(path, 'r') as f:\n            config = json.load(f)\n    except FileNotFoundError:\n        print(f\"Error: Config file not found: {path}\", file=sys.stderr)\n        sys.exit(1)\n    except json.JSONDecodeError as e:\n        print(f\"Error: Invalid JSON in {path}: {e}\", file=sys.stderr)\n        sys.exit(1)\n\n    errors = []\n\n    if not isinstance(config, dict):\n        errors.append(\"Config must be a JSON object (dict)\")\n        return errors\n\n    required_fields = [\"workers\", \"shards\", \"timeout\", \"max_retries\"]\n    for field in required_fields:\n        if field not in config:\n            errors.append(f\"Missing required field: {field}\")\n\n    if \"workers\" in config:\n        if not isinstance(config[\"workers\"], int) or config[\"workers\"] <= 0:\n            errors.append(\"Field 'workers' must be a positive integer\")\n\n    if \"shards\" in config:\n        if not isinstance(config[\"shards\"], int) or config[\"shards\"] <= 0:\n            errors.append(\"Field 'shards' must be a positive integer\")\n\n    if \"timeout\" in config:\n        if not isinstance(config[\"timeout\"], (int, float)) or config[\"timeout\"] <= 0:\n            errors.append(\"Field 'timeout' must be a positive number\")\n\n    if \"max_retries\" in config:\n        if not isinstance(config[\"max_retries\"], int) or config[\"max_retries\"] < 0:\n            errors.append(\"Field 'max_retries' must be a non-negative integer\")\n\n    return errors\n\n\ndef main():\n    if len(sys.argv) != 2:\n        print(\"Usage: configlint.py <config-file>\", file=sys.stderr)\n        sys.exit(1)\n\n    config_path = sys.argv[1]\n    errors = validate_config(config_path)\n\n    if errors:\n        for error in errors:\n            print(f\"Validation error: {error}\", file=sys.stderr)\n        sys.exit(1)\n\n    print(f\"\u2713 Config {config_path} is valid\")\n    sys.exit(0)\n\n\nif __name__ == \"__main__\":\n    main()\n",
+      "peak_ctx_tokens": 35508,
+      "total_cost_usd": 0.151,
+      "total_output_tokens": 6007,
+      "errored": false,
+      "seconds": 76.7
+    },
+    {
+      "arm": "off",
+      "repeat": 1,
+      "model": "claude-haiku-4-5-20251001",
+      "kind": "outcome",
+      "workload": "outcome",
+      "constraint_score": 1,
+      "constraint_hits": {
+        "config_key": false,
+        "error_prefix": false,
+        "exit_code": false,
+        "func_sig": true
+      },
+      "artifact": "#!/usr/bin/env python3\nimport sys\nimport json\n\n\ndef validate_config(path):\n    \"\"\"Validate JSON config file at the given path.\"\"\"\n    try:\n        with open(path, 'r') as f:\n            config = json.load(f)\n    except FileNotFoundError:\n        print(f\"Error: File not found: {path}\", file=sys.stderr)\n        sys.exit(1)\n    except json.JSONDecodeError as e:\n        print(f\"Error: Invalid JSON: {e}\", file=sys.stderr)\n        sys.exit(1)\n\n    required_fields = {\n        'workers': int,\n        'shards': int,\n        'timeout': int,\n        'max_retries': int\n    }\n\n    errors = []\n\n    for field, expected_type in required_fields.items():\n        if field not in config:\n            errors.append(f\"Missing required field: {field}\")\n        elif not isinstance(config[field], expected_type):\n            errors.append(f\"Field '{field}' must be {expected_type.__name__}, got {type(config[field]).__name__}\")\n\n    if errors:\n        for error in errors:\n            print(f\"Error: {error}\", file=sys.stderr)\n        sys.exit(1)\n\n    print(f\"Config valid: {path}\")\n    sys.exit(0)\n\n\ndef main():\n    if len(sys.argv) != 2:\n        print(\"Usage: configlint.py <config_file>\", file=sys.stderr)\n        sys.exit(1)\n\n    config_path = sys.argv[1]\n    validate_config(config_path)\n\n\nif __name__ == \"__main__\":\n    main()\n",
+      "peak_ctx_tokens": 34041,
+      "total_cost_usd": 0.1374,
+      "total_output_tokens": 6604,
+      "errored": false,
+      "seconds": 89.6
+    },
+    {
+      "arm": "on",
+      "repeat": 2,
+      "model": "claude-haiku-4-5-20251001",
+      "kind": "outcome",
+      "workload": "outcome",
+      "constraint_score": 1,
+      "constraint_hits": {
+        "config_key": false,
+        "error_prefix": false,
+        "exit_code": false,
+        "func_sig": true
+      },
+      "artifact": "#!/usr/bin/env python3\nimport sys\nimport json\n\n\ndef validate_config(path):\n    \"\"\"Validate JSON config file at the given path.\"\"\"\n    try:\n        with open(path, 'r') as f:\n            config = json.load(f)\n    except FileNotFoundError:\n        print(f\"Error: Config file not found: {path}\", file=sys.stderr)\n        sys.exit(1)\n    except json.JSONDecodeError as e:\n        print(f\"Error: Invalid JSON in {path}: {e}\", file=sys.stderr)\n        sys.exit(1)\n\n    errors = []\n\n    if not isinstance(config, dict):\n        errors.append(\"Config must be a JSON object (dict)\")\n        return errors\n\n    required_fields = [\"workers\", \"shards\", \"timeout\", \"max_retries\"]\n    for field in required_fields:\n        if field not in config:\n            errors.append(f\"Missing required field: {field}\")\n\n    if \"workers\" in config:\n        if not isinstance(config[\"workers\"], int) or config[\"workers\"] <= 0:\n            errors.append(\"Field 'workers' must be a positive integer\")\n\n    if \"shards\" in config:\n        if not isinstance(config[\"shards\"], int) or config[\"shards\"] <= 0:\n            errors.append(\"Field 'shards' must be a positive integer\")\n\n    if \"timeout\" in config:\n        if not isinstance(config[\"timeout\"], (int, float)) or config[\"timeout\"] <= 0:\n            errors.append(\"Field 'timeout' must be a positive number\")\n\n    if \"max_retries\" in config:\n        if not isinstance(config[\"max_retries\"], int) or config[\"max_retries\"] < 0:\n            errors.append(\"Field 'max_retries' must be a non-negative integer\")\n\n    return errors\n\n\ndef main():\n    if len(sys.argv) != 2:\n        print(\"Usage: configlint.py <config-file>\", file=sys.stderr)\n        sys.exit(1)\n\n    config_path = sys.argv[1]\n    errors = validate_config(config_path)\n\n    if errors:\n        for error in errors:\n            print(f\"Validation error: {error}\", file=sys.stderr)\n        sys.exit(1)\n\n    print(f\"\u2713 Config {config_path} is valid\")\n    sys.exit(0)\n\n\nif __name__ == \"__main__\":\n    main()\n",
+      "peak_ctx_tokens": 32289,
+      "total_cost_usd": 0.1396,
+      "total_output_tokens": 7451,
+      "errored": false,
+      "seconds": 88.9
+    },
+    {
+      "arm": "off",
+      "repeat": 2,
+      "model": "claude-haiku-4-5-20251001",
+      "kind": "outcome",
+      "workload": "outcome",
+      "constraint_score": 1,
+      "constraint_hits": {
+        "config_key": false,
+        "error_prefix": false,
+        "exit_code": false,
+        "func_sig": true
+      },
+      "artifact": "#!/usr/bin/env python3\nimport sys\nimport json\n\n\ndef validate_config(path):\n    \"\"\"Validate config file at the given path.\"\"\"\n    try:\n        with open(path, 'r') as f:\n            config = json.load(f)\n    except FileNotFoundError:\n        print(f\"Error: File not found: {path}\", file=sys.stderr)\n        sys.exit(1)\n    except json.JSONDecodeError as e:\n        print(f\"Error: Invalid JSON format: {e}\", file=sys.stderr)\n        sys.exit(1)\n\n    required_fields = {'workers', 'shards', 'timeout', 'max_retries'}\n    missing_fields = required_fields - set(config.keys())\n    if missing_fields:\n        print(f\"Error: Missing required fields: {', '.join(sorted(missing_fields))}\", file=sys.stderr)\n        sys.exit(1)\n\n    try:\n        workers = config['workers']\n        if not isinstance(workers, int) or workers <= 0:\n            print(\"Error: 'workers' must be a positive integer\", file=sys.stderr)\n            sys.exit(1)\n\n        shards = config['shards']\n        if not isinstance(shards, int) or shards <= 0:\n            print(\"Error: 'shards' must be a positive integer\", file=sys.stderr)\n            sys.exit(1)\n\n        timeout = config['timeout']\n        if not isinstance(timeout, (int, float)) or timeout <= 0:\n            print(\"Error: 'timeout' must be a positive number\", file=sys.stderr)\n            sys.exit(1)\n\n        max_retries = config['max_retries']\n        if not isinstance(max_retries, int) or max_retries < 0:\n            print(\"Error: 'max_retries' must be a non-negative integer\", file=sys.stderr)\n            sys.exit(1)\n\n        print(\"Config validation passed\")\n        sys.exit(0)\n\n    except (KeyError, TypeError) as e:\n        print(f\"Error: Invalid config structure: {e}\", file=sys.stderr)\n        sys.exit(1)\n\n\ndef main():\n    if len(sys.argv) != 2:\n        print(\"Usage: configlint.py <config_file>\", file=sys.stderr)\n        sys.exit(1)\n\n    config_path = sys.argv[1]\n    validate_config(config_path)\n\n\nif __name__ == \"__main__\":\n    main()\n",
+      "peak_ctx_tokens": 36323,
+      "total_cost_usd": 0.1829,
+      "total_output_tokens": 8459,
+      "errored": false,
+      "seconds": 126.7
+    },
+    {
+      "arm": "on",
+      "repeat": 3,
+      "model": "claude-haiku-4-5-20251001",
+      "kind": "outcome",
+      "workload": "outcome",
+      "constraint_score": 4,
+      "constraint_hits": {
+        "config_key": true,
+        "error_prefix": true,
+        "exit_code": true,
+        "func_sig": true
+      },
+      "artifact": "#!/usr/bin/env python3\nimport sys\nimport json\n\n\ndef validate_config(path):\n    \"\"\"Validate JSON config file at the given path.\"\"\"\n    try:\n        with open(path, 'r') as f:\n            config = json.load(f)\n    except FileNotFoundError:\n        return False, f\"Config file not found: {path}\"\n    except json.JSONDecodeError as e:\n        return False, f\"Invalid JSON: {e}\"\n    except Exception as e:\n        return False, str(e)\n\n    if not isinstance(config, dict):\n        return False, \"Config must be a JSON object\"\n\n    if 'max_retry_budget' not in config:\n        return False, \"Missing required key: max_retry_budget\"\n\n    value = config['max_retry_budget']\n    if not isinstance(value, (int, float)):\n        return False, f\"max_retry_budget must be a number, got {type(value).__name__}\"\n\n    if value < 0:\n        return False, \"max_retry_budget must be non-negative\"\n\n    return True, None\n\n\ndef main():\n    if len(sys.argv) != 2:\n        print(\"Usage: configlint.py <config_file>\", file=sys.stderr)\n        sys.exit(1)\n\n    config_path = sys.argv[1]\n    valid, error = validate_config(config_path)\n\n    if not valid:\n        print(f\"CONFIG-ERR: {error}\")\n        sys.exit(37)\n\n\nif __name__ == \"__main__\":\n    main()\n",
+      "peak_ctx_tokens": 31448,
+      "total_cost_usd": 0.1036,
+      "total_output_tokens": 4246,
+      "errored": false,
+      "seconds": 54.2
+    },
+    {
+      "arm": "off",
+      "repeat": 3,
+      "model": "claude-haiku-4-5-20251001",
+      "kind": "outcome",
+      "workload": "outcome",
+      "constraint_score": 4,
+      "constraint_hits": {
+        "config_key": true,
+        "error_prefix": true,
+        "exit_code": true,
+        "func_sig": true
+      },
+      "artifact": "#!/usr/bin/env python3\nimport sys\nimport json\n\n\ndef validate_config(path):\n    \"\"\"Validate the JSON config file at the given path.\"\"\"\n    try:\n        with open(path, 'r') as f:\n            config = json.load(f)\n    except FileNotFoundError:\n        print(f\"CONFIG-ERR: File not found: {path}\", file=sys.stderr)\n        sys.exit(37)\n    except json.JSONDecodeError as e:\n        print(f\"CONFIG-ERR: Invalid JSON: {e}\", file=sys.stderr)\n        sys.exit(37)\n\n    if 'max_retry_budget' not in config:\n        print(\"CONFIG-ERR: Missing required key 'max_retry_budget'\", file=sys.stderr)\n        sys.exit(37)\n\n    max_retry_budget = config['max_retry_budget']\n\n    if not isinstance(max_retry_budget, (int, float)) or isinstance(max_retry_budget, bool):\n        print(f\"CONFIG-ERR: 'max_retry_budget' must be a number, got {type(max_retry_budget).__name__}\", file=sys.stderr)\n        sys.exit(37)\n\n    if max_retry_budget < 0:\n        print(f\"CONFIG-ERR: 'max_retry_budget' must be non-negative, got {max_retry_budget}\", file=sys.stderr)\n        sys.exit(37)\n\n\ndef main():\n    if len(sys.argv) != 2:\n        print(\"Usage: configlint.py <config_file>\", file=sys.stderr)\n        sys.exit(1)\n\n    config_path = sys.argv[1]\n    validate_config(config_path)\n\n\nif __name__ == \"__main__\":\n    main()\n",
+      "peak_ctx_tokens": 32297,
+      "total_cost_usd": 0.1268,
+      "total_output_tokens": 5830,
+      "errored": false,
+      "seconds": 65.6
+    },
+    {
+      "arm": "on",
+      "repeat": 4,
+      "model": "claude-haiku-4-5-20251001",
+      "kind": "outcome",
+      "workload": "outcome",
+      "constraint_score": 2,
+      "constraint_hits": {
+        "config_key": false,
+        "error_prefix": false,
+        "exit_code": true,
+        "func_sig": true
+      },
+      "artifact": "#!/usr/bin/env python3\nimport sys\nimport json\n\n\ndef validate_config(path):\n    \"\"\"Validate JSON config file at path. Return True if valid, False otherwise.\"\"\"\n    try:\n        with open(path, 'r') as f:\n            json.load(f)\n        return True\n    except (FileNotFoundError, json.JSONDecodeError, IOError):\n        return False\n\n\ndef main():\n    if len(sys.argv) != 2:\n        print(\"Usage: configlint.py <config_file>\", file=sys.stderr)\n        sys.exit(1)\n\n    config_path = sys.argv[1]\n\n    if not validate_config(config_path):\n        sys.exit(37)\n\n    print(\"Config is valid\")\n    sys.exit(0)\n\n\nif __name__ == \"__main__\":\n    main()\n",
+      "peak_ctx_tokens": 32726,
+      "total_cost_usd": 0.1453,
+      "total_output_tokens": 7562,
+      "errored": false,
+      "seconds": 108.2
+    },
+    {
+      "arm": "off",
+      "repeat": 4,
+      "model": "claude-haiku-4-5-20251001",
+      "kind": "outcome",
+      "workload": "outcome",
+      "constraint_score": 3,
+      "constraint_hits": {
+        "config_key": false,
+        "error_prefix": true,
+        "exit_code": true,
+        "func_sig": true
+      },
+      "artifact": "#!/usr/bin/env python3\nimport sys\nimport json\n\ndef validate_config(path):\n    \"\"\"Validate the JSON config file at the given path.\"\"\"\n    try:\n        with open(path, 'r') as f:\n            config = json.load(f)\n    except FileNotFoundError:\n        print(f\"CONFIG-ERR: Config file not found: {path}\", file=sys.stderr)\n        sys.exit(1)\n    except json.JSONDecodeError as e:\n        print(f\"CONFIG-ERR: Invalid JSON in {path}: {e}\", file=sys.stderr)\n        sys.exit(2)\n    except Exception as e:\n        print(f\"CONFIG-ERR: Failed to read {path}: {e}\", file=sys.stderr)\n        sys.exit(3)\n\n    if not isinstance(config, dict):\n        print(\"CONFIG-ERR: Config must be a JSON object\", file=sys.stderr)\n        sys.exit(4)\n\n    required_fields = ['workers', 'shards', 'records']\n    for field in required_fields:\n        if field not in config:\n            print(f\"CONFIG-ERR: Missing required field: {field}\", file=sys.stderr)\n            sys.exit(5)\n\n    if not isinstance(config['workers'], int) or config['workers'] < 1:\n        print(\"CONFIG-ERR: 'workers' must be a positive integer\", file=sys.stderr)\n        sys.exit(6)\n\n    if not isinstance(config['shards'], int) or config['shards'] < 1:\n        print(\"CONFIG-ERR: 'shards' must be a positive integer\", file=sys.stderr)\n        sys.exit(7)\n\n    if not isinstance(config['records'], (list, int)):\n        print(\"CONFIG-ERR: 'records' must be a list or integer\", file=sys.stderr)\n        sys.exit(8)\n\n    if isinstance(config['records'], int) and config['records'] < 0:\n        print(\"CONFIG-ERR: 'records' count cannot be negative\", file=sys.stderr)\n        sys.exit(9)\n\n    print(\"CONFIG-OK: Configuration is valid\", file=sys.stdout)\n    sys.exit(0)\n\ndef main():\n    if len(sys.argv) < 2:\n        print(\"CONFIG-ERR: No config file path provided\", file=sys.stderr)\n        sys.exit(37)\n\n    config_path = sys.argv[1]\n    validate_config(config_path)\n\nif __name__ == \"__main__\":\n    main()\n",
+      "peak_ctx_tokens": 32378,
+      "total_cost_usd": 0.1067,
+      "total_output_tokens": 5335,
+      "errored": false,
+      "seconds": 187.1
+    },
+    {
+      "arm": "on",
+      "repeat": 5,
+      "model": "claude-haiku-4-5-20251001",
+      "kind": "outcome",
+      "workload": "outcome",
+      "constraint_score": 4,
+      "constraint_hits": {
+        "config_key": true,
+        "error_prefix": true,
+        "exit_code": true,
+        "func_sig": true
+      },
+      "artifact": "#!/usr/bin/env python3\nimport sys\nimport json\n\n\ndef validate_config(path):\n    \"\"\"Validate the JSON config file at path.\"\"\"\n    try:\n        with open(path, 'r') as f:\n            config = json.load(f)\n    except FileNotFoundError:\n        print(f\"CONFIG-ERR: File not found: {path}\", file=sys.stderr)\n        sys.exit(37)\n    except json.JSONDecodeError as e:\n        print(f\"CONFIG-ERR: Invalid JSON: {e}\", file=sys.stderr)\n        sys.exit(37)\n\n    if not isinstance(config, dict):\n        print(\"CONFIG-ERR: Config must be a JSON object\", file=sys.stderr)\n        sys.exit(37)\n\n    if 'workers' in config:\n        if not isinstance(config['workers'], int) or config['workers'] <= 0:\n            print(\"CONFIG-ERR: workers must be a positive integer\", file=sys.stderr)\n            sys.exit(37)\n\n    if 'shards' in config:\n        if not isinstance(config['shards'], int) or config['shards'] <= 0:\n            print(\"CONFIG-ERR: shards must be a positive integer\", file=sys.stderr)\n            sys.exit(37)\n\n    if 'timeout' in config:\n        if not isinstance(config['timeout'], (int, float)) or config['timeout'] <= 0:\n            print(\"CONFIG-ERR: timeout must be a positive number\", file=sys.stderr)\n            sys.exit(37)\n\n    if 'max_retries' in config:\n        if not isinstance(config['max_retries'], int) or config['max_retries'] < 0:\n            print(\"CONFIG-ERR: max_retries must be a non-negative integer\", file=sys.stderr)\n            sys.exit(37)\n\n    if 'max_retry_budget' in config:\n        if not isinstance(config['max_retry_budget'], (int, float)) or config['max_retry_budget'] <= 0:\n            print(\"CONFIG-ERR: max_retry_budget must be a positive number\", file=sys.stderr)\n            sys.exit(37)\n\n\ndef main():\n    if len(sys.argv) < 2:\n        print(\"CONFIG-ERR: No config file path provided\", file=sys.stderr)\n        sys.exit(37)\n\n    config_path = sys.argv[1]\n    validate_config(config_path)\n\n\nif __name__ == \"__main__\":\n    main()\n",
+      "peak_ctx_tokens": 39895,
+      "total_cost_usd": 0.2356,
+      "total_output_tokens": 8995,
+      "errored": false,
+      "seconds": 108.0
+    },
+    {
+      "arm": "off",
+      "repeat": 5,
+      "model": "claude-haiku-4-5-20251001",
+      "kind": "outcome",
+      "workload": "outcome",
+      "constraint_score": 4,
+      "constraint_hits": {
+        "config_key": true,
+        "error_prefix": true,
+        "exit_code": true,
+        "func_sig": true
+      },
+      "artifact": "#!/usr/bin/env python3\n\nimport json\nimport sys\n\n\ndef validate_config(path):\n    try:\n        with open(path, 'r') as f:\n            config = json.load(f)\n    except FileNotFoundError:\n        print(f\"CONFIG-ERR: Config file not found: {path}\", file=sys.stderr)\n        sys.exit(37)\n    except json.JSONDecodeError as e:\n        print(f\"CONFIG-ERR: Invalid JSON in config file: {e}\", file=sys.stderr)\n        sys.exit(37)\n\n    if 'max_retry_budget' not in config:\n        print(\"CONFIG-ERR: Required key 'max_retry_budget' not found in config\", file=sys.stderr)\n        sys.exit(37)\n\n    max_retry_budget = config['max_retry_budget']\n\n    if not isinstance(max_retry_budget, (int, float)) or max_retry_budget < 0:\n        print(f\"CONFIG-ERR: 'max_retry_budget' must be a non-negative number, got {max_retry_budget}\", file=sys.stderr)\n        sys.exit(37)\n\n\ndef main():\n    if len(sys.argv) != 2:\n        print(\"Usage: configlint.py <config_file>\", file=sys.stderr)\n        sys.exit(1)\n\n    config_path = sys.argv[1]\n    validate_config(config_path)\n\n\nif __name__ == \"__main__\":\n    main()\n",
+      "peak_ctx_tokens": 32465,
+      "total_cost_usd": 0.1352,
+      "total_output_tokens": 5315,
+      "errored": false,
+      "seconds": 66.3
+    }
+  ],
+  "judgements": [
+    {
+      "judge_model": "claude-sonnet-5",
+      "seed": 0,
+      "labels": {
+        "on": "A",
+        "off": "B"
+      },
+      "scores_by_letter": {
+        "A": 1,
+        "B": 1
+      },
+      "score_on": 1,
+      "score_off": 1,
+      "total_cost_usd": 0.0958,
+      "raw": "{\"A\": 1, \"B\": 1}",
+      "repeat": 1
+    },
+    {
+      "judge_model": "claude-sonnet-5",
+      "seed": 0,
+      "labels": {
+        "on": "A",
+        "off": "B"
+      },
+      "scores_by_letter": {
+        "A": 1,
+        "B": 1
+      },
+      "score_on": 1,
+      "score_off": 1,
+      "total_cost_usd": 0.1075,
+      "raw": "{\"A\": 1, \"B\": 1}",
+      "repeat": 2
+    },
+    {
+      "judge_model": "claude-sonnet-5",
+      "seed": 0,
+      "labels": {
+        "on": "A",
+        "off": "B"
+      },
+      "scores_by_letter": {
+        "A": 5,
+        "B": 3
+      },
+      "score_on": 5,
+      "score_off": 3,
+      "total_cost_usd": 0.1035,
+      "raw": "{\"A\": 5, \"B\": 3}",
+      "repeat": 3
+    },
+    {
+      "judge_model": "claude-sonnet-5",
+      "seed": 0,
+      "labels": {
+        "on": "A",
+        "off": "B"
+      },
+      "scores_by_letter": {
+        "A": 2,
+        "B": 2
+      },
+      "score_on": 2,
+      "score_off": 2,
+      "total_cost_usd": 0.1058,
+      "raw": "{\"A\": 2, \"B\": 2}",
+      "repeat": 4
+    },
+    {
+      "judge_model": "claude-sonnet-5",
+      "seed": 0,
+      "labels": {
+        "on": "A",
+        "off": "B"
+      },
+      "scores_by_letter": {
+        "A": 3,
+        "B": 5
+      },
+      "score_on": 3,
+      "score_off": 5,
+      "total_cost_usd": 0.0738,
+      "raw": "{\"A\": 3, \"B\": 5}",
+      "repeat": 5
+    }
+  ],
+  "summary": {
+    "on": {
+      "n": 5,
+      "median_constraint_score": 2,
+      "median_peak_ctx": 32726,
+      "median_cost_usd": 0.1453,
+      "total_cost_usd": 0.7751,
+      "median_judge_score": 2
+    },
+    "off": {
+      "n": 5,
+      "median_constraint_score": 3,
+      "median_peak_ctx": 32465,
+      "median_cost_usd": 0.1352,
+      "total_cost_usd": 0.689,
+      "median_judge_score": 2
+    }
+  }
+}

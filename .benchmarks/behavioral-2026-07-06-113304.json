@@ -1,0 +1,314 @@
+{
+  "stamp": "2026-07-06-113304",
+  "model": "claude-haiku-4-5-20251001",
+  "repeats": 3,
+  "kind": "recall",
+  "flood_turns": 3,
+  "log_tokens": 9000,
+  "sessions": [
+    {
+      "arm": "on",
+      "repeat": 1,
+      "model": "claude-haiku-4-5-20251001",
+      "kind": "recall",
+      "recall": 4,
+      "recall_hits": {
+        "codename": true,
+        "db_driver": true,
+        "retry_budget": true,
+        "dead_end_flag": true
+      },
+      "peak_ctx_tokens": 31376,
+      "total_cost_usd": 0.1009,
+      "total_output_tokens": 2082,
+      "offload_files": 1,
+      "snapshots": 0,
+      "compacted": false,
+      "errored": false,
+      "seconds": 52.6,
+      "turns_ctx": [
+        {
+          "turn": "plant",
+          "ctx": 28605
+        },
+        {
+          "turn": "flood-1",
+          "ctx": 30236
+        },
+        {
+          "turn": "flood-2",
+          "ctx": 30560
+        },
+        {
+          "turn": "flood-3",
+          "ctx": 30962
+        },
+        {
+          "turn": "distractor",
+          "ctx": 31376
+        },
+        {
+          "turn": "probe",
+          "ctx": 24040
+        }
+      ],
+      "probe_answer": "(a) Saffron-Quill\n(b) pgx-v5.2\n(c) 137\n(d) turbo-merge"
+    },
+    {
+      "arm": "off",
+      "repeat": 1,
+      "model": "claude-haiku-4-5-20251001",
+      "kind": "recall",
+      "recall": 4,
+      "recall_hits": {
+        "codename": true,
+        "db_driver": true,
+        "retry_budget": true,
+        "dead_end_flag": true
+      },
+      "peak_ctx_tokens": 32240,
+      "total_cost_usd": 0.1071,
+      "total_output_tokens": 3646,
+      "offload_files": 0,
+      "snapshots": 0,
+      "compacted": false,
+      "errored": false,
+      "seconds": 69.1,
+      "turns_ctx": [
+        {
+          "turn": "plant",
+          "ctx": 29098
+        },
+        {
+          "turn": "flood-1",
+          "ctx": 31129
+        },
+        {
+          "turn": "flood-2",
+          "ctx": 31444
+        },
+        {
+          "turn": "flood-3",
+          "ctx": 31723
+        },
+        {
+          "turn": "distractor",
+          "ctx": 32240
+        },
+        {
+          "turn": "probe",
+          "ctx": 24862
+        }
+      ],
+      "probe_answer": "(a) Saffron-Quill\n(b) pgx-v5.2\n(c) 137\n(d) turbo-merge"
+    },
+    {
+      "arm": "on",
+      "repeat": 2,
+      "model": "claude-haiku-4-5-20251001",
+      "kind": "recall",
+      "recall": 4,
+      "recall_hits": {
+        "codename": true,
+        "db_driver": true,
+        "retry_budget": true,
+        "dead_end_flag": true
+      },
+      "peak_ctx_tokens": 32122,
+      "total_cost_usd": 0.1108,
+      "total_output_tokens": 2729,
+      "offload_files": 1,
+      "snapshots": 0,
+      "compacted": false,
+      "errored": false,
+      "seconds": 52.1,
+      "turns_ctx": [
+        {
+          "turn": "plant",
+          "ctx": 28916
+        },
+        {
+          "turn": "flood-1",
+          "ctx": 30953
+        },
+        {
+          "turn": "flood-2",
+          "ctx": 31302
+        },
+        {
+          "turn": "flood-3",
+          "ctx": 31724
+        },
+        {
+          "turn": "distractor",
+          "ctx": 32122
+        },
+        {
+          "turn": "probe",
+          "ctx": 24800
+        }
+      ],
+      "probe_answer": "(a) Project Saffron-Quill\n(b) pgx-v5.2\n(c) 137\n(d) turbo-merge flag"
+    },
+    {
+      "arm": "off",
+      "repeat": 2,
+      "model": "claude-haiku-4-5-20251001",
+      "kind": "recall",
+      "recall": 4,
+      "recall_hits": {
+        "codename": true,
+        "db_driver": true,
+        "retry_budget": true,
+        "dead_end_flag": true
+      },
+      "peak_ctx_tokens": 31406,
+      "total_cost_usd": 0.1008,
+      "total_output_tokens": 2626,
+      "offload_files": 0,
+      "snapshots": 0,
+      "compacted": false,
+      "errored": false,
+      "seconds": 47.9,
+      "turns_ctx": [
+        {
+          "turn": "plant",
+          "ctx": 28298
+        },
+        {
+          "turn": "flood-1",
+          "ctx": 30176
+        },
+        {
+          "turn": "flood-2",
+          "ctx": 30477
+        },
+        {
+          "turn": "flood-3",
+          "ctx": 30746
+        },
+        {
+          "turn": "distractor",
+          "ctx": 31406
+        },
+        {
+          "turn": "probe",
+          "ctx": 24036
+        }
+      ],
+      "probe_answer": "(a) Saffron-Quill\n(b) pgx-v5.2\n(c) 137\n(d) turbo-merge (corrupts the WAL)"
+    },
+    {
+      "arm": "on",
+      "repeat": 3,
+      "model": "claude-haiku-4-5-20251001",
+      "kind": "recall",
+      "recall": 4,
+      "recall_hits": {
+        "codename": true,
+        "db_driver": true,
+        "retry_budget": true,
+        "dead_end_flag": true
+      },
+      "peak_ctx_tokens": 32191,
+      "total_cost_usd": 0.1115,
+      "total_output_tokens": 2793,
+      "offload_files": 1,
+      "snapshots": 0,
+      "compacted": false,
+      "errored": false,
+      "seconds": 59.4,
+      "turns_ctx": [
+        {
+          "turn": "plant",
+          "ctx": 29072
+        },
+        {
+          "turn": "flood-1",
+          "ctx": 30999
+        },
+        {
+          "turn": "flood-2",
+          "ctx": 31354
+        },
+        {
+          "turn": "flood-3",
+          "ctx": 31767
+        },
+        {
+          "turn": "distractor",
+          "ctx": 32191
+        },
+        {
+          "turn": "probe",
+          "ctx": 24875
+        }
+      ],
+      "probe_answer": "(a) Saffron-Quill\n(b) pgx-v5.2\n(c) 137\n(d) turbo-merge flag"
+    },
+    {
+      "arm": "off",
+      "repeat": 3,
+      "model": "claude-haiku-4-5-20251001",
+      "kind": "recall",
+      "recall": 4,
+      "recall_hits": {
+        "codename": true,
+        "db_driver": true,
+        "retry_budget": true,
+        "dead_end_flag": true
+      },
+      "peak_ctx_tokens": 31785,
+      "total_cost_usd": 0.1044,
+      "total_output_tokens": 2972,
+      "offload_files": 0,
+      "snapshots": 0,
+      "compacted": false,
+      "errored": false,
+      "seconds": 51.6,
+      "turns_ctx": [
+        {
+          "turn": "plant",
+          "ctx": 28339
+        },
+        {
+          "turn": "flood-1",
+          "ctx": 30330
+        },
+        {
+          "turn": "flood-2",
+          "ctx": 30625
+        },
+        {
+          "turn": "flood-3",
+          "ctx": 30914
+        },
+        {
+          "turn": "distractor",
+          "ctx": 31785
+        },
+        {
+          "turn": "probe",
+          "ctx": 24430
+        }
+      ],
+      "probe_answer": "(a) Saffron-Quill\n(b) pgx-v5.2\n(c) 137\n(d) turbo-merge"
+    }
+  ],
+  "summary": {
+    "on": {
+      "n": 3,
+      "median_recall": 4,
+      "median_peak_ctx": 32122,
+      "median_cost_usd": 0.1108,
+      "total_cost_usd": 0.3232
+    },
+    "off": {
+      "n": 3,
+      "median_recall": 4,
+      "median_peak_ctx": 31785,
+      "median_cost_usd": 0.1044,
+      "total_cost_usd": 0.3123
+    }
+  }
+}

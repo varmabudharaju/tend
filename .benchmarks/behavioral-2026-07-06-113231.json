@@ -1,0 +1,72 @@
+{
+  "stamp": "2026-07-06-113231",
+  "model": "claude-haiku-4-5-20251001",
+  "repeats": 1,
+  "kind": "outcome",
+  "workload": "outcome",
+  "seed": 0,
+  "judge": null,
+  "arms": [
+    "on",
+    "off"
+  ],
+  "sessions": [
+    {
+      "arm": "on",
+      "repeat": 1,
+      "model": "claude-haiku-4-5-20251001",
+      "kind": "outcome",
+      "workload": "outcome",
+      "constraint_score": 3,
+      "constraint_hits": {
+        "config_key": true,
+        "error_prefix": true,
+        "exit_code": true,
+        "func_sig": false
+      },
+      "artifact": "#!/usr/bin/env python3\nimport sys\nimport json\nimport re\n\n\ndef validate_config(config_path):\n    \"\"\"Validate JSON config file at the given path.\"\"\"\n    try:\n        with open(config_path, 'r') as f:\n            config = json.load(f)\n    except FileNotFoundError:\n        print(f\"CONFIG-ERR: File not found: {config_path}\")\n        sys.exit(37)\n    except json.JSONDecodeError as e:\n        print(f\"CONFIG-ERR: Invalid JSON: {e}\")\n        sys.exit(37)\n\n    if 'max_retry_budget' not in config:\n        print(\"CONFIG-ERR: Missing required key 'max_retry_budget'\")\n        sys.exit(37)\n\n    if not isinstance(config['max_retry_budget'], (int, float)) or config['max_retry_budget'] < 0:\n        print(\"CONFIG-ERR: 'max_retry_budget' must be a non-negative number\")\n        sys.exit(37)\n\n    return config\n\n\ndef parse_log_file(log_path):\n    \"\"\"Parse log file and extract retry counts.\"\"\"\n    try:\n        with open(log_path, 'r') as f:\n            lines = f.readlines()\n    except FileNotFoundError:\n        print(f\"CONFIG-ERR: Log file not found: {log_path}\")\n        sys.exit(37)\n\n    total_retries = 0\n    retry_pattern = r'retry=(\\d+)'\n\n    for line in lines:\n        match = re.search(retry_pattern, line)\n        if match:\n            retry_count = int(match.group(1))\n            total_retries += retry_count\n\n    return total_retries\n\n\ndef main():\n    if len(sys.argv) < 3:\n        print(\"CONFIG-ERR: Usage: configlint.py <config_file> <log_file>\")\n        sys.exit(37)\n\n    config_path = sys.argv[1]\n    log_path = sys.argv[2]\n\n    config = validate_config(config_path)\n    max_budget = config['max_retry_budget']\n\n    total_retries = parse_log_file(log_path)\n\n    if total_retries > max_budget:\n        print(f\"CONFIG-ERR: Retry budget exceeded. Used {total_retries}, max {max_budget}\")\n        sys.exit(37)\n\n    print(\"Config is valid\")\n    print(f\"Retry budget: {total_retries}/{max_budget}\")\n\n\nif __name__ == '__main__':\n    main()\n",
+      "peak_ctx_tokens": 32558,
+      "total_cost_usd": 0.1404,
+      "total_output_tokens": 6945,
+      "errored": false,
+      "seconds": 83.9
+    },
+    {
+      "arm": "off",
+      "repeat": 1,
+      "model": "claude-haiku-4-5-20251001",
+      "kind": "outcome",
+      "workload": "outcome",
+      "constraint_score": 0,
+      "constraint_hits": {
+        "config_key": false,
+        "error_prefix": false,
+        "exit_code": false,
+        "func_sig": false
+      },
+      "artifact": "",
+      "peak_ctx_tokens": 34371,
+      "total_cost_usd": 0.1152,
+      "total_output_tokens": 4927,
+      "errored": false,
+      "seconds": 64.1
+    }
+  ],
+  "judgements": [],
+  "summary": {
+    "on": {
+      "n": 1,
+      "median_constraint_score": 3,
+      "median_peak_ctx": 32558,
+      "median_cost_usd": 0.1404,
+      "total_cost_usd": 0.1404
+    },
+    "off": {
+      "n": 1,
+      "median_constraint_score": 0,
+      "median_peak_ctx": 34371,
+      "median_cost_usd": 0.1152,
+      "total_cost_usd": 0.1152
+    }
+  }
+}
