@@ -64,7 +64,7 @@ tend is the colleague who quietly keeps the desk tidy.
 |---|---|---|
 | **File it, don't pile it** | A 10-page printout gets filed in a drawer; a sticky note on the desk says which drawer. | Oversized tool outputs are replaced with a head+tail excerpt; the full text is saved to disk with its path, retrievable with a bounded `Read`. |
 | **Keep a notebook** | Goals, decisions, and dead-ends live in a notebook that survives even if the desk is cleared. | Each project gets `.claude/tend/STATE.md` (Goal / Now / Decisions / Dead-ends). New sessions auto-load it, so `/clear` is a lossless handoff. |
-| **Sticky note with the goal** | A note on the monitor: *what we're doing, how full the desk is*. | A ≤400-token anchor is injected with every prompt: goal, current step, context %, stale-result warnings, and a `/compact` recommendation when it's time. |
+| **Sticky note with the goal** | A note on the monitor: *what we're doing, how full the desk is*. | A ≤400-token anchor carries the goal, current step, context %, stale-result warnings, and a `/compact` recommendation when it's time. It's adaptive: an unchanged anchor isn't re-injected — only a meaningful change (or every `anchor_refresh_turns` prompts) refreshes it. |
 | **Clean up at the right moment** | Tidy between tasks — never mid-thought, never throwing out the notebook. | tend detects task boundaries, recommends *curated* compaction (keep goal/decisions, drop raw outputs), snapshots before every compaction, and blocks one stale auto-compact until the notebook is updated. |
 
 And one bonus habit, added after watching real usage bills:
@@ -187,7 +187,7 @@ tend-marked entries).
 
 ## Configuration
 
-`~/.claude/tend/config.yaml`, overridable per project in `<project>/.claude/tend/config.yaml`. Keys and defaults are in `tend/config.py`. Invalid values fall back to defaults rather than disabling tend. Notable: `retention_days` (default 30) age-caps stored session state.
+`~/.claude/tend/config.yaml`, overridable per project in `<project>/.claude/tend/config.yaml`. Keys and defaults are in `tend/config.py`. Invalid values fall back to defaults rather than disabling tend. Notable: `retention_days` (default 30) age-caps stored session state, and `anchor_refresh_turns` (default 8) re-injects an unchanged anchor at most once every N prompts (1 = every prompt).
 
 ## Privacy & disk use
 
