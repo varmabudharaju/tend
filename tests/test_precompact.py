@@ -57,6 +57,21 @@ def test_stale_auto_compact_blocked_even_after_context_shrink(tmp_path):
     assert out == {"decision": "block", "reason": precompact.BLOCK_REASON}
 
 
+def test_snapshot_includes_state_sections_and_path(tmp_path):
+    from tend import paths, state
+
+    sp = state.path_for(str(tmp_path))
+    sp.parent.mkdir(parents=True)
+    sp.write_text("## Goal\nShip the parser\n\n## Decisions\nChose recursive descent\n")
+    precompact.handle(ev("manual", tmp_path))
+    snap = list(paths.session_dir("s1").glob("precompact-*.json"))[0]
+    data = paths.read_json(snap)
+    assert data["state_path"] == str(sp)
+    assert data["cwd"] == str(tmp_path)
+    assert "Ship the parser" in data["state_sections"]["Goal"]
+    assert "Chose recursive descent" in data["state_sections"]["Decisions"]
+
+
 def test_auto_compact_never_blocked_in_home(tend_home):
     """M5: sessionstart never seeds $HOME, so STATE.md can't exist there - don't block."""
     from pathlib import Path
