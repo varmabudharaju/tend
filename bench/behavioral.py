@@ -311,7 +311,11 @@ def run_discovery_session(arm, run_dir, model, repeat, log=print):
 
 def run_pilot(out_dir, stamp, model="claude-haiku-4-5-20251001", repeats=2,
               arms=("on", "off"), kind="recall", flood_turns=3, log_tokens=9000,
-              log=print):
+              judge=None, seed=0, log=print):
+    if kind == "outcome":
+        from . import outcome
+        return outcome.run(out_dir, stamp, model=model, repeats=repeats, arms=arms,
+                           judge=judge, seed=seed, log=log)
     run_dir = Path(tempfile.mkdtemp(prefix="tend-bench2-"))
     log(f"[bench2] run dir: {run_dir}  model={model}  repeats={repeats}  arms={arms} "
         f"kind={kind} flood_turns={flood_turns} log_tokens={log_tokens}")
