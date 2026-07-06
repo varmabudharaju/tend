@@ -1,7 +1,7 @@
 """Pillar 4: lossless continuation - restore STATE.md into fresh sessions; seed convention."""
 from pathlib import Path
 
-from . import config, flags, retention, state
+from . import config, flags, paths, retention, state
 
 CONVENTION = (
     "[tend] This project uses .claude/tend/STATE.md as the session's external state file "
@@ -18,12 +18,22 @@ PREAMBLE = (
 
 MAX_INJECT_CHARS = 16000
 
+COMPACT_PREAMBLE = (
+    "[tend] Context was just compacted. Durable state below survived on disk "
+    "(.claude/tend/STATE.md); filed outputs and snapshots are under {sdir}.\n\n"
+)
+
+MAX_COMPACT_CHARS = 8000
+COMPACT_ORDER = ("Goal", "Now", "Decisions", "Dead-ends", "Files touched")
+
 
 def handle(event):
     sid = event.get("session_id")
     _pin_project_root(event.get("cwd"), sid, event.get("source"))
     if sid:
         flags.update(sid, anchor_fp=None)  # rebuilt context needs a fresh anchor
+    if event.get("source") == "compact":
+        return _reanchor(event)
     if event.get("source") not in ("startup", "clear"):
         return None
     cwd = event.get("cwd") or "."
@@ -65,6 +75,58 @@ def _rel(sp, cwd):
         return sp.relative_to(cwd)
     except ValueError:
         return sp
+
+
+def _reanchor(event):
+    """source=compact: re-inject durable STATE.md so a compaction can't drop
+    decisions Claude Code's own summary missed. Never seeds; ignores freshness."""
+    cwd = event.get("cwd") or "."
+    sid = event.get("session_id")
+    if Path(cwd).resolve() == Path.home().resolve():
+        return None  # $HOME is never seeded; never act there
+    sp = state.resolve(cwd, sid)  # pin-aware: a drifted compact still finds the project
+    if not sp.exists():
+        return None  # nothing on disk to re-anchor; do NOT seed on compact
+    sections = state.read_sections(sp)
+    if _is_pristine(sections):
+        return None  # untouched template: nothing worth re-anchoring
+    sdir = paths.session_dir(sid) if sid else paths.home() / "sessions"
+    text = COMPACT_PREAMBLE.format(sdir=sdir) + _compact_body(sections, sp)
+    return _ctx(text, "tend: re-anchored durable state after compaction")
+
+
+def _is_pristine(sections) -> bool:
+    return all(_placeholder(sections.get(k)) for k in ("Goal", "Now", "Decisions"))
+
+
+def _placeholder(text) -> bool:
+    """True when a section has no real content - blank or only (...) template lines."""
+    for ln in (text or "").splitlines():
+        ln = ln.strip()
+        if ln and not ln.startswith("("):
+            return False
+    return True
+
+
+def _compact_body(sections, sp) -> str:
+    order = list(COMPACT_ORDER)
+    body = _join(sections, order)
+    for low in ("Files touched", "Dead-ends"):  # shed lowest priority first
+        if len(body) <= MAX_COMPACT_CHARS:
+            break
+        if low in order:
+            order.remove(low)
+            body = _join(sections, order)
+    if len(body) > MAX_COMPACT_CHARS:
+        cut = body.rfind("\n", 0, MAX_COMPACT_CHARS)
+        body = body[: cut if cut > 0 else MAX_COMPACT_CHARS]
+        body += f"\n[tend] STATE.md truncated for injection - read the rest at {sp}"
+    return body
+
+
+def _join(sections, order) -> str:
+    return "\n\n".join(f"## {k}\n{sections[k]}" for k in order
+                       if sections.get(k) and not _placeholder(sections.get(k)))
 
 
 def _ctx(text, note=None):

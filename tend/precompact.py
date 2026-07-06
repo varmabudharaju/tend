@@ -15,7 +15,7 @@ def handle(event):
     if not sid:
         return None
     cfg = config.load(event.get("cwd"))
-    _snapshot(sid)
+    _snapshot(sid, event.get("cwd"))
     flags.update(sid, anchor_fp=None)  # post-compaction context needs a fresh anchor
     if event.get("trigger") == "auto":
         fl = flags.load(sid)
@@ -42,10 +42,17 @@ def _is_stale(event, cfg) -> bool:
     return since is not None and since > cfg.state_stale_tokens
 
 
-def _snapshot(sid) -> None:
+def _snapshot(sid, cwd) -> None:
     snap = {
         "summary": ledger.load_summary(sid),
         "ctx": ctxmetrics.read_ctx(sid),
         "ts": time.time(),
     }
+    try:  # STATE.md capture is best-effort: a bad read must not lose the snapshot
+        sp = state.resolve(cwd, sid)  # pin-aware: snapshot the project's state, not a drifted cwd's
+        snap["cwd"] = str(cwd)
+        snap["state_path"] = str(sp)
+        snap["state_sections"] = state.read_sections(sp)
+    except Exception:
+        pass
     paths.write_json_atomic(paths.session_dir(sid) / f"precompact-{time.time_ns()}.json", snap)
