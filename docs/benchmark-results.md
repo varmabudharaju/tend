@@ -239,6 +239,11 @@ credibly (many repeats, blind scoring) and is the next benchmark we want to
 build. Until it exists, the outcome claim is an argument from mechanism, and
 you should read it that way.
 
+The harness for exactly this now exists — `python3 -m bench behavioral --workload
+outcome` runs a multi-step coding task with 4 planted constraints, a forced
+mid-task reset, and per-constraint plus optional blind-judge scoring — but no run
+has been executed yet, so there are still **no outcome numbers to report**.
+
 ---
 
 ## Artifacts & cost
