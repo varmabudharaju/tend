@@ -23,6 +23,22 @@ def test_pin_happens_for_ignored_sources_too(tmp_path):
     assert flags.load("s1")["project_root"] == str(proj.resolve())
 
 
+def test_compact_never_overwrites_pin(tmp_path):
+    """A compact fires mid-session with a possibly-drifted cwd; the startup pin wins."""
+    proj, other = tmp_path / "proj", tmp_path / "other"
+    proj.mkdir(), other.mkdir()
+    sessionstart.handle(ss(proj))
+    sessionstart.handle(ss(other, source="compact"))
+    assert flags.load("s1")["project_root"] == str(proj.resolve())
+
+
+def test_compact_fills_missing_pin(tmp_path):
+    proj = tmp_path / "proj"
+    proj.mkdir()
+    sessionstart.handle(ss(proj, source="compact"))
+    assert flags.load("s1")["project_root"] == str(proj.resolve())
+
+
 def test_no_pin_without_cwd(tmp_path):
     sessionstart.handle(make_event(hook_event_name="SessionStart", source="resume",
                                    cwd="", session_id="s1"))

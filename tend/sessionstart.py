@@ -21,7 +21,7 @@ MAX_INJECT_CHARS = 16000
 
 def handle(event):
     sid = event.get("session_id")
-    _pin_project_root(event.get("cwd"), sid)  # for every source, before the early-return
+    _pin_project_root(event.get("cwd"), sid, event.get("source"))
     if event.get("source") not in ("startup", "clear"):
         return None
     cwd = event.get("cwd") or "."
@@ -44,11 +44,15 @@ def handle(event):
     return None
 
 
-def _pin_project_root(cwd, sid) -> None:
-    """Pin the session's project root so later hooks survive a persistent cd (U2)."""
+def _pin_project_root(cwd, sid, source=None) -> None:
+    """Pin the session's project root so later hooks survive a persistent cd (U2).
+    A compact fires mid-session with a possibly-drifted cwd: never overwrite an
+    existing pin there, only fill a missing one."""
     if not cwd or not sid:
         return
     try:
+        if source == "compact" and flags.load(sid).get("project_root"):
+            return
         flags.update(sid, project_root=str(Path(cwd).resolve()))
     except Exception:
         pass  # fail-open: a missed pin only forgoes drift protection
