@@ -43,6 +43,8 @@ We didn't just claim tend works — we [benchmarked it](docs/benchmark-results.m
 | In-context size of the outputs tend offloads | **86.6% smaller** — on a [frozen corpus](bench/corpus/) of real recorded outputs, reproducible by anyone |
 | Recall across a context reset, given a maintained STATE.md | **4/4 with tend → 0/4 without** — every run (memory-only probe) |
 | And when the model is *allowed* to go look for the file? | it finds it — at **2.1× the cost** and +2K context per probe; tend's restore is deterministic and ~free |
+| A full task-level outcome A/B (one task, one reset) | **null, honestly reported** — the constraints survived *in the code on disk*, so both arms recovered them; tend's edge is the reasoning **not yet** in code |
+| Anchor overhead on short tasks (v0.4 adaptive anchors) | **+14% → +6%** cost, **+4% → +1%** peak context — unchanged anchors are no longer re-injected |
 | tend's own per-event overhead | **~10 ms** (the handler itself is <0.3 ms) |
 | Correctness invariants | **6 / 6** held — re-checked in CI on every push |
 | Install footprint | daemon-less, fully reversible, fails open |
@@ -118,7 +120,7 @@ python3 -m bench behavioral --workload handoff --repeats 5
 python3 -m bench behavioral --workload discovery --repeats 5   # the fair control
 ```
 
-> **Honest boundary.** When there's little to offload and no reset, tend's anchors are a small net cost: **+14%** in a Haiku stress test and **+1–31%** on Sonnet (n=2 each — ranges, not points). Each anchor is ≤400 tokens, but anchors persist in the transcript, so a session carries a standing ~1–2K of extra context that's re-read every turn. The flip side, measured in the same Sonnet run: once offloading actually fired, tend's peak context finished **below** the no-tend arm — each offload claws back more than the anchors cost. tend earns its keep on **long, multi-session, decision-heavy work**; on short tasks the code and `CLAUDE.md` already cover, it's roughly neutral.
+> **Honest boundary.** When there's little to offload and no reset, tend's anchors are a small net cost. It used to be **+14%** in a Haiku stress test; v0.4 made anchors **adaptive** (an unchanged anchor isn't re-injected), and the same test now measures **+6% cost / +1% peak context** (n=3) — the remainder is mostly the one-time restore. Sonnet measured +1–31% before adaptive anchors (n=2, not rerun). The flip side, measured on Sonnet: once offloading actually fired, tend's peak context finished **below** the no-tend arm — each offload claws back more than the anchors cost. And our task-level outcome A/B came back **null**: when a task's decisions are already embodied in code on disk, both arms recover them after a reset — tend's edge is the reasoning *not yet* in code ([details](docs/benchmark-results.md)). tend earns its keep on **long, multi-session, decision-heavy work**; on short tasks the code and `CLAUDE.md` already cover, it's roughly neutral.
 
 ## How it fits into a session
 

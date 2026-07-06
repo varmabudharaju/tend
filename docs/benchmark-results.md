@@ -11,6 +11,8 @@ python3 -m bench mechanical                      # Phase 1: deterministic, free 
 python3 -m bench behavioral --repeats 2          # Phase 2: live A/B (needs API key)
 python3 -m bench behavioral --workload handoff --repeats 5   # Phase 2b: restore A/B
 python3 -m bench behavioral --workload discovery --repeats 5 # fair OFF control
+python3 -m bench behavioral --workload outcome --repeats 5 \
+    --judge claude-sonnet-5 --seed 0             # Phase 3: task-level outcome A/B
 python3 -m bench interactive --setup             # human-in-the-loop /clear test
 python3 -m bench interactive --score
 ```
@@ -21,7 +23,8 @@ python3 -m bench interactive --score
 |---|---|---|
 | **Context (within a session)** | **better** | offloading cuts oversized tool outputs **86.6%** on the frozen public corpus (Phase 1) |
 | **Context (across a reset)** | **decisively better** | fresh-session recall **4/4 with tend vs 0/4 without — 5 repeats/arm** (Phase 2b, maintained STATE.md held fixed) |
-| **Performance overhead** | **small, real** | ~10 ms of tend work per event; a standing anchor cost that netted +14% (Haiku, n=2) / +1–31% (Sonnet, n=2) when there was little to offload — and flipped to a context *saving* in the Sonnet run where offloading fired (Phase 2) |
+| **Outcome (one task, one reset)** | **null — and diagnostic** | task-level A/B (Phase 3): the constraints survived **in the artifact itself**, so both arms recovered them by re-reading the code — median 2 vs 3 of 4, blind judge tied, n=5. Maps the boundary: tend protects reasoning *not yet* embodied in code |
+| **Performance overhead** | **small, real — halved in v0.4** | ~10 ms of tend work per event; a standing anchor cost that netted +14% (Haiku, n=2) / +1–31% (Sonnet, n=2) when there was little to offload — v0.4 **adaptive anchors** cut the Haiku figure to **+6% cost / +1% peak context** (n=3 rerun below); the Sonnet run where offloading fired flipped it to a context *saving* (Phase 2) |
 | **When it's redundant** | honest limit | short tasks where the code + CLAUDE.md already hold everything |
 
 tend's value is conditional: it shines on long, multi-session, decision-heavy
@@ -92,6 +95,24 @@ Diagnosis from the raw token accounting:
 
 So this measured **tend's cost without its benefit**. It does not contradict Phase 1
 — it just failed to reproduce the large-output condition where offloading pays off.
+
+### Rerun with adaptive anchors (v0.4)
+
+v0.4 made anchors **adaptive**: an unchanged anchor is not re-injected (fingerprint
+suppression; full refresh every `anchor_refresh_turns` prompts). Rerunning the exact
+workload above (Haiku, now 3 repeats/arm):
+
+| metric (medians) | tend ON | tend OFF | delta | was (v0.3) |
+|---|--:|--:|--:|--:|
+| recall (/4) | 4 | 4 | tie | tie |
+| peak context tokens | 32,122 | 31,785 | **+1%** | +4% |
+| cost / session | $0.1108 | $0.1044 | **+6%** | +14% |
+
+The standing anchor cost roughly halved, and peak context is now essentially neutral.
+Per-run costs overlap between arms (ON $0.101–0.112 vs OFF $0.101–0.107 — small-n
+ranges, not points), the control held (1 offload ON, 0 OFF), and recall stayed a
+4/4 tie. The remaining +6% is dominated by the SessionStart restore injection plus
+the first full anchor — the recurring per-prompt cost is what adaptivity removed.
 
 ---
 
@@ -186,7 +207,9 @@ Everything above ran on Haiku. Rerunning the key claims on **Sonnet 5**:
   where it fired repeatedly tend's peak context finished **below** the OFF arm
   (−3.5%) — the per-turn gap flipped from +1.7K at the first turn to −1.6K by the
   last. That's the mechanism visible in a single session: anchors cost a standing
-  1–2K; each offload claws back more than that.
+  1–2K; each offload claws back more than that. (These Sonnet numbers predate the
+  v0.4 adaptive anchors that halved the Haiku overhead — the Sonnet arm has not
+  been rerun since.)
 
 ### Interactive `/clear` run (N=1/arm, corroboration)
 
@@ -228,21 +251,51 @@ neutral (small overhead) on short tasks the code + CLAUDE.md already cover.
 
 ---
 
-## What we have NOT measured
+## Phase 3 — Outcome (task-level A/B): a null result, and what it maps
 
-The pitch is "stays smart ten hours in" — an *outcome* claim. These benchmarks
-prove the mechanisms (offloading shrinks context; restore survives resets) but
-not the outcome: that an agent with tend completes long, decision-heavy tasks
-better than one without. That needs a task-level A/B — a multi-step job with a
-forced mid-task reset, scored on completion quality — which is expensive to run
-credibly (many repeats, blind scoring) and is the next benchmark we want to
-build. Until it exists, the outcome claim is an argument from mechanism, and
-you should read it that way.
+The pitch is "stays smart ten hours in" — an *outcome* claim. Phases 1–2 prove
+mechanisms; this phase tried to measure the outcome directly: a multi-step coding
+task (build `configlint.py`) with 4 planted constraints (a config key name, an
+error prefix, an exit code, a function signature), a **forced mid-task reset**,
+then "finish the task" with the constraints deliberately not restated. Scored
+mechanically per constraint plus a blind judge (Sonnet 5, shuffled labels).
+5 repeats/arm, Haiku:
 
-The harness for exactly this now exists — `python3 -m bench behavioral --workload
-outcome` runs a multi-step coding task with 4 planted constraints, a forced
-mid-task reset, and per-constraint plus optional blind-judge scoring — but no run
-has been executed yet, so there are still **no outcome numbers to report**.
+| metric (medians) | tend ON | tend OFF |
+|---|--:|--:|
+| constraints kept (/4) | 2 | 3 |
+| blind judge quality (1–5) | 2 | 2 |
+| cost / arm | $0.145 (+7%) | $0.135 |
+
+**No measured advantage — and the reason is the finding.** Both arms swing
+together (1/4 on runs 1–2, 4/4 on runs 3 and 5): by the reset, phase A had
+already written the constraints **into the artifact on disk**, and the artifact
+survives the reset in both arms. The OFF model recovers the constraints the same
+way the ON model does — by re-reading its own code. That is exactly the boundary
+the "[What tend actually adds](#what-tend-actually-adds-and-where-its-redundant)"
+section predicts: *code on disk survives a reset; tend adds nothing for facts
+already embodied in code.* What tend protects is the reasoning **not yet** in
+code — decisions pending application, rejected dead-ends, the why — which this
+task shape doesn't isolate, because its constraints become code almost
+immediately.
+
+We report this null result as-is. A follow-up design that would isolate memory:
+constraints that must stay *out* of the artifact until the end (e.g. "apply
+decision X only in the final step"), or deleting the work-in-progress at reset.
+(A first attempt at this run was discarded: a usage-limit window silently killed
+sessions mid-run at $0 — artifact `behavioral-2026-07-06-113517` is excluded and
+should not be cited.)
+
+---
+
+## What we still have NOT measured
+
+The long-horizon outcome claim itself. Phase 3 covers *one* task with *one*
+reset on a cheap model, and its constraints leaked into the artifact; a credible
+"ten hours in" test needs decision-heavy work where the reasoning stays outside
+the code for long stretches, plus many repeats. Until that exists, "stays smart
+ten hours in" remains an argument from mechanism (86.6% offload + 4/4 restore +
+now-near-zero anchor overhead), and you should read it that way.
 
 ---
 
@@ -251,13 +304,18 @@ has been executed yet, so there are still **no outcome numbers to report**.
 - `bench/{mechanical,behavioral,interactive}.py` — the harnesses (reusable).
 - `bench/corpus/` — the frozen, scrubbed real-output corpus Phase 1 runs on.
 - `.benchmarks/mechanical-*.{json,md}` — Phase 1 results.
-- `.benchmarks/behavioral-*.{json,md}` — Phase 2 (recall pilot + Sonnet rerun),
-  Phase 2b (handoff tallies, Haiku + Sonnet), and the discovery control; the
-  `kind` and `model` fields in each JSON say which.
+- `.benchmarks/behavioral-*.{json,md}` — Phase 2 (recall pilot + Sonnet rerun +
+  the v0.4 adaptive-anchor rerun `2026-07-06-113304`), Phase 2b (handoff tallies,
+  Haiku + Sonnet), the discovery control, and Phase 3 outcome (smoke
+  `2026-07-06-113231`, full run `2026-07-06-160640`; `2026-07-06-113517` is the
+  excluded usage-limit-poisoned run); the `kind`, `workload`, and `model` fields
+  in each JSON say which.
 - `docs/screenshots/01-bench-mechanical.png` — captured run.
-- Live-session API spend ≈ **$4.4** total: ≈$1.8 for the original Haiku pilot,
+- Live-session API spend ≈ **$7.3** total: ≈$1.8 for the original Haiku pilot,
   handoff tally, and feasibility diagnostics; ≈$2.6 for the discovery control
-  ($0.34), Sonnet handoff ($0.43), and Sonnet recall ($1.85). The interactive
+  ($0.34), Sonnet handoff ($0.43), and Sonnet recall ($1.85); ≈$2.9 for the v0.4
+  wave — adaptive-anchor rerun ($0.64), outcome smoke ($0.26), full outcome A/B
+  ($1.46 + judge), and ~$0.5 lost to the poisoned run. The interactive
   `/clear` run was by hand.
 - Host: Darwin arm64 (M-series MacBook Air), Python 3.11. Latency numbers are
   machine-dependent.
