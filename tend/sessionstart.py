@@ -22,6 +22,8 @@ MAX_INJECT_CHARS = 16000
 def handle(event):
     sid = event.get("session_id")
     _pin_project_root(event.get("cwd"), sid, event.get("source"))
+    if sid:
+        flags.update(sid, anchor_fp=None)  # rebuilt context needs a fresh anchor
     if event.get("source") not in ("startup", "clear"):
         return None
     cwd = event.get("cwd") or "."
