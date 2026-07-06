@@ -1,17 +1,25 @@
 # Session state
 
 ## Goal
-Ship the 2026-07-01 review improvements on the benchmarks branch: honest
-benchmark claims (frozen corpus, discovery control, Sonnet A/B), retention GC
-(tend clean), CI invariant gate, README restructure. Plan:
-docs/superpowers/plans/2026-07-01-review-improvements.md (8 tasks).
+v0.4 feature wave: five parallel branches off benchmarks - fix/u2-cwd-drift
+(project-root pinning + ancestor-walk), feat/adaptive-anchors (fingerprint
+suppression, anchor_refresh_turns), feat/compaction-insurance (re-anchor
+STATE.md on SessionStart source=compact), feat/offload-index (index.jsonl +
+tend find), bench/outcome-workload (task-level A/B, no live runs). Each lands
+as its own PR (base benchmarks); plain commits, no AI attribution (owner's
+explicit preference). Naming: pick a simple ONE-WORD term for the practice
+(candidates: gardening / upkeep / grooming; "context gardening" leading).
 
 ## Now
-REVIEW IMPROVEMENTS: Tasks 1-5 COMMITTED on benchmarks (3bce794 corpus+CI gate,
+Five implementation agents running in parallel worktrees (scratchpad/wt-*).
+Review improvements DONE: all 8 tasks committed AND pushed (b746b04 head);
+PR #1 updated. Next: verify each worktree (full pytest + diff review), push
+branches, open PRs with base=benchmarks.
+PREVIOUSLY - REVIEW IMPROVEMENTS: Tasks 1-5 COMMITTED on benchmarks (3bce794 corpus+CI gate,
 7555f9b scoring+discovery, bfec926 retention), 190 tests green. Frozen-corpus
 mechanical headline = 86.6% (was 88.8% on private corpus); footprint replay 84%
 lighter; new full run recorded (.benchmarks/mechanical-2026-07-01-210532).
-Task 6 in flight: discovery A/B (Haiku x5/arm) running in background; next
+Task 6 was: discovery A/B (Haiku x5/arm) running in background; next
 Sonnet handoff x3 + recall x2 (claude-sonnet-5). Then Task 7/8: fill measured
 numbers into README results table + benchmark-results.md (discovery + Sonnet
 sections), refresh screenshots via capture, commit.
