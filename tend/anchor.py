@@ -10,7 +10,7 @@ def handle(event):
     cfg = config.load(cwd)
     summary = ledger.load_summary(sid)
     fl = flags.load(sid)
-    sp = state.path_for(cwd)
+    sp = state.resolve(cwd, sid)
     goal, now = state.goal_now(sp)
     pct = ctxmetrics.used_pct(sid)
     stale = ledger.stale_tokens(summary)

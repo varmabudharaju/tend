@@ -29,6 +29,42 @@ def test_no_pin_without_cwd(tmp_path):
     assert "project_root" not in flags.load("s1")
 
 
+def test_anchor_uses_pinned_root_after_cwd_drift(tmp_path):
+    """U2 core: anchor arrives with a drifted cwd but still injects project A's Goal;
+    no STATE.md is seeded in the unrelated directory."""
+    proj = tmp_path / "proj"
+    proj.mkdir()
+    sp = state.path_for(str(proj))
+    sp.parent.mkdir(parents=True)
+    sp.write_text("## Goal\nShip project A\n\n## Now\nstep one\n")
+    sessionstart.handle(ss(proj))  # pins proj
+
+    other = tmp_path / "unrelated"
+    other.mkdir()
+    out = anchor.handle(make_event(hook_event_name="UserPromptSubmit",
+                                   cwd=str(other), session_id="s1"))
+    ctx = out["hookSpecificOutput"]["additionalContext"]
+    assert "Ship project A" in ctx
+    assert not (other / ".claude" / "tend" / "STATE.md").exists()
+
+
+def test_precompact_staleness_uses_pinned_root_after_drift(tmp_path):
+    """Precompact must evaluate the pinned project's (fresh) STATE.md, not the drifted cwd
+    where STATE.md is absent - otherwise a false stale-block fires."""
+    proj = tmp_path / "proj"
+    proj.mkdir()
+    sessionstart.handle(ss(proj))  # seeds proj STATE.md + pins
+    sp = state.path_for(str(proj))
+    assert sp.exists()
+    ledger.set_state_mark("s1", sp.stat().st_mtime)  # fresh
+
+    other = tmp_path / "unrelated"
+    other.mkdir()
+    out = precompact.handle(make_event(hook_event_name="PreCompact", trigger="auto",
+                                       cwd=str(other), session_id="s1"))
+    assert out is None
+
+
 def test_resolve_uses_session_pin(tmp_path):
     proj = tmp_path / "proj"
     proj.mkdir()

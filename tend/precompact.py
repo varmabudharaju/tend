@@ -25,13 +25,14 @@ def handle(event):
 
 
 def _is_stale(event, cfg) -> bool:
-    cwd = event.get("cwd") or "."
-    if Path(cwd).resolve() == Path.home().resolve():
+    sid = event.get("session_id")
+    root = state.resolve_root(event.get("cwd") or ".", sid)
+    if root.resolve() == Path.home().resolve():
         return False  # $HOME is never seeded (see sessionstart); never block there
-    sp = state.path_for(cwd)
+    sp = state.path_for(root)
     if not sp.exists():
         return True
-    summary = ledger.load_summary(event.get("session_id"))
+    summary = ledger.load_summary(sid)
     mark = summary.get("state_mark")
     if mark and mark.get("mtime") != sp.stat().st_mtime:
         return False  # updated since our last mark: fresh

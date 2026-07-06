@@ -9,7 +9,7 @@ def handle(event):
     cwd = event.get("cwd") or "."
     cfg = config.load(cwd)
     summary = ledger.load_summary(sid)
-    sp = state.path_for(cwd)
+    sp = state.resolve(cwd, sid)
     if sp.exists():
         mtime = sp.stat().st_mtime
         mark = summary.get("state_mark")
