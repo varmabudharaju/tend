@@ -16,6 +16,7 @@ def handle(event):
         return None
     cfg = config.load(event.get("cwd"))
     _snapshot(sid)
+    flags.update(sid, anchor_fp=None)  # post-compaction context needs a fresh anchor
     if event.get("trigger") == "auto":
         fl = flags.load(sid)
         if not fl.get("blocked_once") and _is_stale(event, cfg):

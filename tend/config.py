@@ -11,6 +11,7 @@ DEFAULTS = {
     "offload_tail_tokens": 600,
     "read_guard_bytes": 65536,
     "anchor_max_tokens": 400,
+    "anchor_refresh_turns": 8,  # re-inject an unchanged anchor at most once every N prompts; 1 = every prompt
     "state_stale_tokens": 3000,  # OUTPUT tokens since the last STATE.md mark (monotonic)
     "state_fresh_hours": 48,
     "retention_days": 30,  # sweep sessions/<id> older than this at SessionStart; 0 disables
@@ -28,6 +29,7 @@ class Config:
     offload_tail_tokens: int
     read_guard_bytes: int
     anchor_max_tokens: int
+    anchor_refresh_turns: int
     state_stale_tokens: int
     state_fresh_hours: int
     retention_days: int
@@ -44,6 +46,14 @@ def _coerce(key, value):
         if isinstance(value, list) and all(isinstance(t, str) for t in value):
             return value  # [] is legal: disables offloading
         return None
+    if key == "anchor_refresh_turns":
+        if isinstance(value, bool):
+            return None
+        try:
+            n = int(value)
+        except (TypeError, ValueError):
+            return None
+        return n if n >= 1 else None  # must be a positive whole number of turns
     if isinstance(DEFAULTS[key], bool):
         return value if isinstance(value, bool) else None
     if isinstance(value, bool):
