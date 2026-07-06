@@ -11,17 +11,21 @@ explicit preference). Naming: pick a simple ONE-WORD term for the practice
 (candidates: gardening / upkeep / grooming; "context gardening" leading).
 
 ## Now
-v0.4 FEATURE WAVE COMPLETE: all five branches verified (full pytest per
-worktree), pushed, PRs open with base=benchmarks - #2 compaction-insurance
-(197 tests), #3 adaptive-anchors (201), #4 offload-index+tend find (211),
-#5 U2 cwd-drift fix (202), #6 outcome benchmark harness (209, no live runs,
-no numbers claimed). All commits plain-message, owner-authored, zero AI
-attribution (owner's explicit preference - applies to future commits/PRs too).
-Merge order note: #5/#3/#2 all touch sessionstart.py+precompact.py - whichever
-merges second/third needs a small rebase; offer to handle after each merge.
-Naming: recommended one-word term = "gardening" (context gardening; tend = the
-gardener). Alternatives offered: upkeep, grooming, housekeeping. Awaiting pick;
-README repositioning only after owner chooses.
+v0.4 WAVE MERGED TO MASTER (2026-07-06): PRs #1-#7 all merged, CI green,
+262 tests. Merge order was #1 benchmarks, #5 U2 (+ compact-never-overwrites-pin
+guard), #3 adaptive anchors, #2 compaction insurance (+ pin-aware reads via
+state.resolve in _reanchor and _snapshot), #4 offload index + tend find,
+#6 outcome harness, #7 context-gardening rebrand. Rebases resolved by hand in
+sessionstart.py (order in handle: pin -> anchor_fp clear -> compact reanchor ->
+startup/clear), precompact.py, README habit rows.
+NAMING DECIDED: "context gardening" is the category term (README tagline+intro,
+pyproject description, repo description + context-gardening topic).
+Worktrees removed; merged local branches deleted; REMOTE feature branches NOT
+deleted (permission scope) - owner can prune on GitHub.
+Open follow-ups: run the outcome benchmark live (python3 -m bench behavioral
+--workload outcome --repeats 5 --model ... [--judge ... --seed 0], ~$10-20);
+re-measure short-task overhead with adaptive anchors (expect +14% -> ~0);
+plugin marketplace submission still awaiting owner login.
 PREVIOUSLY - REVIEW IMPROVEMENTS: Tasks 1-5 COMMITTED on benchmarks (3bce794 corpus+CI gate,
 7555f9b scoring+discovery, bfec926 retention), 190 tests green. Frozen-corpus
 mechanical headline = 86.6% (was 88.8% on private corpus); footprint replay 84%
