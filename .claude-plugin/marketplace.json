@@ -1,16 +1,16 @@
 {
-  "name": "tend",
+  "name": "carryover",
   "owner": {
     "name": "Varma Budharaju"
   },
   "plugins": [
     {
-      "name": "tend",
+      "name": "carryover",
       "source": "./",
-      "description": "Context hygiene for Claude Code - keeps long sessions sharp.",
+      "description": "Context gardening for Claude Code - keeps long sessions sharp.",
       "license": "MIT",
-      "homepage": "https://github.com/varmabudharaju/tend"
+      "homepage": "https://github.com/varmabudharaju/carryover"
     }
   ],
-  "description": "tend - context hygiene for Claude Code"
+  "description": "carryover - context gardening for Claude Code"
 }

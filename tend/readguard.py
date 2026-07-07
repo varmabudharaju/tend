@@ -1,38 +1,9 @@
-"""Pillar 1b: nudge (never block) unbounded Reads of large files."""
-import os
+"""Deprecated shim -> carryover.readguard. See tend/__init__.py."""
+if __name__ == "__main__":  # legacy: python3 -m tend.readguard
+    import runpy
 
-from . import config
+    runpy.run_module("carryover.readguard", run_name="__main__", alter_sys=True)
+else:
+    from carryover import readguard as _mod
 
-
-def handle(event):
-    if event.get("tool_name") != "Read":
-        return None
-    ti = event.get("tool_input") or {}
-    if "limit" in ti or "offset" in ti:
-        return None
-    fp = ti.get("file_path")
-    if not fp or not os.path.isfile(fp):
-        return None
-    cfg = config.load(event.get("cwd"))
-    try:
-        size = os.path.getsize(fp)
-    except OSError:
-        return None
-    if size <= cfg.read_guard_bytes:
-        return None
-    try:
-        with open(fp, "rb") as fh:
-            if b"\0" in fh.read(4096):
-                return None  # binary: token math and offset/limit advice don't apply
-    except OSError:
-        return None
-    return {
-        "hookSpecificOutput": {
-            "hookEventName": "PreToolUse",
-            "additionalContext": (
-                f"[tend] {fp} is ~{size // 4:,} tokens. Prefer Read with offset/limit on the "
-                "relevant range, or delegate scanning to an Explore subagent, instead of "
-                "loading the whole file into context."
-            ),
-        }
-    }
+    globals().update({k: v for k, v in vars(_mod).items() if not k.startswith("__")})

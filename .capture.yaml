@@ -14,21 +14,21 @@ shots:
     command: "sed -n '7,28p' .benchmarks/behavioral-2026-06-18-125330.md"
     cols: 96
     rows: 26
-    alt: "Handoff A/B: 4/4 recall with tend vs 0/4 without — consistent across all 5 runs per arm"
+    alt: "Handoff A/B: 4/4 recall with carryover vs 0/4 without — consistent across all 5 runs per arm"
   - name: bench-mechanical
     kind: cli
     command: "python3 -m bench mechanical --iters 8"
     rows: 30
-    alt: "tend mechanical benchmark running: per-event overhead table and cumulative footprint (desk 87% lighter)"
-  - name: tend-status
+    alt: "carryover mechanical benchmark running: per-event overhead table and cumulative footprint (desk 87% lighter)"
+  - name: carryover-status
     kind: cli
-    command: "tend status --session smoke-live --cwd /Users/varma/tend"
-    alt: "tend status dashboard: context health, offloaded outputs, STATE.md freshness"
-  - name: tend-report
+    command: "carryover status --session smoke-live --cwd /Users/varma/tend"
+    alt: "carryover status dashboard: context health, offloaded outputs, STATE.md freshness"
+  - name: carryover-report
     kind: cli
-    command: "tend report --session smoke-live"
-    alt: "tend report: per-session ledger of offloaded outputs and hook activity"
-  - name: tend-handoff
+    command: "carryover report --session smoke-live"
+    alt: "carryover report: per-session ledger of offloaded outputs and hook activity"
+  - name: carryover-handoff
     kind: cli
-    command: "tend handoff --cwd /Users/varma/tend"
-    alt: "tend handoff: the STATE.md notebook that survives /clear and compaction"
+    command: "carryover handoff --cwd /Users/varma/tend"
+    alt: "carryover handoff: the STATE.md notebook that survives /clear and compaction"

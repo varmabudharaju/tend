@@ -1,12 +1,12 @@
-# tend architecture
+# carryover architecture
 
-How tend plugs into Claude Code: no daemon, one short-lived process per hook
+How carryover plugs into Claude Code: no daemon, one short-lived process per hook
 event, everything durable in plain files. (Extracted from the README; this is
 the deep-dive companion to [../README.md](../README.md).)
 
-## System design — how tend plugs into Claude Code
+## System design — how carryover plugs into Claude Code
 
-No daemon, no background process: Claude Code fires an event, a tiny tend process wakes, reads its state from disk, acts, and exits. Everything durable lives in plain files.
+No daemon, no background process: Claude Code fires an event, a tiny carryover process wakes, reads its state from disk, acts, and exits. Everything durable lives in plain files.
 
 ```mermaid
 flowchart TB
@@ -15,19 +15,19 @@ flowchart TB
         SL["statusline render"]
         TR["session transcript .jsonl"]
     end
-    subgraph tendp ["tend - one short-lived process per event"]
+    subgraph carryoverp ["carryover - one short-lived process per event"]
         HK["hook.py dispatcher<br/>fail-open wrapper"]
         LG["ledger.py<br/>incremental token accounting"]
         HD["event handlers<br/>offload, readguard, agentguard,<br/>anchor, boundary, precompact, sessionstart"]
         SLW["statusline.py wrapper"]
     end
-    subgraph disk ["state on disk - ~/.claude/tend/"]
+    subgraph disk ["state on disk - ~/.claude/carryover/"]
         SUM["sessions/ID/summary.json<br/>ledger totals + cursor"]
         CTX["sessions/ID/ctx.json<br/>exact context metrics"]
         OUT["sessions/ID/outputs/NNNN.txt<br/>offloaded tool outputs"]
         FLG["sessions/ID/flags.json"]
     end
-    ST["project/.claude/tend/STATE.md<br/>the notebook"]
+    ST["project/.claude/carryover/STATE.md<br/>the notebook"]
     EV -->|"stdin JSON"| HK
     HK --> LG
     HK --> HD
@@ -81,7 +81,7 @@ flowchart TB
     core --> infra
 ```
 
-## Flow chart — when does tend recommend compaction?
+## Flow chart — when does carryover recommend compaction?
 
 The advisor runs on every prompt; this is its whole decision:
 
@@ -96,7 +96,7 @@ flowchart TD
     b -->|no| later["at the next task boundary,<br/>run /compact"]
 ```
 
-And the one time tend ever blocks anything:
+And the one time carryover ever blocks anything:
 
 ```mermaid
 flowchart TD
@@ -112,8 +112,8 @@ flowchart TD
 ## Modules
 
 ```
-tend/
-  hook.py          entry point: python3 -m tend.hook (all 8 events)
+carryover/
+  hook.py          entry point: python3 -m carryover.hook (all 8 events)
   hookio.py        stdin/stdout plumbing, fail-open wrapper, log rotation
   ledger.py        incremental transcript ledger: exact context totals,
                    tool-result sizes, staleness, crash-safe single-file cursor
@@ -126,7 +126,7 @@ tend/
   boundary.py      Stop-event task-boundary + staleness detection
   precompact.py    pillar 4 safety net: snapshot + one-shot stale block
   advisor.py       when and how to recommend a curated /compact
-  retention.py     age-capped GC of session state (tend clean + daily auto-sweep)
+  retention.py     age-capped GC of session state (carryover clean + daily auto-sweep)
   statusline.py    statusline wrapper: tees exact context metrics to disk
   config.py        defaults < global yaml < project yaml, validated
   install.py       reversible settings.json merge (backup, mode-preserving)

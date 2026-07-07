@@ -2,7 +2,7 @@ import json
 
 from conftest import make_event
 
-from tend import offload, paths, tokens
+from carryover import offload, paths, tokens
 
 
 def big_event(**kw):
@@ -13,7 +13,7 @@ def big_event(**kw):
     )
 
 
-def test_big_bash_output_offloaded(tend_home):
+def test_big_bash_output_offloaded(carryover_home):
     out = offload.handle(big_event())
     repl = out["hookSpecificOutput"]["updatedToolOutput"]
     assert out["hookSpecificOutput"]["hookEventName"] == "PostToolUse"
@@ -34,19 +34,19 @@ def test_read_tool_never_offloaded():
     assert offload.handle(make_event(tool_name="Read", tool_response="x" * 20000)) is None
 
 
-def test_dict_response_serialized(tend_home):
+def test_dict_response_serialized(carryover_home):
     out = offload.handle(make_event(tool_name="Bash", tool_response={"stdout": "y" * 20000}))
     assert out is not None
 
 
-def test_sequential_output_numbering(tend_home):
+def test_sequential_output_numbering(carryover_home):
     offload.handle(big_event())
     offload.handle(big_event())
     names = sorted(p.name for p in (paths.session_dir("s1") / "outputs").glob("*.txt"))
     assert names == ["0001.txt", "0002.txt"]
 
 
-def test_save_skips_to_0002_when_0001_exists(tend_home):
+def test_save_skips_to_0002_when_0001_exists(carryover_home):
     """_save must use O_EXCL retry: pre-existing 0001.txt forces name to 0002.txt."""
     d = paths.session_dir("s1") / "outputs"
     d.mkdir(parents=True, exist_ok=True)
@@ -58,10 +58,10 @@ def test_save_skips_to_0002_when_0001_exists(tend_home):
     assert (d / "0001.txt").read_text() == "original content", "0001.txt must be untouched"
 
 
-def test_overlap_guard_skips_offload_when_excerpt_not_smaller(tend_home):
+def test_overlap_guard_skips_offload_when_excerpt_not_smaller(carryover_home):
     """If head+tail tokens * 4 >= len(text), offloading saves nothing — return None."""
     # Write a config where head+tail tokens together cover the text
-    cfg_path = tend_home / "config.yaml"
+    cfg_path = carryover_home / "config.yaml"
     cfg_path.parent.mkdir(parents=True, exist_ok=True)
     cfg_path.write_text(
         "offload_threshold_tokens: 500\n"
@@ -75,10 +75,10 @@ def test_overlap_guard_skips_offload_when_excerpt_not_smaller(tend_home):
     assert result is None, "overlap guard must return None when excerpt wouldn't save tokens"
 
 
-def test_tail_zero_offloads_head_only(tend_home):
+def test_tail_zero_offloads_head_only(carryover_home):
     """M6: tail=0 must mean 'no tail', never 'the whole string'."""
-    (tend_home / "config.yaml").parent.mkdir(parents=True, exist_ok=True)
-    (tend_home / "config.yaml").write_text(
+    (carryover_home / "config.yaml").parent.mkdir(parents=True, exist_ok=True)
+    (carryover_home / "config.yaml").write_text(
         "offload_threshold_tokens: 500\noffload_head_tokens: 100\noffload_tail_tokens: 0\n"
     )
     text = "H" * 400 + "m" * 4000
@@ -89,10 +89,10 @@ def test_tail_zero_offloads_head_only(tend_home):
     assert "m" * 1000 not in repl          # the body is actually gone
 
 
-def test_banner_overhead_never_inflates(tend_home):
+def test_banner_overhead_never_inflates(carryover_home):
     """L4: head+tail just under len(text), but banner pushes it over - skip, no file."""
-    (tend_home / "config.yaml").parent.mkdir(parents=True, exist_ok=True)
-    (tend_home / "config.yaml").write_text(
+    (carryover_home / "config.yaml").parent.mkdir(parents=True, exist_ok=True)
+    (carryover_home / "config.yaml").write_text(
         "offload_threshold_tokens: 500\noffload_head_tokens: 300\noffload_tail_tokens: 300\n"
     )
     text = "x" * 2500                       # head+tail = 2400 < 2500, banner makes it bigger
@@ -100,23 +100,23 @@ def test_banner_overhead_never_inflates(tend_home):
     assert list((paths.session_dir("s1") / "outputs").glob("*.txt")) == []
 
 
-def test_mcp_structured_response_not_offloaded(tend_home):
+def test_mcp_structured_response_not_offloaded(carryover_home):
     """M8: schema'd MCP outputs would be silently rejected by Claude Code - don't pretend."""
-    (tend_home / "config.yaml").parent.mkdir(parents=True, exist_ok=True)
-    (tend_home / "config.yaml").write_text('offload_tools: ["mcp__db__query"]\n')
+    (carryover_home / "config.yaml").parent.mkdir(parents=True, exist_ok=True)
+    (carryover_home / "config.yaml").write_text('offload_tools: ["mcp__db__query"]\n')
     ev = make_event(tool_name="mcp__db__query", tool_response={"rows": ["x" * 20000]})
     assert offload.handle(ev) is None
     assert list((paths.session_dir("s1") / "outputs").glob("*.txt")) == []
 
 
-def test_mcp_plain_string_response_still_offloaded(tend_home):
-    (tend_home / "config.yaml").parent.mkdir(parents=True, exist_ok=True)
-    (tend_home / "config.yaml").write_text('offload_tools: ["mcp__db__query"]\n')
+def test_mcp_plain_string_response_still_offloaded(carryover_home):
+    (carryover_home / "config.yaml").parent.mkdir(parents=True, exist_ok=True)
+    (carryover_home / "config.yaml").write_text('offload_tools: ["mcp__db__query"]\n')
     ev = make_event(tool_name="mcp__db__query", tool_response="x" * 20000)
     assert offload.handle(ev) is not None
 
 
-def test_bash_dict_offload_file_is_line_addressable(tend_home):
+def test_bash_dict_offload_file_is_line_addressable(carryover_home):
     """M7 live-artifact repro: the saved file must have real newlines, not escaped JSON."""
     resp = {"stdout": "line\n" * 4000, "stderr": ""}
     out = offload.handle(make_event(tool_name="Bash", tool_response=resp))
@@ -130,14 +130,14 @@ def _index_lines(sid="s1"):
     return (paths.session_dir(sid) / "outputs" / "index.jsonl").read_text().splitlines()
 
 
-def test_banner_advertises_find(tend_home):
+def test_banner_advertises_find(carryover_home):
     repl = offload.handle(big_event())["hookSpecificOutput"]["updatedToolOutput"]
-    assert "search filed outputs with `tend find <regex>`" in repl
+    assert "search filed outputs with `carryover find <regex>`" in repl
     # still a single trailing banner line
-    assert repl.rstrip().endswith("`tend find <regex>`.")
+    assert repl.rstrip().endswith("`carryover find <regex>`.")
 
 
-def test_index_line_appended_with_tool_tokens_hint(tend_home):
+def test_index_line_appended_with_tool_tokens_hint(carryover_home):
     text = "first line here\n" + ("body line\n" * 4000)
     out = offload.handle(make_event(tool_name="Bash", tool_response=text))
     assert out is not None
@@ -151,7 +151,7 @@ def test_index_line_appended_with_tool_tokens_hint(tend_home):
     assert isinstance(rec["ts"], (int, float)) and rec["ts"] > 0
 
 
-def test_index_one_line_per_offload(tend_home):
+def test_index_one_line_per_offload(carryover_home):
     offload.handle(big_event())
     offload.handle(big_event())
     lines = _index_lines()
@@ -159,7 +159,7 @@ def test_index_one_line_per_offload(tend_home):
     assert [json.loads(l)["file"] for l in lines] == ["0001.txt", "0002.txt"]
 
 
-def test_index_hint_clipped_to_80(tend_home):
+def test_index_hint_clipped_to_80(carryover_home):
     text = "X" * 200 + "\n" + "z" * 40000
     offload.handle(make_event(tool_name="Grep", tool_response=text))
     rec = json.loads(_index_lines()[0])
@@ -167,13 +167,13 @@ def test_index_hint_clipped_to_80(tend_home):
     assert rec["tool"] == "Grep"
 
 
-def test_index_hint_skips_leading_blank_lines(tend_home):
+def test_index_hint_skips_leading_blank_lines(carryover_home):
     text = "\n\n   \nreal first line\n" + "q" * 40000
     offload.handle(make_event(tool_name="Bash", tool_response=text))
     assert json.loads(_index_lines()[0])["hint"] == "real first line"
 
 
-def test_read_index_survives_torn_partial_line(tend_home):
+def test_read_index_survives_torn_partial_line(carryover_home):
     offload.handle(big_event())
     idx = paths.session_dir("s1") / "outputs" / "index.jsonl"
     with open(idx, "a", encoding="utf-8") as f:
@@ -183,7 +183,7 @@ def test_read_index_survives_torn_partial_line(tend_home):
     assert entries[0]["file"] == "0001.txt"
 
 
-def test_read_index_skips_unparseable_lines(tend_home):
+def test_read_index_skips_unparseable_lines(carryover_home):
     offload.handle(big_event())
     idx = paths.session_dir("s1") / "outputs" / "index.jsonl"
     with open(idx, "a", encoding="utf-8") as f:
@@ -192,11 +192,11 @@ def test_read_index_skips_unparseable_lines(tend_home):
     assert [e["file"] for e in offload.read_index("s1")] == ["0001.txt", "0003.txt"]
 
 
-def test_read_index_missing_file_returns_empty(tend_home):
+def test_read_index_missing_file_returns_empty(carryover_home):
     assert offload.read_index("nope") == []
 
 
-def test_offload_survives_index_write_failure(tend_home, monkeypatch):
+def test_offload_survives_index_write_failure(carryover_home, monkeypatch):
     def boom(*a, **k):
         raise OSError("index write failed")
 

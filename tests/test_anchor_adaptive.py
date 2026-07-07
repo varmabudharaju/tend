@@ -1,10 +1,10 @@
 """Adaptive anchor: fingerprint suppression + refresh turns."""
 from conftest import make_event
 
-from tend import anchor, config, flags, paths, precompact, sessionstart, state
+from carryover import anchor, config, flags, paths, precompact, sessionstart, state
 
 
-def seed_state(tmp_path, goal="Ship tend", now="Writing anchor"):
+def seed_state(tmp_path, goal="Ship carryover", now="Writing anchor"):
     sp = state.path_for(str(tmp_path))
     sp.parent.mkdir(parents=True, exist_ok=True)
     sp.write_text(f"## Goal\n{goal}\n\n## Now\n{now}\n")
@@ -31,7 +31,7 @@ def seed_stale(*sizes):
 
 
 def seed_config(tmp_path, **kv):
-    p = tmp_path / ".claude" / "tend" / "config.yaml"
+    p = tmp_path / ".claude" / "carryover" / "config.yaml"
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text("".join(f"{k}: {v}\n" for k, v in kv.items()))
 
@@ -49,7 +49,7 @@ def test_suppressed_on_identical_prompt(tmp_path):
     seed_ctx(30)
     e = ev(tmp_path)
     first = anchor.handle(e)
-    assert "Goal: Ship tend" in first["hookSpecificOutput"]["additionalContext"]
+    assert "Goal: Ship carryover" in first["hookSpecificOutput"]["additionalContext"]
     assert anchor.handle(e) is None  # identical anchor already in context
 
 
@@ -146,7 +146,7 @@ def test_corrupt_flags_injects_full_anchor(tmp_path):
     (paths.session_dir("s1") / "flags.json").write_text("{ not json")
     out = anchor.handle(ev(tmp_path))
     assert has_anchor(out)
-    assert "Goal: Ship tend" in out["hookSpecificOutput"]["additionalContext"]
+    assert "Goal: Ship carryover" in out["hookSpecificOutput"]["additionalContext"]
 
 
 def test_config_anchor_refresh_turns_validation(tmp_path):

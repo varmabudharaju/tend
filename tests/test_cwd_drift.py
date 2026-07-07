@@ -1,7 +1,7 @@
 """U2 regression: hook cwd drifts mid-session; STATE.md must stay pinned to the project."""
 from conftest import make_event
 
-from tend import anchor, flags, ledger, precompact, sessionstart, state
+from carryover import anchor, flags, ledger, precompact, sessionstart, state
 
 
 def ss(cwd, source="startup", sid="s1"):
@@ -61,7 +61,7 @@ def test_anchor_uses_pinned_root_after_cwd_drift(tmp_path):
                                    cwd=str(other), session_id="s1"))
     ctx = out["hookSpecificOutput"]["additionalContext"]
     assert "Ship project A" in ctx
-    assert not (other / ".claude" / "tend" / "STATE.md").exists()
+    assert not (other / ".claude" / "carryover" / "STATE.md").exists()
 
 
 def test_precompact_staleness_uses_pinned_root_after_drift(tmp_path):

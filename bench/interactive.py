@@ -1,16 +1,16 @@
-"""Phase 2b — faithful interactive A/B for tend's lossless-handoff claim.
+"""Phase 2b — faithful interactive A/B for carryover's lossless-handoff claim.
 
-tend's marquee behavioral feature (restore STATE.md into a fresh context on
+carryover's marquee behavioral feature (restore STATE.md into a fresh context on
 /clear, so a long task survives a context reset) is an *interactive* property:
 it fires when a human runs /clear, which headless `claude -p` cannot reproduce.
 
 So this is a human-in-the-loop protocol. `setup` creates two isolated sandboxes
 and prints the exact prompts to paste; you run the same short script in each arm
-(tend ON, tend OFF), ending in /clear then a memory-only probe. `score` then reads
+(carryover ON, carryover OFF), ending in /clear then a memory-only probe. `score` then reads
 the two transcripts and grades recall of the planted facts.
 
-Isolation: each arm launches claude with its own TEND_HOME (the OFF arm's has a
-`disabled` file → tend's hooks no-op). Your global tend and this session are
+Isolation: each arm launches claude with its own CARRYOVER_HOME (the OFF arm's has a
+`disabled` file → carryover's hooks no-op). Your global carryover and this session are
 untouched. STATE.md lives in the sandbox cwd, transcripts under ~/.claude/projects.
 """
 import json
@@ -22,7 +22,7 @@ RESTORE_MARKER = "State restored from previous session"
 
 
 def _home_base():
-    return Path.home() / "tend" / ".benchmarks" / "interactive"
+    return Path.home() / "carryover" / ".benchmarks" / "interactive"
 
 
 def setup(log=print):
@@ -31,9 +31,9 @@ def setup(log=print):
     for arm in ("on", "off"):
         sb = base / arm / "project"
         sb.mkdir(parents=True, exist_ok=True)
-        home = base / arm / "tend_home"
+        home = base / arm / "carryover_home"
         home.mkdir(parents=True, exist_ok=True)
-        # OFF arm: kill switch so tend hooks no-op even though they are installed.
+        # OFF arm: kill switch so carryover hooks no-op even though they are installed.
         disabled = home / "disabled"
         if arm == "off":
             disabled.write_text("", encoding="utf-8")
@@ -41,15 +41,15 @@ def setup(log=print):
             disabled.unlink()
         arms[arm] = (sb, home)
 
-    launch = {arm: f'TEND_HOME="{home}" claude' for arm, (sb, home) in arms.items()}
-    L = ["", "=" * 72, "tend interactive A/B — lossless /clear handoff", "=" * 72,
+    launch = {arm: f'CARRYOVER_HOME="{home}" claude' for arm, (sb, home) in arms.items()}
+    L = ["", "=" * 72, "carryover interactive A/B — lossless /clear handoff", "=" * 72,
          "",
-         "Run the SAME 3 steps in each arm. Only difference: tend on vs off.",
+         "Run the SAME 3 steps in each arm. Only difference: carryover on vs off.",
          "The probe is memory-only — do NOT let the model read files at the probe.",
          ""]
     for arm in ("on", "off"):
         sb, home = arms[arm]
-        L += [f"--- ARM: tend {arm.upper()} " + "-" * 50,
+        L += [f"--- ARM: carryover {arm.upper()} " + "-" * 50,
               f"1. cd {sb}",
               f"2. launch:   {launch[arm]}",
               "3. paste PROMPT 1 (plant), wait for it to finish writing STATE.md:",
@@ -109,7 +109,7 @@ def score(log=print):
             continue
         hits, recall = score_recall(info["probe_answer"])
         rows.append({"arm": arm, "found": True, "recall": recall, "hits": hits,
-                     "tend_restored": info["restored"],
+                     "carryover_restored": info["restored"],
                      "probe_answer": info["probe_answer"][:300],
                      "transcript": info["transcript"]})
     md = _render(rows)
@@ -118,8 +118,8 @@ def score(log=print):
 
 
 def _render(rows):
-    L = ["# tend interactive A/B — lossless /clear handoff", "",
-         "| arm | recall | tend restored STATE on /clear | probe answer (excerpt) |",
+    L = ["# carryover interactive A/B — lossless /clear handoff", "",
+         "| arm | recall | carryover restored STATE on /clear | probe answer (excerpt) |",
          "|---|--:|:--:|---|"]
     for r in rows:
         if not r.get("found"):
@@ -127,13 +127,13 @@ def _render(rows):
             continue
         ans = r["probe_answer"].replace("\n", " ").strip()[:90]
         L.append(f"| {r['arm']} | {r['recall']}/4 | "
-                 f"{'yes' if r['tend_restored'] else 'no'} | {ans} |")
+                 f"{'yes' if r['carryover_restored'] else 'no'} | {ans} |")
     on = next((r for r in rows if r["arm"] == "on" and r.get("found")), None)
     off = next((r for r in rows if r["arm"] == "off" and r.get("found")), None)
     if on and off:
-        L += ["", f"**Verdict:** tend ON recalled {on['recall']}/4 after /clear, "
-              f"tend OFF recalled {off['recall']}/4. "
-              + ("tend's STATE restore preserved the facts across the context reset."
+        L += ["", f"**Verdict:** carryover ON recalled {on['recall']}/4 after /clear, "
+              f"carryover OFF recalled {off['recall']}/4. "
+              + ("carryover's STATE restore preserved the facts across the context reset."
                  if on["recall"] > off["recall"] else
                  "No handoff advantage observed in this run.")]
     return "\n".join(L) + "\n"

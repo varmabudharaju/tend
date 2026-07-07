@@ -4,7 +4,7 @@ from pathlib import Path
 
 from conftest import make_event
 
-from tend import sessionstart, state
+from carryover import sessionstart, state
 
 
 def ev(tmp_path, source="startup"):
@@ -41,7 +41,7 @@ def test_resume_and_compact_sources_ignored(tmp_path):
 
 
 def test_home_directory_never_seeded(tmp_path, monkeypatch):
-    # hermetic: a real ~/.claude/tend/STATE.md on the host must not fail this
+    # hermetic: a real ~/.claude/carryover/STATE.md on the host must not fail this
     fake_home = tmp_path / "home"
     fake_home.mkdir()
     monkeypatch.setattr(Path, "home", lambda: fake_home)
@@ -62,7 +62,7 @@ def test_oversized_state_truncated_with_visible_marker(tmp_path):
     assert str(sp) in ctx
     assert len(ctx) < 17000
     # cut lands on a line boundary: no half line right before the marker
-    body = ctx.split("\n[tend] STATE.md truncated")[0]
+    body = ctx.split("\n[carryover] STATE.md truncated")[0]
     assert body.endswith("filler line")
 
 
@@ -81,7 +81,7 @@ def test_restore_shows_user_visible_notice(tmp_path):
 
 
 def test_sessionstart_triggers_retention_sweep(tmp_path, monkeypatch):
-    from tend import retention
+    from carryover import retention
     called = {}
     monkeypatch.setattr(retention, "maybe_sweep",
                         lambda days: called.setdefault("days", days))
@@ -106,7 +106,7 @@ def test_compact_reanchors_real_state(tmp_path):
     ctx = out["hookSpecificOutput"]["additionalContext"]
     assert "compacted" in ctx
     assert "Chose recursive descent over a table-driven parser" in ctx
-    assert out["systemMessage"] == "tend: re-anchored durable state after compaction"
+    assert out["systemMessage"] == "carryover: re-anchored durable state after compaction"
 
 
 def test_compact_skips_pristine_template(tmp_path):

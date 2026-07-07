@@ -1,6 +1,6 @@
 from conftest import make_event, write_transcript
 
-from tend import hook, ledger
+from carryover import hook, ledger
 
 
 def test_posttooluse_ingests_and_offloads(tmp_path):
@@ -26,7 +26,7 @@ def test_unknown_event_returns_none():
 
 
 def test_userpromptsubmit_returns_anchor(tmp_path):
-    from tend import paths
+    from carryover import paths
     paths.write_json_atomic(paths.session_dir("s1") / "ctx.json",
                             {"context_window": {"used_percentage": 30.0}})
     out = hook.dispatch(make_event(hook_event_name="UserPromptSubmit", cwd=str(tmp_path)))
@@ -35,7 +35,7 @@ def test_userpromptsubmit_returns_anchor(tmp_path):
 
 def test_handler_still_runs_when_ingest_crashes(tmp_path, monkeypatch):
     """M3: a poisoned ledger must degrade the ledger, not kill offload."""
-    from tend import ledger as ledger_mod
+    from carryover import ledger as ledger_mod
 
     def boom(event):
         raise TypeError("'<' not supported between instances of 'str' and 'int'")

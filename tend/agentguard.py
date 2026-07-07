@@ -1,33 +1,9 @@
-"""Pillar 1c: advisory model-tier nudge for subagent spawns. Never blocks."""
-from . import config, ctxmetrics
+"""Deprecated shim -> carryover.agentguard. See tend/__init__.py."""
+if __name__ == "__main__":  # legacy: python3 -m tend.agentguard
+    import runpy
 
-SPAWN_TOOLS = {"Task", "Agent"}
+    runpy.run_module("carryover.agentguard", run_name="__main__", alter_sys=True)
+else:
+    from carryover import agentguard as _mod
 
-LADDER_TEXT = (
-    "Pick the lowest tier that fits: haiku = mechanical (verify outputs/extract/"
-    "format/capture); sonnet = clear-goal bounded work (scan/review/simple edits); "
-    "opus = real coding; inherit = design/synthesis/judgment."
-)
-
-
-def handle(event):
-    if event.get("tool_name") not in SPAWN_TOOLS:
-        return None
-    cfg = config.load(event.get("cwd"))
-    if not cfg.delegation_guard:
-        return None
-    if (event.get("tool_input") or {}).get("model"):
-        return None
-    tier = ctxmetrics.session_model_tier(event.get("session_id"))
-    if tier == "haiku":
-        return None  # already the floor; nothing to save
-    inherit = tier or "the session model"
-    return {
-        "hookSpecificOutput": {
-            "hookEventName": "PreToolUse",
-            "additionalContext": (
-                f"[tend] This subagent has no model set - it will inherit {inherit}. "
-                + LADDER_TEXT
-            ),
-        }
-    }
+    globals().update({k: v for k, v in vars(_mod).items() if not k.startswith("__")})

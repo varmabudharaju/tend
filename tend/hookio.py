@@ -1,53 +1,9 @@
-"""Hook stdin/stdout plumbing. Fail-open: a tend bug must never break a session."""
-import datetime
-import json
-import sys
-import traceback
+"""Deprecated shim -> carryover.hookio. See tend/__init__.py."""
+if __name__ == "__main__":  # legacy: python3 -m tend.hookio
+    import runpy
 
-from . import paths
+    runpy.run_module("carryover.hookio", run_name="__main__", alter_sys=True)
+else:
+    from carryover import hookio as _mod
 
-
-def read_event() -> dict:
-    raw = sys.stdin.read()
-    return json.loads(raw) if raw.strip() else {}
-
-
-def emit(obj: dict) -> None:
-    sys.stdout.write(json.dumps(obj) + "\n")
-
-
-MAX_LOG_BYTES = 1_000_000
-
-
-def append_log(text: str) -> None:
-    try:
-        paths.home().mkdir(parents=True, exist_ok=True)
-        lp = paths.log_path()
-        try:
-            if lp.stat().st_size > MAX_LOG_BYTES:
-                lp.replace(lp.with_name(lp.name + ".1"))
-        except OSError:
-            pass
-        with open(lp, "a", encoding="utf-8") as f:
-            f.write(text)
-    except BaseException:
-        pass
-
-
-def log_error() -> None:
-    append_log(f"--- {datetime.datetime.now().isoformat()}\n{traceback.format_exc()}\n")
-
-
-def run_fail_open(handler) -> int:
-    try:
-        if paths.disabled():
-            return 0
-        event = read_event()
-        out = handler(event)
-        if out is not None:
-            emit(out)
-    except KeyboardInterrupt:
-        pass  # routine Ctrl-C: not a tend error, nothing to log
-    except BaseException:
-        log_error()
-    return 0
+    globals().update({k: v for k, v in vars(_mod).items() if not k.startswith("__")})

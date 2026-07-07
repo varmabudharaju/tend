@@ -100,7 +100,7 @@ def test_phase_a_states_every_constraint():
     a = outcome.PHASE_A
     for token in outcome.constraint_values():
         assert token in a, f"phase A must state constraint value {token!r}"
-    # phase A also wires the STATE.md convention (tend ON maintains it)
+    # phase A also wires the STATE.md convention (carryover ON maintains it)
     assert "STATE.md" in a
 
 
@@ -142,7 +142,7 @@ def test_judge_prompt_is_blind():
     prompt = outcome.build_judge_prompt(
         outcome.JUDGE_TASK_SPEC, {"A": GOOD_ARTIFACT, "B": EMPTY_ARTIFACT})
     low = prompt.lower()
-    assert "tend" not in low
+    assert "carryover" not in low
     import re
     assert re.search(r"\barm\b", low) is None
     # artifacts are referred to only by their shuffled letters, and both appear

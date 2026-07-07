@@ -2,7 +2,7 @@
 
 The pitch is "stays smart ten hours in" — an *outcome* claim. Phases 1/2/2b prove
 mechanisms (offloading shrinks context; STATE restore survives a reset) but not the
-outcome: that an agent *with* tend finishes a long, decision-heavy task better than
+outcome: that an agent *with* carryover finishes a long, decision-heavy task better than
 one without. This workload closes that gap.
 
 Shape (a task-level, forced-reset A/B):
@@ -10,11 +10,11 @@ Shape (a task-level, forced-reset A/B):
     (a config-key name, an error-output prefix, a required exit code, a named
     function signature) — frozen in CONSTRAINTS below.
   - **Phase A** (plant): the arm is given the task + all 4 constraints and starts
-    the file, recording decisions in `.claude/tend/STATE.md` (tend ON maintains it,
-    exactly like the handoff arms). Identical prompt in both arms; only tend on/off.
+    the file, recording decisions in `.claude/carryover/STATE.md` (carryover ON maintains it,
+    exactly like the handoff arms). Identical prompt in both arms; only carryover on/off.
   - **Forced mid-task reset**: phase B runs as a FRESH session (resume_sid=None) —
     the same reset mechanism the handoff workload uses, which fires `SessionStart`.
-    tend ON re-injects STATE.md; the OFF (vanilla) arm gets nothing.
+    carryover ON re-injects STATE.md; the OFF (vanilla) arm gets nothing.
   - **Phase B** (finish): "finish the task" — the constraints are NOT restated.
   - **Score** the final artifact on disk: a mechanical per-constraint rubric
     (word-boundary matched, reused from the recall scorer) → /4, plus an optional
@@ -133,7 +133,7 @@ PHASE_A = (
     "It MUST satisfy these four constraints exactly — they are decisions, honor "
     "them for the whole task:\n"
     f"{_CONSTRAINT_LINES}\n\n"
-    "Record the task goal and these four constraints now in .claude/tend/STATE.md "
+    "Record the task goal and these four constraints now in .claude/carryover/STATE.md "
     "(create it): put 'Build configlint.py' on the Goal line and the four "
     "constraints under a Decisions heading. Then create configlint.py with the "
     "argument parsing and the validate_config(path) skeleton — you will finish the "
@@ -183,7 +183,7 @@ def judge_labels(seed=0):
 
 def build_judge_prompt(task_spec, artifacts_by_letter):
     """A strict-rubric prompt. Blind: artifacts appear only under letters A/B, with
-    no arm identifiers ('tend'/'on'/'off'/'arm') anywhere."""
+    no arm identifiers ('carryover'/'on'/'off'/'arm') anywhere."""
     L = [
         "You are grading two candidate solutions to a coding task. Judge only the "
         "code shown; do not run it. Be strict.",
@@ -242,7 +242,7 @@ def run_judge(artifact_on, artifact_off, model, seed=0, runner=run_turn,
     labels = judge_labels(seed)  # {'on': 'A'|'B', 'off': ...}
     by_letter = {labels["on"]: artifact_on, labels["off"]: artifact_off}
     prompt = build_judge_prompt(task_spec, by_letter)
-    cwd = cwd or tempfile.mkdtemp(prefix="tend-judge-")
+    cwd = cwd or tempfile.mkdtemp(prefix="carryover-judge-")
     env = env if env is not None else os.environ
     d = runner(prompt, cwd, env, model, resume_sid=None, allowed=None,
                disallowed=JUDGE_BLOCK, timeout=300)
@@ -308,7 +308,7 @@ def run_outcome_session(arm, run_dir, model, repeat, seed=0, log=print,
 # --------------------------------------------------------------------------- #
 def run(out_dir, stamp, model="claude-haiku-4-5-20251001", repeats=3,
         arms=("on", "off"), judge=None, seed=0, log=print, runner=run_turn):
-    run_dir = Path(tempfile.mkdtemp(prefix="tend-outcome-"))
+    run_dir = Path(tempfile.mkdtemp(prefix="carryover-outcome-"))
     log(f"[outcome] run dir: {run_dir}  model={model}  repeats={repeats}  "
         f"arms={arms}  judge={judge}  seed={seed}")
     sessions = []
@@ -368,14 +368,14 @@ def _summarize(sessions, judgements, arms):
 
 def render_markdown(r, arms):
     s = r["summary"]
-    L = ["# tend behavioral A/B — outcome", "",
+    L = ["# carryover behavioral A/B — outcome", "",
          f"_Generated {r['stamp']} · model `{r['model']}` · {r['repeats']} repeats/arm · "
          f"outcome workload"
          + (f" · judge `{r['judge']}` (seed {r['seed']})_" if r.get("judge") else "_"),
          "",
          "A multi-step coding task with 4 planted constraints, a **forced mid-task "
          "reset** (fresh session — the handoff mechanism), then 'finish the task' "
-         "with the constraints NOT restated. Identical in both arms; only tend "
+         "with the constraints NOT restated. Identical in both arms; only carryover "
          "on/off. Scored on the final artifact: a mechanical per-constraint rubric "
          "(/4)" + (", plus a blind judge (1-5, shuffled letters)." if r.get("judge")
                    else "."),
@@ -383,7 +383,7 @@ def render_markdown(r, arms):
     for name, c in CONSTRAINTS.items():
         L.append(f"- **{name}** — {c['desc']}.")
     L += ["", "## Summary (medians)", "",
-          "| metric | tend ON | tend OFF | delta |", "|---|--:|--:|--:|"]
+          "| metric | carryover ON | carryover OFF | delta |", "|---|--:|--:|--:|"]
     if "on" in s and "off" in s:
         on, off = s["on"], s["off"]
 
@@ -414,7 +414,7 @@ def render_markdown(r, arms):
         L.append(f"- **{x['arm']} r{x['repeat']}** ({x['constraint_score']}/4): {kept}")
     if r.get("judgements"):
         L += ["", "## Blind judge (shuffled letters)", "",
-              "| repeat | tend ON | tend OFF |", "|---|--:|--:|"]
+              "| repeat | carryover ON | carryover OFF |", "|---|--:|--:|"]
         for j in r["judgements"]:
             L.append(f"| {j.get('repeat', '')} | {j['score_on']} | {j['score_off']} |")
     return "\n".join(L) + "\n"

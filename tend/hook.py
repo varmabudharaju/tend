@@ -1,41 +1,9 @@
-"""Hook entry point: python3 -m tend.hook (registered for all tend events)."""
-import sys
+"""Deprecated shim -> carryover.hook. See tend/__init__.py."""
+if __name__ == "__main__":  # legacy: python3 -m tend.hook
+    import runpy
 
-from . import hookio
+    runpy.run_module("carryover.hook", run_name="__main__", alter_sys=True)
+else:
+    from carryover import hook as _mod
 
-INGEST = {"PostToolUse", "UserPromptSubmit", "Stop", "PreCompact"}
-
-
-def dispatch(event):
-    from . import agentguard, anchor, boundary, ledger, offload, precompact, readguard, sessionstart
-
-    name = event.get("hook_event_name")
-    if name in INGEST:
-        try:
-            ledger.ingest(event)
-        except Exception:
-            # The ledger is an amplifier: one crash here must degrade the
-            # ledger, not silently disable every handler behind it.
-            hookio.log_error()
-            ledger.mark_degraded(event.get("session_id"))
-    if name in ("SubagentStart", "SubagentStop"):
-        ledger.record_agent(event)
-        return None
-    handlers = {
-        "PostToolUse": offload.handle,
-        "PreToolUse": lambda e: readguard.handle(e) or agentguard.handle(e),
-        "UserPromptSubmit": anchor.handle,
-        "Stop": boundary.handle,
-        "SessionStart": sessionstart.handle,
-        "PreCompact": precompact.handle,
-    }
-    fn = handlers.get(name)
-    return fn(event) if fn else None
-
-
-def main() -> int:
-    return hookio.run_fail_open(dispatch)
-
-
-if __name__ == "__main__":
-    sys.exit(main())
+    globals().update({k: v for k, v in vars(_mod).items() if not k.startswith("__")})

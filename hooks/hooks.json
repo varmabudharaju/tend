@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "PYTHONPATH=\"${CLAUDE_PLUGIN_ROOT}\" python3 -m tend.hook"
+            "command": "PYTHONPATH=\"${CLAUDE_PLUGIN_ROOT}\" python3 -m carryover.hook"
           }
         ]
       }
@@ -15,7 +15,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "PYTHONPATH=\"${CLAUDE_PLUGIN_ROOT}\" python3 -m tend.hook"
+            "command": "PYTHONPATH=\"${CLAUDE_PLUGIN_ROOT}\" python3 -m carryover.hook"
           }
         ]
       }
@@ -25,7 +25,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "PYTHONPATH=\"${CLAUDE_PLUGIN_ROOT}\" python3 -m tend.hook"
+            "command": "PYTHONPATH=\"${CLAUDE_PLUGIN_ROOT}\" python3 -m carryover.hook"
           }
         ]
       }
@@ -35,7 +35,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "PYTHONPATH=\"${CLAUDE_PLUGIN_ROOT}\" python3 -m tend.hook"
+            "command": "PYTHONPATH=\"${CLAUDE_PLUGIN_ROOT}\" python3 -m carryover.hook"
           }
         ]
       }
@@ -45,7 +45,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "PYTHONPATH=\"${CLAUDE_PLUGIN_ROOT}\" python3 -m tend.hook"
+            "command": "PYTHONPATH=\"${CLAUDE_PLUGIN_ROOT}\" python3 -m carryover.hook"
           }
         ]
       }
@@ -55,7 +55,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "PYTHONPATH=\"${CLAUDE_PLUGIN_ROOT}\" python3 -m tend.hook"
+            "command": "PYTHONPATH=\"${CLAUDE_PLUGIN_ROOT}\" python3 -m carryover.hook"
           }
         ]
       }
@@ -65,7 +65,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "PYTHONPATH=\"${CLAUDE_PLUGIN_ROOT}\" python3 -m tend.hook"
+            "command": "PYTHONPATH=\"${CLAUDE_PLUGIN_ROOT}\" python3 -m carryover.hook"
           }
         ]
       }
@@ -75,7 +75,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "PYTHONPATH=\"${CLAUDE_PLUGIN_ROOT}\" python3 -m tend.hook"
+            "command": "PYTHONPATH=\"${CLAUDE_PLUGIN_ROOT}\" python3 -m carryover.hook"
           }
         ]
       }

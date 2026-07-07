@@ -1,11 +1,11 @@
 import os
 import time
 
-from tend import state
+from carryover import state
 
 
 def test_path_for(tmp_path):
-    assert state.path_for(str(tmp_path)) == tmp_path / ".claude" / "tend" / "STATE.md"
+    assert state.path_for(str(tmp_path)) == tmp_path / ".claude" / "carryover" / "STATE.md"
 
 
 def _seed_state(root):

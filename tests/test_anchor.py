@@ -1,9 +1,9 @@
 from conftest import make_event
 
-from tend import anchor, flags, paths, state
+from carryover import anchor, flags, paths, state
 
 
-def seed_state(tmp_path, goal="Ship tend", now="Writing anchor"):
+def seed_state(tmp_path, goal="Ship carryover", now="Writing anchor"):
     sp = state.path_for(str(tmp_path))
     sp.parent.mkdir(parents=True, exist_ok=True)
     sp.write_text(f"## Goal\n{goal}\n\n## Now\n{now}\n")
@@ -27,7 +27,7 @@ def test_anchor_contains_goal_now_health(tmp_path):
     out = anchor.handle(ev(tmp_path))
     ctx = out["hookSpecificOutput"]["additionalContext"]
     assert out["hookSpecificOutput"]["hookEventName"] == "UserPromptSubmit"
-    assert "Goal: Ship tend" in ctx
+    assert "Goal: Ship carryover" in ctx
     assert "Now: Writing anchor" in ctx
     assert "context 30%" in ctx
     assert "/compact" not in ctx  # below advise threshold

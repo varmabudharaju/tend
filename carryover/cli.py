@@ -1,0 +1,283 @@
+"""carryover CLI: status, report, find, handoff, clean, on/off, install-hook, uninstall-hook, statusline-wrap."""
+import argparse
+import os
+import re
+import time
+from pathlib import Path
+
+from . import config, ctxmetrics, install, ledger, offload, paths, state
+
+
+def latest_session():
+    root = paths.home() / "sessions"
+    if not root.exists():
+        return None
+    dirs = [d for d in root.iterdir() if d.is_dir()]
+    if not dirs:
+        return None
+    return max(dirs, key=paths.newest_mtime).name
+
+
+def _sessions_with_outputs():
+    """Session ids whose outputs dir has a *.txt, newest outputs mtime first."""
+    root = paths.home() / "sessions"
+    if not root.exists():
+        return []
+    found = []
+    for d in root.iterdir():
+        out = d / "outputs"
+        if d.is_dir() and out.is_dir() and any(out.glob("*.txt")):
+            found.append((paths.newest_mtime(out), d.name))
+    found.sort(reverse=True)
+    return [name for _, name in found]
+
+
+def cmd_status(args) -> int:
+    sid = args.session or latest_session()
+    if not sid:
+        print("no carryover sessions recorded yet")
+        return 0
+    if args.session and not (paths.home() / "sessions" / sid).is_dir():
+        print(f"no such session: {sid}")
+        return 1
+    summary = ledger.load_summary(sid)
+    pct = ctxmetrics.used_pct(sid)
+    print(f"session  {sid}")
+    newest = paths.newest_mtime(paths.home() / "sessions" / sid)
+    if newest:
+        print(f"last hook activity {(time.time() - newest) / 60:.1f}m ago")
+    pct_s = f"{pct:.0f}%" if pct is not None else "unknown"
+    print(f"context  {pct_s} ({summary.get('context_total', 0):,} tok)")
+    print(f"stale    {ledger.stale_tokens(summary):,} tok of stale tool results")
+    cfg = config.load(args.cwd)
+    print(f"bloat    {ledger.bloat_tokens(summary, cfg.offload_threshold_tokens):,} tok in oversized results")
+    sp = state.path_for(args.cwd)
+    if sp.exists():
+        age_h = (time.time() - sp.stat().st_mtime) / 3600
+        print(f"STATE.md updated {age_h:.1f}h ago ({sp})")
+    else:
+        print("STATE.md missing for this project")
+    top = ledger.top_results(summary, 3)
+    if top:
+        print("top results:")
+        for r in top:
+            mark = "  STALE" if r.get("stale") else ""
+            print(f"  {r['tokens']:>8,} tok  {r.get('tool') or '?'} {r.get('file') or ''}{mark}")
+    return 0
+
+
+def cmd_report(args) -> int:
+    sid = args.session or latest_session()
+    if not sid:
+        print("no carryover sessions recorded yet")
+        return 0
+    if args.session and not (paths.home() / "sessions" / sid).is_dir():
+        print(f"no such session: {sid}")
+        return 1
+    summary = ledger.load_summary(sid)
+    print(f"# carryover report - session {sid}\n")
+    print(f"context total : {summary.get('context_total', 0):,} tok")
+    print(f"output total  : {summary.get('output_total', 0):,} tok")
+    print(f"stale results : {ledger.stale_tokens(summary):,} tok")
+    print(f"degraded      : {summary.get('degraded')}")
+    print("\n## tool results by size")
+    for r in ledger.top_results(summary, 20):
+        mark = "  STALE" if r.get("stale") else ""
+        print(f"  {r['tokens']:>8,} tok  {r.get('tool') or '?'} {r.get('file') or ''}{mark}")
+    outputs = sorted((paths.session_dir(sid) / "outputs").glob("*.txt"))
+    if outputs:
+        print(f"\n## offloaded outputs ({len(outputs)})")
+        for p in outputs:
+            print(f"  {p}")
+    agents = summary.get("agents", {})
+    if agents:
+        print(f"\n## subagents ({len(agents)})")
+        for aid, a in agents.items():
+            status = "done" if a.get("stopped") else "running"
+            print(f"  {aid}  {a.get('type') or '?'}  {status}")
+    snaps = sorted((paths.session_dir(sid)).glob("precompact-*.json"))
+    if snaps:
+        print(f"\n## compaction snapshots ({len(snaps)})")
+        for p in snaps:
+            print(f"  {p.name}")
+    return 0
+
+
+def _find_header(sid) -> str:
+    entries = offload.read_index(sid)
+    if entries:
+        last = entries[-1]
+        bits = [b for b in (last.get("tool"), last.get("hint")) if b]
+        detail = " - " + " | ".join(bits) if bits else ""
+        return f"# {sid} ({len(entries)} filed){detail}"
+    return f"# {sid}"
+
+
+def cmd_find(args) -> int:
+    root = paths.home() / "sessions"
+    if args.session:
+        if not (root / args.session).is_dir():
+            print(f"no such session: {args.session}")
+            return 1
+        sessions = [args.session]
+    elif args.all:
+        sessions = _sessions_with_outputs()
+    else:
+        sessions = _sessions_with_outputs()[:1]
+    if not sessions:
+        print("no filed outputs to search yet")
+        return 0
+    try:
+        rx = re.compile(args.pattern, 0 if args.case_sensitive else re.IGNORECASE)
+    except re.error as e:
+        print(f"bad pattern: {e}")
+        return 1
+
+    total, truncated = 0, False
+    for sid in sessions:
+        header_shown = False
+        for txt in sorted((root / sid / "outputs").glob("*.txt")):
+            try:
+                lines = txt.read_text(encoding="utf-8", errors="replace").splitlines()
+            except OSError:
+                continue
+            for i, line in enumerate(lines, 1):
+                if not rx.search(line):
+                    continue
+                if total >= args.max:
+                    truncated = True
+                    break
+                if not header_shown:
+                    print(_find_header(sid))
+                    header_shown = True
+                print(f"{os.path.abspath(str(txt))}:{i}: {line[:200]}")
+                total += 1
+            if truncated:
+                break
+        if truncated:
+            break
+    if truncated:
+        print(f"... clipped, {args.max}+ matches")
+    elif total == 0:
+        print(f"no matches for {args.pattern!r}")
+    return 0
+
+
+def cmd_handoff(args) -> int:
+    sp = state.path_for(args.cwd)
+    if not sp.exists():
+        print(f"No STATE.md at {sp} - nothing to hand off. "
+              "Ask Claude to write it, or start a session to seed the template.")
+        return 1
+    age_h = (time.time() - sp.stat().st_mtime) / 3600
+    print(f"STATE.md ({sp}) - updated {age_h:.1f}h ago")
+    if age_h > 4:
+        print("WARNING: state may be stale; ask Claude to update it before switching sessions.")
+    print("\nA new session in this project will auto-load:\n")
+    print(sp.read_text(encoding="utf-8"))
+    return 0
+
+
+def cmd_clean(args) -> int:
+    from . import retention
+
+    days = args.days if args.days is not None else config.load(args.cwd).retention_days
+    stats = retention.sweep(days, dry_run=args.dry_run)
+    verb = "would remove" if args.dry_run else "removed"
+    print(f"{verb} {stats['removed']} session(s) older than {days}d "
+          f"({stats['freed_bytes'] / 1e6:.1f} MB); kept {stats['kept']}")
+    return 0
+
+
+def cmd_on(args) -> int:
+    (paths.home() / "disabled").unlink(missing_ok=True)
+    print("carryover enabled")
+    return 0
+
+
+def cmd_off(args) -> int:
+    paths.home().mkdir(parents=True, exist_ok=True)
+    (paths.home() / "disabled").touch()
+    print("carryover disabled (hooks exit immediately)")
+    return 0
+
+
+def cmd_install(args) -> int:
+    try:
+        install.install(args.settings)
+    except install.SettingsError as e:
+        print(str(e))
+        return 1
+    print(f"carryover hooks + statusline installed into {args.settings}")
+    print("Restart your Claude Code session to activate.")
+    return 0
+
+
+def cmd_uninstall(args) -> int:
+    try:
+        install.uninstall(args.settings)
+    except install.SettingsError as e:
+        print(str(e))
+        return 1
+    print(f"carryover removed from {args.settings}")
+    return 0
+
+
+def cmd_wrap_statusline(args) -> int:
+    try:
+        install.wrap_statusline(args.settings)
+    except install.SettingsError as e:
+        print(str(e))
+        return 1
+    print(f"statusline wrapped in {args.settings} (original saved; carryover uninstall-hook restores it)")
+    return 0
+
+
+def cmd_statusline_wrap(args) -> int:
+    from . import statusline
+
+    return statusline.main()
+
+
+def main(argv=None) -> int:
+    parser = argparse.ArgumentParser(prog="carryover", description="Context-hygiene harness for Claude Code")
+    sub = parser.add_subparsers(dest="command", required=True)
+    default_settings = str(Path.home() / ".claude" / "settings.json")
+
+    for name, fn, opts in [
+        ("status", cmd_status, ["session", "cwd"]),
+        ("report", cmd_report, ["session", "cwd"]),
+        ("find", cmd_find, ["find"]),
+        ("handoff", cmd_handoff, ["cwd"]),
+        ("clean", cmd_clean, ["cwd", "clean"]),
+        ("on", cmd_on, []),
+        ("off", cmd_off, []),
+        ("install-hook", cmd_install, ["settings"]),
+        ("uninstall-hook", cmd_uninstall, ["settings"]),
+        ("wrap-statusline", cmd_wrap_statusline, ["settings"]),
+        ("statusline-wrap", cmd_statusline_wrap, []),
+    ]:
+        p = sub.add_parser(name)
+        if "session" in opts:
+            p.add_argument("--session", default=None)
+        if "cwd" in opts:
+            p.add_argument("--cwd", default=".")
+        if "settings" in opts:
+            p.add_argument("--settings", default=default_settings)
+        if "clean" in opts:
+            p.add_argument("--days", type=int, default=None)
+            p.add_argument("--dry-run", action="store_true")
+        if "find" in opts:
+            p.add_argument("pattern")
+            p.add_argument("--session", default=None)
+            p.add_argument("--all", action="store_true")
+            p.add_argument("-s", "--case-sensitive", action="store_true")
+            p.add_argument("--max", type=int, default=50)
+        p.set_defaults(fn=fn)
+
+    args = parser.parse_args(argv)
+    return args.fn(args)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

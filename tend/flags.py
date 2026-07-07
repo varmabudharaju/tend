@@ -1,23 +1,9 @@
-"""Per-session flags shared between hook invocations."""
-import fcntl
+"""Deprecated shim -> carryover.flags. See tend/__init__.py."""
+if __name__ == "__main__":  # legacy: python3 -m tend.flags
+    import runpy
 
-from . import paths
+    runpy.run_module("carryover.flags", run_name="__main__", alter_sys=True)
+else:
+    from carryover import flags as _mod
 
-
-def load(sid) -> dict:
-    return paths.read_json(paths.session_dir(sid) / "flags.json", {})
-
-
-def save(sid, fl) -> None:
-    paths.write_json_atomic(paths.session_dir(sid) / "flags.json", fl)
-
-
-def update(sid, **changes) -> dict:
-    """Atomically merge changes into the session's flags (lock held across read+write)."""
-    lock_path = paths.session_dir(sid) / "flags.lock"
-    with open(lock_path, "w") as lock:
-        fcntl.flock(lock, fcntl.LOCK_EX)
-        fl = load(sid)
-        fl.update(changes)
-        save(sid, fl)
-        return fl
+    globals().update({k: v for k, v in vars(_mod).items() if not k.startswith("__")})

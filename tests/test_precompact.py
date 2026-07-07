@@ -1,6 +1,6 @@
 from conftest import make_event
 
-from tend import flags, paths, precompact
+from carryover import flags, paths, precompact
 
 
 def ev(trigger, tmp_path):
@@ -33,7 +33,7 @@ def test_two_snapshots_are_unique(tmp_path):
 
 
 def test_fresh_state_not_blocked(tmp_path):
-    from tend import ledger, state
+    from carryover import ledger, state
 
     sp = state.path_for(str(tmp_path))
     state.seed(sp)
@@ -43,7 +43,7 @@ def test_fresh_state_not_blocked(tmp_path):
 
 def test_stale_auto_compact_blocked_even_after_context_shrink(tmp_path):
     """H2 repro: mark at high output, context shrank - the block must still fire."""
-    from tend import paths, state
+    from carryover import paths, state
 
     sp = state.path_for(str(tmp_path))
     state.seed(sp)
@@ -58,7 +58,7 @@ def test_stale_auto_compact_blocked_even_after_context_shrink(tmp_path):
 
 
 def test_snapshot_includes_state_sections_and_path(tmp_path):
-    from tend import paths, state
+    from carryover import paths, state
 
     sp = state.path_for(str(tmp_path))
     sp.parent.mkdir(parents=True)
@@ -72,7 +72,7 @@ def test_snapshot_includes_state_sections_and_path(tmp_path):
     assert "Chose recursive descent" in data["state_sections"]["Decisions"]
 
 
-def test_auto_compact_never_blocked_in_home(tend_home):
+def test_auto_compact_never_blocked_in_home(carryover_home):
     """M5: sessionstart never seeds $HOME, so STATE.md can't exist there - don't block."""
     from pathlib import Path
 
