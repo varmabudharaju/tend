@@ -20,6 +20,12 @@ HOOK_EVENTS = [
 
 HOOK_MARKER = "-m carryover.hook"
 STATUSLINE_MARKER = "-m carryover.statusline"
+LEGACY_HOOK_MARKER = "-m tend.hook"  # pre-rename installs; recognized for cleanup/refresh
+LEGACY_STATUSLINE_MARKER = "-m tend.statusline"
+
+
+def _is_hook_command(cmd: str) -> bool:
+    return HOOK_MARKER in cmd or LEGACY_HOOK_MARKER in cmd
 
 
 class SettingsError(RuntimeError):
@@ -64,7 +70,7 @@ def install(settings_path) -> None:
         entries = hooks.get(ev)
         if not isinstance(entries, list):
             entries = hooks[ev] = []
-        if not _refresh_marked(entries, HOOK_MARKER, hook_command()):
+        if not _refresh_marked(entries, hook_command()):
             entries.append({"hooks": [{"type": "command", "command": hook_command()}]})
     _wrap_statusline(settings)
     _write_settings(sp, settings)
@@ -128,7 +134,7 @@ def _prune_entries(entries):
             pruned.append(e)
             continue
         kept = [h for h in inner
-                if not (isinstance(h, dict) and HOOK_MARKER in (h.get("command") or ""))]
+                if not (isinstance(h, dict) and _is_hook_command(h.get("command") or ""))]
         if len(kept) == len(inner):
             pruned.append(e)
             continue
@@ -138,21 +144,25 @@ def _prune_entries(entries):
     return pruned, changed
 
 
-def _refresh_marked(entries, marker, command) -> bool:
-    """Repoint existing carryover hooks at the current interpreter; True if any found (M11)."""
+def _refresh_marked(entries, command) -> bool:
+    """Repoint existing carryover hooks (including legacy -m tend.hook) at the current
+    interpreter/module; True if any were found (M11)."""
     found = False
     for e in entries:
         if not isinstance(e, dict):
             continue
         for h in e.get("hooks") or []:
-            if isinstance(h, dict) and marker in (h.get("command") or ""):
+            if isinstance(h, dict) and _is_hook_command(h.get("command") or ""):
                 h["command"] = command
                 found = True
     return found
 
 
 def _is_carryover_statusline(sl) -> bool:
-    return isinstance(sl, dict) and STATUSLINE_MARKER in (sl.get("command") or "")
+    if not isinstance(sl, dict):
+        return False
+    cmd = sl.get("command") or ""
+    return STATUSLINE_MARKER in cmd or LEGACY_STATUSLINE_MARKER in cmd
 
 
 def _write_settings(sp, settings) -> None:

@@ -5,7 +5,18 @@ from pathlib import Path
 
 
 def home() -> Path:
-    return Path(os.environ.get("CARRYOVER_HOME", str(Path.home() / ".claude" / "carryover")))
+    """Data dir, resolved in order: CARRYOVER_HOME, legacy TEND_HOME, ~/.claude/carryover -
+    but a pre-existing legacy ~/.claude/tend is used when the new dir was never created
+    (no data migration; pre-rename installs keep reading their state)."""
+    env = os.environ.get("CARRYOVER_HOME") or os.environ.get("TEND_HOME")
+    if env:
+        return Path(env)
+    new = Path.home() / ".claude" / "carryover"
+    if not new.exists():
+        legacy = Path.home() / ".claude" / "tend"
+        if legacy.exists():
+            return legacy
+    return new
 
 
 def session_dir(session_id: str) -> Path:

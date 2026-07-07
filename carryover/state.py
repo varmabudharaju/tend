@@ -22,8 +22,21 @@ TEMPLATE = """# Session state
 """
 
 
+_NEW = (".claude", "carryover", "STATE.md")
+_LEGACY = (".claude", "tend", "STATE.md")
+
+
 def path_for(cwd) -> Path:
-    return Path(cwd) / ".claude" / "carryover" / "STATE.md"
+    """Canonical STATE.md path, or the legacy .claude/tend/STATE.md when only that
+    exists (read fall-back). Seeding always lands on the canonical path: seed is only
+    reached when neither file exists, and this returns the canonical one then."""
+    root = Path(cwd)
+    new = root.joinpath(*_NEW)
+    if not new.exists():
+        legacy = root.joinpath(*_LEGACY)
+        if legacy.exists():
+            return legacy
+    return new
 
 
 def resolve(cwd, sid=None) -> Path:
@@ -58,7 +71,7 @@ def _ancestor_with_state(cwd):
     except OSError:
         return None
     while True:
-        if (cur / ".claude" / "carryover" / "STATE.md").is_file():
+        if cur.joinpath(*_NEW).is_file() or cur.joinpath(*_LEGACY).is_file():
             return cur
         if cur == home or (cur / ".git").exists():
             return None  # project/home boundary: never adopt state from across it

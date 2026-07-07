@@ -112,6 +112,8 @@ def load(cwd=None) -> Config:
     data = dict(DEFAULTS)
     candidates = [paths.home() / "config.yaml"]
     if cwd:
+        # legacy project config first (lower precedence), canonical last (it wins)
+        candidates.append(Path(cwd) / ".claude" / "tend" / "config.yaml")
         candidates.append(Path(cwd) / ".claude" / "carryover" / "config.yaml")
     for p in candidates:
         if not p.is_file():
