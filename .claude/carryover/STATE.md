@@ -1,17 +1,28 @@
 # Session state
 
 ## Goal
-v0.4 feature wave: five parallel branches off benchmarks - fix/u2-cwd-drift
-(project-root pinning + ancestor-walk), feat/adaptive-anchors (fingerprint
-suppression, anchor_refresh_turns), feat/compaction-insurance (re-anchor
-STATE.md on SessionStart source=compact), feat/offload-index (index.jsonl +
-tend find), bench/outcome-workload (task-level A/B, no live runs). Each lands
-as its own PR (base benchmarks); plain commits, no AI attribution (owner's
-explicit preference). Naming: pick a simple ONE-WORD term for the practice
-(candidates: gardening / upkeep / grooming; "context gardening" leading).
+Ship carryover 0.4.0 (formerly tend): v0.4 feature wave + honest measurements
++ full rename. Category term: "context gardening". Owner's standing rules:
+plain commits under varmabudharaju, no AI attribution, granular commits/PRs.
 
 ## Now
-v0.4 WAVE MERGED TO MASTER (2026-07-06): PRs #1-#7 all merged, CI green,
+RENAME SHIPPED (PR #8 merged 2026-07-06): tend -> carryover everywhere.
+Repo renamed on GitHub (varmabudharaju/carryover, old URLs redirect), dist
+ctx-tend -> carryover 0.4.0 (PyPI name free, NOT yet published), CLI carryover
+(+ tend alias), plugin id carryover@carryover, 281 tests. Back-compat: tend.*
+module shims (runpy under -m, warning-free), CARRYOVER_HOME -> TEND_HOME ->
+~/.claude/carryover -> legacy ~/.claude/tend resolution, state reads fall back
+to .claude/tend/STATE.md (seeds always new path), install markers repoint
+legacy -m tend.* entries. Live install refreshed (pip -e + carryover
+install-hook; restart activates). Local folder still /Users/varma/tend
+(owner may rename; pip -e re-install after). Spec-link fix committed (the
+2026-06-18 spec file keeps its pre-rename name). Rename-decision data:
+"tend" had ~19.8K GitHub name matches; "carryover" 69 (top star 7).
+Candidates rejected: mulch/trellis (direct agent-space collisions), regrow/
+wintergreen/greenthumb/trowel (offered, owner picked carryover).
+NOTE FOR MARKETPLACE SUBMISSION (still awaiting owner login): submit as
+carryover, marketplace add command is varmabudharaju/carryover.
+PREVIOUSLY: v0.4 WAVE MERGED TO MASTER (2026-07-06): PRs #1-#7 all merged, CI green,
 262 tests. Merge order was #1 benchmarks, #5 U2 (+ compact-never-overwrites-pin
 guard), #3 adaptive anchors, #2 compaction insurance (+ pin-aware reads via
 state.resolve in _reanchor and _snapshot), #4 offload index + tend find,
