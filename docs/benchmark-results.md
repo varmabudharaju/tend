@@ -2,7 +2,7 @@
 
 How much does carryover actually help — and what does it cost? This is the honest
 writeup of a two-phase benchmark run locally on real data and real Claude Code
-sessions. Methodology spec: [`docs/superpowers/specs/2026-06-18-carryover-benchmark-design.md`](superpowers/specs/2026-06-18-carryover-benchmark-design.md).
+sessions. Methodology spec: [`docs/superpowers/specs/2026-06-18-tend-benchmark-design.md`](superpowers/specs/2026-06-18-tend-benchmark-design.md) (written pre-rename).
 
 Reproduce:
 
