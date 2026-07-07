@@ -28,9 +28,9 @@ def handle(event):
     path = _save(sid, text)
     omitted = max(0, n - cfg.offload_head_tokens - cfg.offload_tail_tokens)
     excerpt = (
-        f"{head}\n\n[tend: ~{omitted} tokens offloaded]\n\n{tail}\n\n"
-        f"[tend] Full output saved to {path} - Read it (with offset/limit) "
-        f"or search filed outputs with `tend find <regex>`."
+        f"{head}\n\n[carryover: ~{omitted} tokens offloaded]\n\n{tail}\n\n"
+        f"[carryover] Full output saved to {path} - Read it (with offset/limit) "
+        f"or search filed outputs with `carryover find <regex>`."
     )
     if len(excerpt) >= len(text):
         os.unlink(path)  # banner overhead would inflate, not shrink

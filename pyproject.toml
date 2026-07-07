@@ -3,8 +3,8 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ctx-tend"
-version = "0.3.0"
+name = "carryover"
+version = "0.4.0"
 description = "Context gardening for Claude Code - keeps long sessions sharp: offloads oversized outputs, externalizes session state, anchors the goal, curates compaction"
 readme = "README.md"
 license = { text = "MIT" }
@@ -21,12 +21,13 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/varmabudharaju/tend"
-Repository = "https://github.com/varmabudharaju/tend"
-Issues = "https://github.com/varmabudharaju/tend/issues"
+Homepage = "https://github.com/varmabudharaju/carryover"
+Repository = "https://github.com/varmabudharaju/carryover"
+Issues = "https://github.com/varmabudharaju/carryover/issues"
 
 [project.scripts]
-tend = "tend.cli:main"
+carryover = "carryover.cli:main"
+tend = "carryover.cli:main"  # deprecated alias, kept for pre-rename installs
 
 [tool.setuptools.packages.find]
-include = ["tend*"]
+include = ["carryover*", "tend*"]

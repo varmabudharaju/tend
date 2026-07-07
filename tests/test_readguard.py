@@ -2,7 +2,7 @@ import os
 
 from conftest import make_event
 
-from tend import readguard
+from carryover import readguard
 
 
 def test_large_unbounded_read_gets_nudge(tmp_path):

@@ -30,7 +30,7 @@ def handle(event):
         "hookSpecificOutput": {
             "hookEventName": "PreToolUse",
             "additionalContext": (
-                f"[tend] {fp} is ~{size // 4:,} tokens. Prefer Read with offset/limit on the "
+                f"[carryover] {fp} is ~{size // 4:,} tokens. Prefer Read with offset/limit on the "
                 "relevant range, or delegate scanning to an Explore subagent, instead of "
                 "loading the whole file into context."
             ),

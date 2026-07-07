@@ -14,10 +14,10 @@ def main(argv=None):
     m.add_argument("--iters", type=int, default=40,
                    help="subprocess latency iterations per hook")
     m.add_argument("--live-corpus", action="store_true",
-                   help="benchmark your own ~/.claude/tend offloaded outputs "
+                   help="benchmark your own ~/.claude/carryover offloaded outputs "
                         "instead of the frozen corpus")
 
-    b = sub.add_parser("behavioral", help="run the live tend ON/OFF A/B (uses API key)")
+    b = sub.add_parser("behavioral", help="run the live carryover ON/OFF A/B (uses API key)")
     b.add_argument("--out", default=".benchmarks", help="output directory")
     b.add_argument("--model", default="claude-haiku-4-5-20251001", help="model id")
     b.add_argument("--repeats", type=int, default=2, help="repeats per arm")
@@ -39,7 +39,7 @@ def main(argv=None):
                    help="seed for the judge's label shuffling (outcome workload)")
 
     it = sub.add_parser("interactive",
-                        help="human-in-the-loop A/B for tend's /clear handoff")
+                        help="human-in-the-loop A/B for carryover's /clear handoff")
     it.add_argument("--setup", action="store_true", help="create sandboxes + print protocol")
     it.add_argument("--score", action="store_true", help="grade recall from transcripts")
 

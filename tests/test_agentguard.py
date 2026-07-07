@@ -1,6 +1,6 @@
 from conftest import make_event
 
-from tend import agentguard, paths
+from carryover import agentguard, paths
 
 
 def seed_model(name, sid="s1"):
@@ -50,15 +50,15 @@ def test_generic_wording_when_model_unknown():
     assert "the session model" in ctx
 
 
-def test_config_toggle_disables(tend_home):
+def test_config_toggle_disables(carryover_home):
     seed_model("Fable 5")
-    tend_home.mkdir(parents=True, exist_ok=True)
-    (tend_home / "config.yaml").write_text("delegation_guard: false\n")
+    carryover_home.mkdir(parents=True, exist_ok=True)
+    (carryover_home / "config.yaml").write_text("delegation_guard: false\n")
     assert agentguard.handle(spawn_event()) is None
 
 
-def test_dispatched_from_hook(tend_home):
-    from tend import hook
+def test_dispatched_from_hook(carryover_home):
+    from carryover import hook
 
     seed_model("Fable 5")
     out = hook.dispatch(spawn_event())

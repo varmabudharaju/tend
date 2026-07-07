@@ -1,4 +1,4 @@
-"""Hook stdin/stdout plumbing. Fail-open: a tend bug must never break a session."""
+"""Hook stdin/stdout plumbing. Fail-open: a carryover bug must never break a session."""
 import datetime
 import json
 import sys
@@ -47,7 +47,7 @@ def run_fail_open(handler) -> int:
         if out is not None:
             emit(out)
     except KeyboardInterrupt:
-        pass  # routine Ctrl-C: not a tend error, nothing to log
+        pass  # routine Ctrl-C: not a carryover error, nothing to log
     except BaseException:
         log_error()
     return 0

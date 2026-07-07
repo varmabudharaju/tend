@@ -1,4 +1,4 @@
-from tend import advisor, config, state
+from carryover import advisor, config, state
 
 
 def cfg():
@@ -33,5 +33,5 @@ def test_urge_includes_run_now(tmp_path):
 def test_instructions_include_goal(tmp_path):
     sp = state.path_for(str(tmp_path))
     sp.parent.mkdir(parents=True)
-    sp.write_text("## Goal\nShip tend v1\n## Now\nx\n")
-    assert "Ship tend v1" in advisor.compact_instructions(sp)
+    sp.write_text("## Goal\nShip carryover v1\n## Now\nx\n")
+    assert "Ship carryover v1" in advisor.compact_instructions(sp)

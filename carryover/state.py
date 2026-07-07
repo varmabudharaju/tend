@@ -23,7 +23,7 @@ TEMPLATE = """# Session state
 
 
 def path_for(cwd) -> Path:
-    return Path(cwd) / ".claude" / "tend" / "STATE.md"
+    return Path(cwd) / ".claude" / "carryover" / "STATE.md"
 
 
 def resolve(cwd, sid=None) -> Path:
@@ -34,7 +34,7 @@ def resolve(cwd, sid=None) -> Path:
 def resolve_root(cwd, sid=None) -> Path:
     """Project root for STATE.md, resolved in priority order and always fail-open:
     1. the session's pinned project root (if it still exists),
-    2. the nearest ancestor of cwd holding .claude/tend/STATE.md, not walking past a
+    2. the nearest ancestor of cwd holding .claude/carryover/STATE.md, not walking past a
        .git boundary nor above $HOME,
     3. the event cwd itself (current behaviour)."""
     try:
@@ -58,7 +58,7 @@ def _ancestor_with_state(cwd):
     except OSError:
         return None
     while True:
-        if (cur / ".claude" / "tend" / "STATE.md").is_file():
+        if (cur / ".claude" / "carryover" / "STATE.md").is_file():
             return cur
         if cur == home or (cur / ".git").exists():
             return None  # project/home boundary: never adopt state from across it

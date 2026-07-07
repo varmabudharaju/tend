@@ -1,12 +1,12 @@
 """Phase 1 — mechanical benchmark. Deterministic, no LLM, no network.
 
-Measures what tend *does* to the context window and what it costs per event:
+Measures what carryover *does* to the context window and what it costs per event:
   1. offload savings    — token reduction on real + synthetic tool outputs
   2. anchor budget      — actual anchor token size vs the <=400 claim
-  3. per-event overhead — real `python3 -m tend.hook` subprocess latency
-  4. footprint sim      — cumulative in-context tokens, with vs without tend
+  3. per-event overhead — real `python3 -m carryover.hook` subprocess latency
+  4. footprint sim      — cumulative in-context tokens, with vs without carryover
 
-All tend artifacts are redirected to a throwaway TEND_HOME, so the live
+All carryover artifacts are redirected to a throwaway CARRYOVER_HOME, so the live
 ~/.claude setup is never touched.
 """
 import json
@@ -36,8 +36,8 @@ def load_real_corpus():
 
 
 def load_live_corpus():
-    """Opt-in: the runner's own offloaded outputs from ~/.claude/tend/sessions."""
-    root = Path.home() / ".claude" / "tend" / "sessions"
+    """Opt-in: the runner's own offloaded outputs from ~/.claude/carryover/sessions."""
+    root = Path.home() / ".claude" / "carryover" / "sessions"
     items = []
     for f in sorted(root.glob("*/outputs/*.txt")):
         try:
@@ -71,7 +71,7 @@ def synthetic_corpus():
 # 1. offload savings
 # --------------------------------------------------------------------------- #
 def measure_offload(corpus, workdir):
-    from tend import offload, tokens
+    from carryover import offload, tokens
 
     rows = []
     for name, text in corpus:
@@ -106,8 +106,8 @@ def measure_offload(corpus, workdir):
 # 1b. offload correctness invariants
 # --------------------------------------------------------------------------- #
 def measure_invariants(workdir):
-    """Verify tend offloads the *right* things, not just a lot of things."""
-    from tend import offload
+    """Verify carryover offloads the *right* things, not just a lot of things."""
+    from carryover import offload
 
     big = "x" * 200_000  # ~50k tokens
     base = {"session_id": "bench-inv", "cwd": str(workdir)}
@@ -139,10 +139,10 @@ def measure_invariants(workdir):
 # 2. anchor budget
 # --------------------------------------------------------------------------- #
 def measure_anchor(workdir):
-    from tend import anchor, config, paths, tokens
+    from carryover import anchor, config, paths, tokens
 
     cfg = config.load(str(workdir))
-    sp = workdir / ".claude" / "tend" / "STATE.md"
+    sp = workdir / ".claude" / "carryover" / "STATE.md"
     sp.parent.mkdir(parents=True, exist_ok=True)
 
     rows = []
@@ -231,11 +231,11 @@ def _bar(frac, width=28):
 
 
 def measure_latency_subprocess(workdir, iters=40):
-    """Real per-event wall-clock: a cold `python3 -m tend.hook` subprocess."""
-    env = {**os.environ, "TEND_HOME": str(workdir / "tend_home")}
+    """Real per-event wall-clock: a cold `python3 -m carryover.hook` subprocess."""
+    env = {**os.environ, "CARRYOVER_HOME": str(workdir / "carryover_home")}
     results = {}
 
-    # Baseline: bare interpreter start, to attribute startup vs tend's own work.
+    # Baseline: bare interpreter start, to attribute startup vs carryover's own work.
     base = []
     for _ in range(iters):
         t0 = time.perf_counter()
@@ -249,7 +249,7 @@ def measure_latency_subprocess(workdir, iters=40):
         times = []
         for _ in range(iters):
             t0 = time.perf_counter()
-            subprocess.run([sys.executable, "-m", "tend.hook"], input=payload,
+            subprocess.run([sys.executable, "-m", "carryover.hook"], input=payload,
                            text=True, capture_output=True, env=env, cwd=str(REPO))
             times.append((time.perf_counter() - t0) * 1000)
         results[label] = _pctiles(times)
@@ -258,7 +258,7 @@ def measure_latency_subprocess(workdir, iters=40):
 
 def measure_latency_inprocess(workdir, iters=300):
     """Algorithmic cost only: the handler call, interpreter already warm."""
-    from tend import hook
+    from carryover import hook
 
     results = {}
     for label, ev in _events(workdir).items():
@@ -278,7 +278,7 @@ def measure_latency_inprocess(workdir, iters=300):
 # 4. cumulative footprint simulation
 # --------------------------------------------------------------------------- #
 def measure_footprint(corpus, workdir):
-    from tend import offload, tokens
+    from carryover import offload, tokens
 
     series, cum_without, cum_with = [], 0, 0
     for i, (name, text) in enumerate(corpus, 1):
@@ -294,7 +294,7 @@ def measure_footprint(corpus, workdir):
         cum_without += full
         cum_with += kept
         series.append({"step": i, "name": name,
-                       "cum_without_tend": cum_without, "cum_with_tend": cum_with})
+                       "cum_without_carryover": cum_without, "cum_with_carryover": cum_with})
     return series
 
 
@@ -302,9 +302,9 @@ def measure_footprint(corpus, workdir):
 # run + report
 # --------------------------------------------------------------------------- #
 def run(out_dir, stamp, iters=40, live_corpus=False):
-    tmp = tempfile.mkdtemp(prefix="tend-bench-")
+    tmp = tempfile.mkdtemp(prefix="carryover-bench-")
     workdir = Path(tmp)
-    os.environ["TEND_HOME"] = str(workdir / "tend_home")
+    os.environ["CARRYOVER_HOME"] = str(workdir / "carryover_home")
 
     real = load_live_corpus() if live_corpus else load_real_corpus()
     synth = synthetic_corpus()
@@ -321,7 +321,7 @@ def run(out_dir, stamp, iters=40, live_corpus=False):
     tot_full = sum(r["full_tokens"] for r in offload_rows)
     tot_kept = sum(r["kept_tokens"] for r in offload_rows)
     never_inflates = all(r["kept_tokens"] <= r["full_tokens"] for r in offload_rows)
-    invariants.append({"invariant": "tend never inflates context (kept <= full, all outputs)",
+    invariants.append({"invariant": "carryover never inflates context (kept <= full, all outputs)",
                        "expected": "kept <= full", "result": "held" if never_inflates else "VIOLATED",
                        "pass": never_inflates})
     results = {
@@ -371,7 +371,7 @@ def render_markdown(r):
     inv_pass = sum(1 for c in inv if c["pass"])
 
     # ---- verdict header ----
-    L = ["# tend mechanical benchmark", "",
+    L = ["# carryover mechanical benchmark", "",
          f"_Generated {r['stamp']} on {r['host']['uname']} (Python {r['host']['python']})._",
          "", "## Verdict at a glance", "",
          f"- **Context management:** {o['overall_reduction_pct']}% fewer tokens in context "
@@ -381,8 +381,8 @@ def render_markdown(r):
          f"- **Correctness:** {inv_pass}/{len(inv)} invariants held.",
          "", "## 1. Context savings (offloading)", "",
          f"- Outputs tested: **{o['n_outputs']}** ({o['n_offloaded']} large enough to offload)",
-         f"- Total in-context tokens **without tend: {o['total_full_tokens']:,}**",
-         f"- Total in-context tokens **with tend: {o['total_kept_tokens']:,}**",
+         f"- Total in-context tokens **without carryover: {o['total_full_tokens']:,}**",
+         f"- Total in-context tokens **with carryover: {o['total_kept_tokens']:,}**",
          f"- **Saved: {o['total_saved_tokens']:,} tokens ({o['overall_reduction_pct']}% reduction)**",
          ""]
     # savings curve over the synthetic size ladder
@@ -401,7 +401,7 @@ def render_markdown(r):
 
     # ---- invariants ----
     L += ["", "## 1b. Offload correctness invariants", "",
-          f"**{inv_pass}/{len(inv)} held.** tend offloads the right things, not just a lot of things.",
+          f"**{inv_pass}/{len(inv)} held.** carryover offloads the right things, not just a lot of things.",
           "", "| invariant | expected | result | pass |", "|---|---|---|:--:|"]
     for c in inv:
         L.append(f"| {c['invariant']} | {c['expected']} | {c['result']} "
@@ -417,7 +417,7 @@ def render_markdown(r):
                  f"| {'yes' if row['within_budget'] else 'NO'} |")
 
     L += ["", "## 3. Per-event overhead", "",
-          "Real cost = a cold `python3 -m tend.hook` subprocess (fires on every event).",
+          "Real cost = a cold `python3 -m carryover.hook` subprocess (fires on every event).",
           "", "| hook event | p50 ms | p95 ms | p99 ms | mean ms |", "|---|--:|--:|--:|--:|"]
     for label, s in r["latency_subprocess_ms"].items():
         L.append(f"| {label} | {s['p50_ms']} | {s['p95_ms']} | {s['p99_ms']} | {s['mean_ms']} |")
@@ -429,16 +429,16 @@ def render_markdown(r):
     f = r["footprint"]
     if f:
         last = f[-1]
-        peak = last["cum_without_tend"] or 1
+        peak = last["cum_without_carryover"] or 1
         L += ["", "## 4. Cumulative context footprint (replay sim)", "",
               f"Replaying {len(f)} real tool outputs in order — how the desk fills "
-              "(bar scaled to the without-tend peak):", "", "```",
-              f"{'step':>4}  without tend                    with tend"]
+              "(bar scaled to the without-carryover peak):", "", "```",
+              f"{'step':>4}  without carryover                    with carryover"]
         for row in f:
-            L.append(f"{row['step']:>4}  {_bar(row['cum_without_tend'] / peak, 24)}  "
-                     f"{_bar(row['cum_with_tend'] / peak, 24)}")
+            L.append(f"{row['step']:>4}  {_bar(row['cum_without_carryover'] / peak, 24)}  "
+                     f"{_bar(row['cum_with_carryover'] / peak, 24)}")
         L += ["```", "",
-              f"- final **without tend: {last['cum_without_tend']:,}** tokens",
-              f"- final **with tend: {last['cum_with_tend']:,}** tokens",
-              f"- desk stays **{round(100*(1-last['cum_with_tend']/peak))}% lighter**"]
+              f"- final **without carryover: {last['cum_without_carryover']:,}** tokens",
+              f"- final **with carryover: {last['cum_with_carryover']:,}** tokens",
+              f"- desk stays **{round(100*(1-last['cum_with_carryover']/peak))}% lighter**"]
     return "\n".join(L) + "\n"

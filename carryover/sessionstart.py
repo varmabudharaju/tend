@@ -4,7 +4,7 @@ from pathlib import Path
 from . import config, flags, paths, retention, state
 
 CONVENTION = (
-    "[tend] This project uses .claude/tend/STATE.md as the session's external state file "
+    "[carryover] This project uses .claude/carryover/STATE.md as the session's external state file "
     "(template just created). Maintain it as you work: Goal (stable), Now (current step), "
     "Decisions (append-only), Dead-ends (failed approaches - never retry), Files touched. "
     "Update it whenever you finish a step or make a decision; it survives compaction and "
@@ -12,15 +12,15 @@ CONVENTION = (
 )
 
 PREAMBLE = (
-    "[tend] State restored from previous session (.claude/tend/STATE.md below). "
+    "[carryover] State restored from previous session (.claude/carryover/STATE.md below). "
     "Verify 'Files touched' against current disk before relying on it.\n\n"
 )
 
 MAX_INJECT_CHARS = 16000
 
 COMPACT_PREAMBLE = (
-    "[tend] Context was just compacted. Durable state below survived on disk "
-    "(.claude/tend/STATE.md); filed outputs and snapshots are under {sdir}.\n\n"
+    "[carryover] Context was just compacted. Durable state below survived on disk "
+    "(.claude/carryover/STATE.md); filed outputs and snapshots are under {sdir}.\n\n"
 )
 
 MAX_COMPACT_CHARS = 8000
@@ -44,15 +44,15 @@ def handle(event):
     sp = state.resolve(cwd, sid)
     if not sp.exists():
         state.seed(sp)
-        return _ctx(CONVENTION, f"tend: seeded {_rel(sp, cwd)} - Claude will maintain it")
+        return _ctx(CONVENTION, f"carryover: seeded {_rel(sp, cwd)} - Claude will maintain it")
     if state.is_fresh(sp, cfg.state_fresh_hours):
         text = sp.read_text(encoding="utf-8")
         if len(text) > MAX_INJECT_CHARS:
             cut = text.rfind("\n", 0, MAX_INJECT_CHARS)
             text = text[: cut if cut > 0 else MAX_INJECT_CHARS]
-            text += f"\n[tend] STATE.md truncated for injection - read the rest at {sp}"
+            text += f"\n[carryover] STATE.md truncated for injection - read the rest at {sp}"
         return _ctx(PREAMBLE + text,
-                    f"tend: restored session state from STATE.md ({len(text.splitlines())} lines)")
+                    f"carryover: restored session state from STATE.md ({len(text.splitlines())} lines)")
     return None
 
 
@@ -92,7 +92,7 @@ def _reanchor(event):
         return None  # untouched template: nothing worth re-anchoring
     sdir = paths.session_dir(sid) if sid else paths.home() / "sessions"
     text = COMPACT_PREAMBLE.format(sdir=sdir) + _compact_body(sections, sp)
-    return _ctx(text, "tend: re-anchored durable state after compaction")
+    return _ctx(text, "carryover: re-anchored durable state after compaction")
 
 
 def _is_pristine(sections) -> bool:
@@ -120,7 +120,7 @@ def _compact_body(sections, sp) -> str:
     if len(body) > MAX_COMPACT_CHARS:
         cut = body.rfind("\n", 0, MAX_COMPACT_CHARS)
         body = body[: cut if cut > 0 else MAX_COMPACT_CHARS]
-        body += f"\n[tend] STATE.md truncated for injection - read the rest at {sp}"
+        body += f"\n[carryover] STATE.md truncated for injection - read the rest at {sp}"
     return body
 
 

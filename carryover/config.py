@@ -1,4 +1,4 @@
-"""Config: baked defaults < ~/.claude/tend/config.yaml < <project>/.claude/tend/config.yaml."""
+"""Config: baked defaults < ~/.claude/carryover/config.yaml < <project>/.claude/carryover/config.yaml."""
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -93,7 +93,7 @@ def _parse_value(v: str):
 
 
 def _parse_config(text: str) -> dict:
-    """Flat `key: value` parser (a YAML subset). tend's whole config is flat
+    """Flat `key: value` parser (a YAML subset). carryover's whole config is flat
     scalars and string lists; stdlib-only keeps the plugin dependency-free."""
     data = {}
     for line in text.splitlines():
@@ -112,7 +112,7 @@ def load(cwd=None) -> Config:
     data = dict(DEFAULTS)
     candidates = [paths.home() / "config.yaml"]
     if cwd:
-        candidates.append(Path(cwd) / ".claude" / "tend" / "config.yaml")
+        candidates.append(Path(cwd) / ".claude" / "carryover" / "config.yaml")
     for p in candidates:
         if not p.is_file():
             continue

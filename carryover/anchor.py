@@ -31,7 +31,7 @@ def handle(event):
     lines.append(_health_line(pct, stale, bloat))
     if fl.get("state_reminder"):
         lines.append(
-            "STATE.md is stale - update .claude/tend/STATE.md "
+            "STATE.md is stale - update .claude/carryover/STATE.md "
             "(Now/Decisions/Dead-ends) before continuing."
         )
     adv = advisor.advice(pct, cfg, sp, fl)
@@ -77,7 +77,7 @@ def _suppress(sid, fl, cfg, fp) -> bool:
 
 
 def _render(lines):
-    return "[tend anchor]\n" + "\n".join(lines)
+    return "[carryover anchor]\n" + "\n".join(lines)
 
 
 def _fit(lines, budget):

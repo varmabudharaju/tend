@@ -26,7 +26,7 @@ def handle(event):
         "hookSpecificOutput": {
             "hookEventName": "PreToolUse",
             "additionalContext": (
-                f"[tend] This subagent has no model set - it will inherit {inherit}. "
+                f"[carryover] This subagent has no model set - it will inherit {inherit}. "
                 + LADDER_TEXT
             ),
         }

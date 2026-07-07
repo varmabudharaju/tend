@@ -20,7 +20,7 @@ def level(pct, cfg):
 
 def compact_instructions(state_path) -> str:
     base = (
-        "preserve the Goal, Now and Decisions from .claude/tend/STATE.md and the intent of "
+        "preserve the Goal, Now and Decisions from .claude/carryover/STATE.md and the intent of "
         "the current change; drop exploration detail, raw tool outputs and dead-end attempts "
         "(they are recorded in STATE.md)"
     )

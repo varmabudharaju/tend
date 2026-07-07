@@ -5,7 +5,7 @@ from pathlib import Path
 from . import config, ctxmetrics, flags, ledger, paths, state
 
 BLOCK_REASON = (
-    "tend: STATE.md is stale. Update .claude/tend/STATE.md (Goal/Now/Decisions/Dead-ends), "
+    "carryover: STATE.md is stale. Update .claude/carryover/STATE.md (Goal/Now/Decisions/Dead-ends), "
     "then run /compact. This block fires only once."
 )
 

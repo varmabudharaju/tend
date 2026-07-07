@@ -10,7 +10,7 @@ def main() -> int:
     try:
         return _main()
     except Exception:
-        sys.stdout.write("tend\n")  # a broken wrapper must never blank the statusbar
+        sys.stdout.write("carryover\n")  # a broken wrapper must never blank the statusbar
         return 0
 
 
@@ -23,7 +23,7 @@ def _main() -> int:
     if not isinstance(data, dict):
         data = {}
     sid = data.get("session_id")
-    if sid and not paths.disabled():  # kill switch: no tend writes while off
+    if sid and not paths.disabled():  # kill switch: no carryover writes while off
         try:
             paths.write_json_atomic(paths.session_dir(sid) / "ctx.json", data)
         except Exception:
@@ -35,7 +35,7 @@ def _main() -> int:
                 orig["command"], shell=True, input=raw, capture_output=True, text=True, timeout=10
             )
             if res.returncode == 0 and res.stdout:
-                sys.stdout.write(res.stdout.rstrip("\n") + _tend_segment(sid) + "\n")
+                sys.stdout.write(res.stdout.rstrip("\n") + _carryover_segment(sid) + "\n")
                 return 0
             # Non-zero exit or empty stdout: log stderr and fall through to built-in fallback
             if res.stderr:
@@ -46,18 +46,18 @@ def _main() -> int:
             pass
     model = (data.get("model") or {}).get("display_name", "")
     pct = (data.get("context_window") or {}).get("used_percentage")
-    line = model or "tend"
+    line = model or "carryover"
     if pct is not None:
         try:
             line += f" | ctx {float(pct):.0f}%"
         except (TypeError, ValueError):
             pass
-    sys.stdout.write(line + _tend_segment(sid) + "\n")
+    sys.stdout.write(line + _carryover_segment(sid) + "\n")
     return 0
 
 
-def _tend_segment(sid) -> str:
-    """The visible heartbeat: a quiet suffix proving tend is on and working."""
+def _carryover_segment(sid) -> str:
+    """The visible heartbeat: a quiet suffix proving carryover is on and working."""
     if not sid or paths.disabled():
         return ""
     try:
@@ -72,7 +72,7 @@ def _tend_segment(sid) -> str:
         stale = ledger.stale_tokens(summary)
         if stale >= 1000:
             parts.append(f"{stale // 1000}k stale")
-        return " | tend: " + (", ".join(parts) if parts else "on")
+        return " | carryover: " + (", ".join(parts) if parts else "on")
     except Exception:
         return ""
 

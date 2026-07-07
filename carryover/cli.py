@@ -1,4 +1,4 @@
-"""tend CLI: status, report, find, handoff, clean, on/off, install-hook, uninstall-hook, statusline-wrap."""
+"""carryover CLI: status, report, find, handoff, clean, on/off, install-hook, uninstall-hook, statusline-wrap."""
 import argparse
 import os
 import re
@@ -35,7 +35,7 @@ def _sessions_with_outputs():
 def cmd_status(args) -> int:
     sid = args.session or latest_session()
     if not sid:
-        print("no tend sessions recorded yet")
+        print("no carryover sessions recorded yet")
         return 0
     if args.session and not (paths.home() / "sessions" / sid).is_dir():
         print(f"no such session: {sid}")
@@ -69,13 +69,13 @@ def cmd_status(args) -> int:
 def cmd_report(args) -> int:
     sid = args.session or latest_session()
     if not sid:
-        print("no tend sessions recorded yet")
+        print("no carryover sessions recorded yet")
         return 0
     if args.session and not (paths.home() / "sessions" / sid).is_dir():
         print(f"no such session: {sid}")
         return 1
     summary = ledger.load_summary(sid)
-    print(f"# tend report - session {sid}\n")
+    print(f"# carryover report - session {sid}\n")
     print(f"context total : {summary.get('context_total', 0):,} tok")
     print(f"output total  : {summary.get('output_total', 0):,} tok")
     print(f"stale results : {ledger.stale_tokens(summary):,} tok")
@@ -191,14 +191,14 @@ def cmd_clean(args) -> int:
 
 def cmd_on(args) -> int:
     (paths.home() / "disabled").unlink(missing_ok=True)
-    print("tend enabled")
+    print("carryover enabled")
     return 0
 
 
 def cmd_off(args) -> int:
     paths.home().mkdir(parents=True, exist_ok=True)
     (paths.home() / "disabled").touch()
-    print("tend disabled (hooks exit immediately)")
+    print("carryover disabled (hooks exit immediately)")
     return 0
 
 
@@ -208,7 +208,7 @@ def cmd_install(args) -> int:
     except install.SettingsError as e:
         print(str(e))
         return 1
-    print(f"tend hooks + statusline installed into {args.settings}")
+    print(f"carryover hooks + statusline installed into {args.settings}")
     print("Restart your Claude Code session to activate.")
     return 0
 
@@ -219,7 +219,7 @@ def cmd_uninstall(args) -> int:
     except install.SettingsError as e:
         print(str(e))
         return 1
-    print(f"tend removed from {args.settings}")
+    print(f"carryover removed from {args.settings}")
     return 0
 
 
@@ -229,7 +229,7 @@ def cmd_wrap_statusline(args) -> int:
     except install.SettingsError as e:
         print(str(e))
         return 1
-    print(f"statusline wrapped in {args.settings} (original saved; tend uninstall-hook restores it)")
+    print(f"statusline wrapped in {args.settings} (original saved; carryover uninstall-hook restores it)")
     return 0
 
 
@@ -240,7 +240,7 @@ def cmd_statusline_wrap(args) -> int:
 
 
 def main(argv=None) -> int:
-    parser = argparse.ArgumentParser(prog="tend", description="Context-hygiene harness for Claude Code")
+    parser = argparse.ArgumentParser(prog="carryover", description="Context-hygiene harness for Claude Code")
     sub = parser.add_subparsers(dest="command", required=True)
     default_settings = str(Path.home() / ".claude" / "settings.json")
 

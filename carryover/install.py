@@ -1,4 +1,4 @@
-"""Merge tend into ~/.claude/settings.json non-destructively; reversible."""
+"""Merge carryover into ~/.claude/settings.json non-destructively; reversible."""
 import json
 import os
 import stat
@@ -18,8 +18,8 @@ HOOK_EVENTS = [
     "SubagentStop",
 ]
 
-HOOK_MARKER = "-m tend.hook"
-STATUSLINE_MARKER = "-m tend.statusline"
+HOOK_MARKER = "-m carryover.hook"
+STATUSLINE_MARKER = "-m carryover.statusline"
 
 
 class SettingsError(RuntimeError):
@@ -34,7 +34,7 @@ def _load_settings(sp: Path) -> dict:
     except json.JSONDecodeError as e:
         raise SettingsError(
             f"{sp} exists but is not valid JSON ({e}). Fix it manually or restore "
-            f"{sp.name}.bak-tend before running tend install-hook/uninstall-hook."
+            f"{sp.name}.bak-carryover before running carryover install-hook/uninstall-hook."
         ) from e
     if loaded is None:
         return {}
@@ -81,7 +81,7 @@ def wrap_statusline(settings_path) -> None:
 
 def _wrap_statusline(settings) -> None:
     sl = settings.get("statusLine")
-    if sl and not _is_tend_statusline(sl):
+    if sl and not _is_carryover_statusline(sl):
         paths.write_json_atomic(paths.home() / "statusline-original.json", sl)
     # Never delete a saved original here: after an external removal of our
     # wrapper it can be the only copy of the user's statusline.
@@ -106,7 +106,7 @@ def uninstall(settings_path) -> None:
             else:
                 del hooks[ev]
     sl = settings.get("statusLine")
-    if _is_tend_statusline(sl):
+    if _is_carryover_statusline(sl):
         changed = True
         orig = paths.read_json(paths.home() / "statusline-original.json")
         if orig:
@@ -120,7 +120,7 @@ def uninstall(settings_path) -> None:
 
 
 def _prune_entries(entries):
-    """Remove tend's inner hook commands; drop an entry only when emptied (M10)."""
+    """Remove carryover's inner hook commands; drop an entry only when emptied (M10)."""
     pruned, changed = [], False
     for e in entries:
         inner = e.get("hooks") if isinstance(e, dict) else None
@@ -139,7 +139,7 @@ def _prune_entries(entries):
 
 
 def _refresh_marked(entries, marker, command) -> bool:
-    """Repoint existing tend hooks at the current interpreter; True if any found (M11)."""
+    """Repoint existing carryover hooks at the current interpreter; True if any found (M11)."""
     found = False
     for e in entries:
         if not isinstance(e, dict):
@@ -151,12 +151,12 @@ def _refresh_marked(entries, marker, command) -> bool:
     return found
 
 
-def _is_tend_statusline(sl) -> bool:
+def _is_carryover_statusline(sl) -> bool:
     return isinstance(sl, dict) and STATUSLINE_MARKER in (sl.get("command") or "")
 
 
 def _write_settings(sp, settings) -> None:
-    backup = sp.with_name(sp.name + ".bak-tend")
+    backup = sp.with_name(sp.name + ".bak-carryover")
     mode = None
     if sp.exists():
         mode = stat.S_IMODE(sp.stat().st_mode)

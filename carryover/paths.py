@@ -1,11 +1,11 @@
-"""TEND_HOME resolution, session dirs, kill switch, atomic JSON I/O."""
+"""CARRYOVER_HOME resolution, session dirs, kill switch, atomic JSON I/O."""
 import json
 import os
 from pathlib import Path
 
 
 def home() -> Path:
-    return Path(os.environ.get("TEND_HOME", str(Path.home() / ".claude" / "tend")))
+    return Path(os.environ.get("CARRYOVER_HOME", str(Path.home() / ".claude" / "carryover")))
 
 
 def session_dir(session_id: str) -> Path:
@@ -40,7 +40,7 @@ def disabled() -> bool:
 
 
 def log_path() -> Path:
-    return home() / "tend.log"
+    return home() / "carryover.log"
 
 
 def read_json(path, default=None):

@@ -1,4 +1,4 @@
 #!/bin/sh
-# Deprecated launcher kept for pre-rename references; forwards to carryover.
+# carryover CLI for plugin installs: the package lives in the plugin root.
 ROOT="${CLAUDE_PLUGIN_ROOT:-$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)}"
 PYTHONPATH="$ROOT" exec python3 -m carryover.cli "$@"

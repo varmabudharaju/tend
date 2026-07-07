@@ -1,4 +1,4 @@
-"""Hook entry point: python3 -m tend.hook (registered for all tend events)."""
+"""Hook entry point: python3 -m carryover.hook (registered for all carryover events)."""
 import sys
 
 from . import hookio

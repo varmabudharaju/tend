@@ -5,9 +5,9 @@ import sys
 
 
 def run_hook(payload, env_home):
-    env = dict(os.environ, TEND_HOME=str(env_home))
+    env = dict(os.environ, CARRYOVER_HOME=str(env_home))
     return subprocess.run(
-        [sys.executable, "-m", "tend.hook"],
+        [sys.executable, "-m", "carryover.hook"],
         input=payload, capture_output=True, text=True, env=env, timeout=30,
     )
 
@@ -39,9 +39,9 @@ def test_statusline_end_to_end(tmp_path):
         "model": {"display_name": "Fable"},
         "context_window": {"used_percentage": 33.0},
     })
-    env = dict(os.environ, TEND_HOME=str(tmp_path / "home"))
+    env = dict(os.environ, CARRYOVER_HOME=str(tmp_path / "home"))
     res = subprocess.run(
-        [sys.executable, "-m", "tend.statusline"],
+        [sys.executable, "-m", "carryover.statusline"],
         input=payload, capture_output=True, text=True, env=env, timeout=30,
     )
     assert res.returncode == 0

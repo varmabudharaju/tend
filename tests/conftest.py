@@ -3,10 +3,10 @@ import pytest
 
 
 @pytest.fixture(autouse=True)
-def tend_home(tmp_path, monkeypatch):
-    """Every test gets an isolated TEND_HOME."""
-    home = tmp_path / "tend-home"
-    monkeypatch.setenv("TEND_HOME", str(home))
+def carryover_home(tmp_path, monkeypatch):
+    """Every test gets an isolated CARRYOVER_HOME."""
+    home = tmp_path / "carryover-home"
+    monkeypatch.setenv("CARRYOVER_HOME", str(home))
     return home
 
 

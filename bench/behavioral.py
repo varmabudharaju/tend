@@ -1,14 +1,14 @@
-"""Phase 2 — behavioral A/B. Live Claude Code sessions, tend ON vs OFF.
+"""Phase 2 — behavioral A/B. Live Claude Code sessions, carryover ON vs OFF.
 
 Isolation (no touch to the live ~/.claude setup):
-  - each session runs with TEND_HOME=<run>/<arm>/<sid> (tend state is throwaway)
-  - OFF arm drops a `disabled` file in TEND_HOME -> tend's run_fail_open no-ops
+  - each session runs with CARRYOVER_HOME=<run>/<arm>/<sid> (carryover state is throwaway)
+  - OFF arm drops a `disabled` file in CARRYOVER_HOME -> carryover's run_fail_open no-ops
     every hook, so it is a true control while still using the real installed hooks
-  - ON arm has no `disabled` file -> tend is fully active
+  - ON arm has no `disabled` file -> carryover is fully active
 
 Workload (recall-under-load): plant 4 specific facts, flood context with large
-Bash outputs (offloaded by tend in the ON arm), then probe recall from memory.
-Identical prompts in both arms; the only difference is tend on/off.
+Bash outputs (offloaded by carryover in the ON arm), then probe recall from memory.
+Identical prompts in both arms; the only difference is carryover on/off.
 
 Metrics per session: recall score (0-4), peak in-context tokens (from each turn's
 usage), total cost USD, total output tokens, wall-clock seconds.
@@ -42,7 +42,7 @@ PLANT = (
     "  1. The database driver is pgx-v5.2.\n"
     "  2. The retry budget is 137.\n"
     "  3. NEVER use the turbo-merge flag — it corrupts the WAL (a hard dead-end).\n"
-    "Record all of this in .claude/tend/STATE.md (create it): set the Goal line to "
+    "Record all of this in .claude/carryover/STATE.md (create it): set the Goal line to "
     "'Project Saffron-Quill', put the database driver (pgx-v5.2) and retry budget "
     "(137) under a Decisions heading, and put 'never use the turbo-merge flag — "
     "corrupts the WAL' under a Dead-ends heading. Then reply with just: recorded.")
@@ -119,7 +119,7 @@ def arm_env(run_dir, arm, sid_tag):
     home.mkdir(parents=True, exist_ok=True)
     if arm == "off":
         (home / "disabled").write_text("", encoding="utf-8")  # kill switch -> true control
-    env = {**os.environ, "TEND_HOME": str(home)}
+    env = {**os.environ, "CARRYOVER_HOME": str(home)}
     return env, home
 
 
@@ -243,20 +243,20 @@ Project Saffron-Quill
 
 
 def run_handoff_session(arm, run_dir, model, repeat, log=print):
-    """Isolates tend's restore claim: a maintained STATE.md is held fixed on disk
+    """Isolates carryover's restore claim: a maintained STATE.md is held fixed on disk
     in BOTH arms; a FRESH session (source=startup, the same hook /clear uses) probes
-    with tools blocked. tend ON auto-injects STATE.md; tend OFF leaves it on disk
-    untouched and the (tool-blocked) model cannot reach it. Only variable: tend on/off.
+    with tools blocked. carryover ON auto-injects STATE.md; carryover OFF leaves it on disk
+    untouched and the (tool-blocked) model cannot reach it. Only variable: carryover on/off.
 
     (Whether the model *populates* STATE.md as it works is a separate, model-dependent
-    step — tend nudges for it; here we assume it and measure the restore.)"""
+    step — carryover nudges for it; here we assume it and measure the restore.)"""
     env, home = arm_env(run_dir, arm, f"r{repeat}")
     sb = make_sandbox(home, n_logs=1, log_tokens=200)
-    st = Path(sb) / ".claude" / "tend" / "STATE.md"
+    st = Path(sb) / ".claude" / "carryover" / "STATE.md"
     st.parent.mkdir(parents=True, exist_ok=True)
     st.write_text(HANDOFF_STATE, encoding="utf-8")
     t0 = time.time()
-    # FRESH session (resume_sid=None) -> SessionStart fires -> tend (ON) restores STATE.md
+    # FRESH session (resume_sid=None) -> SessionStart fires -> carryover (ON) restores STATE.md
     d = run_turn(PROBE, sb, env, model, resume_sid=None, allowed=None,
                  disallowed=PROBE_BLOCK, timeout=200)
     answer = d.get("result", "") if not d.get("_parse_error") else ""
@@ -280,12 +280,12 @@ def run_handoff_session(arm, run_dir, model, repeat, log=print):
 
 def run_discovery_session(arm, run_dir, model, repeat, log=print):
     """The fair OFF arm: STATE.md is on disk in BOTH arms, tools are ALLOWED,
-    and the probe names no file. tend ON injects STATE.md at SessionStart;
-    tend OFF must spontaneously discover it. Measures whether tend's restore
+    and the probe names no file. carryover ON injects STATE.md at SessionStart;
+    carryover OFF must spontaneously discover it. Measures whether carryover's restore
     is load-bearing or mere convenience."""
     env, home = arm_env(run_dir, arm, f"r{repeat}")
     sb = make_sandbox(home, n_logs=1, log_tokens=200)
-    st = Path(sb) / ".claude" / "tend" / "STATE.md"
+    st = Path(sb) / ".claude" / "carryover" / "STATE.md"
     st.parent.mkdir(parents=True, exist_ok=True)
     st.write_text(HANDOFF_STATE, encoding="utf-8")
     t0 = time.time()
@@ -316,7 +316,7 @@ def run_pilot(out_dir, stamp, model="claude-haiku-4-5-20251001", repeats=2,
         from . import outcome
         return outcome.run(out_dir, stamp, model=model, repeats=repeats, arms=arms,
                            judge=judge, seed=seed, log=log)
-    run_dir = Path(tempfile.mkdtemp(prefix="tend-bench2-"))
+    run_dir = Path(tempfile.mkdtemp(prefix="carryover-bench2-"))
     log(f"[bench2] run dir: {run_dir}  model={model}  repeats={repeats}  arms={arms} "
         f"kind={kind} flood_turns={flood_turns} log_tokens={log_tokens}")
     sessions = []
@@ -376,22 +376,22 @@ def render_markdown(r, arms):
     kind = r.get("kind", "recall")
     if kind == "handoff":
         desc = ("Plant 4 project facts in STATE.md, then a **fresh session** probes "
-                "recall with tools blocked — only tend can auto-restore STATE on a new "
-                "context. Identical in both arms; only difference: tend on/off.")
+                "recall with tools blocked — only carryover can auto-restore STATE on a new "
+                "context. Identical in both arms; only difference: carryover on/off.")
     elif kind == "discovery":
         desc = ("STATE.md sits on disk in **both** arms, tools ALLOWED, and the probe "
-                "names no file. tend ON auto-injects it; tend OFF must spontaneously "
+                "names no file. carryover ON auto-injects it; carryover OFF must spontaneously "
                 "discover it. Tests whether the restore is load-bearing.")
     else:
         desc = ("Identical scripted session in both arms (plant 4 facts → flood context "
                 "with large Bash outputs → probe recall from memory). Only difference: "
-                "tend on/off.")
-    L = [f"# tend behavioral A/B — {kind}", "",
+                "carryover on/off.")
+    L = [f"# carryover behavioral A/B — {kind}", "",
          f"_Generated {r['stamp']} · model `{r['model']}` · {r['repeats']} repeats/arm · "
          f"{kind} workload._", "",
          desc,
          "", "## Summary (medians)", "",
-         "| metric | tend ON | tend OFF | delta |", "|---|--:|--:|--:|"]
+         "| metric | carryover ON | carryover OFF | delta |", "|---|--:|--:|--:|"]
     if "on" in s and "off" in s:
         on, off = s["on"], s["off"]
 

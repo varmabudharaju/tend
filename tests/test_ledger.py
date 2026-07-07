@@ -2,7 +2,7 @@ import json
 
 from conftest import make_event, write_transcript
 
-from tend import ledger, paths
+from carryover import ledger, paths
 
 
 def fixture_lines():
